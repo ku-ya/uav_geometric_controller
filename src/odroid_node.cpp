@@ -1,6 +1,8 @@
 #include <odroid/odroid_node.hpp>
 #include <tf/transform_datatypes.h>
 // User header files
+
+#include <math.h>
 using namespace std;
 using namespace Eigen;
 odroid_node::odroid_node(){
@@ -18,6 +20,8 @@ odroid_node::odroid_node(){
   0.0, 0.0, -1.0;// Vicon frame (v) to inertial frame (e) (fixed)
   eiX_last = VectorXd::Zero(3);
   eiR_last = VectorXd::Zero(3);
+	x_e = VectorXd::Zero(3);
+
   // quat_vm = new VectorXd::Zeros(4);
   // Given the UAV arm length of 0.31 m and a prop. angle of 15 deg.
   invFMmat <<  0.0000,    1.2879,   -0.1725,   -0.0000,    1.1132,    0.3071,
@@ -67,9 +71,9 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   IMU_flag = true;
   if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
 
-  if(print_imu){
-    printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", psi, theta, phi);
-  }
+  //if(print_imu){
+   // printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", psi, theta, phi);
+  //}
 }
 
 // vicon information callback
@@ -84,12 +88,24 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   quat_vm(3) = msg->transform.rotation.w;
   tf::Quaternion q(quat_vm(0),quat_vm(1),quat_vm(2),quat_vm(3));
   tf::Matrix3x3 m(q);
-  double roll, pitch, yaw;
-  m.getRPY(roll, pitch, yaw);
-  psi = yaw; //msg->orientation.x;
-  theta = pitch;//msg->orientation.y;
-  phi = roll; //msg->orientation.z;
 
+  m.getRPY(roll, pitch, yaw);
+
+    R_vm(0,0) = 1-(2*(quat_vm[1])*(quat_vm[1]))-(2*(quat_vm[2])*(quat_vm[2]));
+     R_vm(0,1) = (2*quat_vm[0]*quat_vm[1])-(2*quat_vm[3]*quat_vm[2]);
+     R_vm(0,2) = (2*quat_vm[0]*quat_vm[2])+(2*quat_vm[3]*quat_vm[1]);
+     R_vm(1,0) = (2*quat_vm[0]*quat_vm[1])+(2*quat_vm[3]*quat_vm[2]);
+    R_vm(1,1) = 1-(2*(quat_vm[0])*(quat_vm[0]))-(2*(quat_vm[2])*(quat_vm[2]));
+    R_vm(1,2) = (2*(quat_vm[1])*(quat_vm[2]))-(2*(quat_vm[3])*(quat_vm[0]));
+     R_vm(2,0) = (2*quat_vm[0]*quat_vm[2])-(2*quat_vm[3]*quat_vm[1]);
+     R_vm(2,1) = (2*quat_vm[0]*quat_vm[3])+(2*quat_vm[2]*quat_vm[1]);
+     R_vm(2,2) = 1-(2*(quat_vm[0])*(quat_vm[0]))-(2*(quat_vm[1])*(quat_vm[1]));
+
+
+	if(print_imu){
+    printf("Vicon: roll:[%f], pitch:[%f], yaw:[%f] \n", roll/M_PI*180, pitch/M_PI*180, yaw/M_PI*180);
+  }
+	
   if(print_x_v){
     cout<<"x_v: "<<x_v<<endl;
   }
@@ -106,7 +122,7 @@ void odroid_node::ctl_callback(){
   VectorXd Wd, Wd_dot;
   Wd = VectorXd::Zero(3); Wd_dot = VectorXd::Zero(3);
   //for attitude testing of position controller
-  Vector3d xd_dot, xd_ddot, x_e, v_e;
+  Vector3d xd_dot, xd_ddot;
   Matrix3d Rd;
 
   if(!(MOTOR_ON && !MotorWarmup)){
@@ -120,15 +136,21 @@ void odroid_node::ctl_callback(){
   Vector3d prev_x_e = x_e;
   x_e = R_ev * x_v;
   v_e = (x_e - prev_x_e)*100;
+	
   // W_b << 0,0.0,0.5;
   // psi = 30/180*M_PI; //msg->orientation.x;
   // theta = 30/180*M_PI;//msg->orientation.y;
   // phi = 30/180*M_PI; //msg->orientation.z;
   // cout<<"psi: "<<psi<<" theta: "<<theta<<" phi: "<<phi<<endl;
-  Eigen::Vector3d angle(psi,theta,phi);
-  euler_Rvm(R_vm, angle);
+  Eigen::Vector3d angle(roll,pitch,yaw);
+  //euler_Rvm(R_vm, angle);
 
   R_eb = R_ev * R_vm * R_bm;
+
+//cout<<"yaw"<<atan2(-R_eb(2,0),R_eb(0,0))<<endl;
+//cout<<"roll"<<atan2(-R_eb(1,2),R_eb(1,1))<<endl;
+//cout<<"pitch"<<asin(R_eb(1,0))<<endl;
+
   // R_eb = R_vm.transpose();
   del_t_CADS = 0.01;
 
@@ -148,9 +170,7 @@ void odroid_node::ctl_callback(){
       cout<<thr[i]<<", ";} cout<<endl;
     }
 
-    if(print_test_variable){
-      printf("eR: %f | %f | %f \n", eR(0), eR(1), eR(2));
-    }
+
   motor_command();
 }
 
@@ -237,6 +257,9 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     Vector3d vee_3by1;
     eigen_invskew(inside_vee_3by3, vee_3by1);// 3x1
     Vector3d eR = 0.5 * vee_3by1;
+	if(print_test_variable){
+      printf("eR: %f | %f | %f \n", eR(0), eR(1), eR(2));
+    }
     // Calculate eW (angular velocity error in body-fixed frame)
     Vector3d eW =  W -  R.transpose() * Rd * Wd;
     // Update integral term of control

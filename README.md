@@ -5,3 +5,5 @@ Odroid node class implementation for ROS
 - Controller callback
 - Vicon subscriber
 - Fake imu sensor data using python code
+
+Check gazebo IMU sensor plugin (https://github.com/alessandrosettimi/test_imu_sensor)

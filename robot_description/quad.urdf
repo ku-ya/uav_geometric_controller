@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<robot name="origins">
+  <link name="base_link">
+    <model name="hexa">
+      <pose>0 0 0 0 0 0</pose>
+      <static>true</static>
+      <link name="body">
+        <visual name="visual">
+          <geometry>
+            <mesh><uri>file://quad.STL</uri>
+             <scale>0.001 0.001 0.001</scale>
+             </mesh>
+          </geometry>
+          <pose>-0.3 -0.2 0 0 0 0</pose>
+        </visual>
+      </link>
+    </model>
+  </link>
+  <!-- <gazebo reference="base_link">
+  <plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
+    <alwaysOn>true</alwaysOn>
+    <bodyName>base_link</bodyName>
+    <topicName>imu</topicName>
+    <serviceName>imu_service</serviceName>
+    <gaussianNoise>0.0</gaussianNoise>
+    <updateRate>100.0</updateRate>
+  </plugin>
+</gazebo> -->
+</robot>

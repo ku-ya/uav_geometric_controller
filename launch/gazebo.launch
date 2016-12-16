@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+
+<launch>
+<!-- <param name="use_sim_time" value="true" /> -->
+  <!-- Start Gazebo with wg world running in (max) realtime -->
+  <!-- <include file="$(find hector_gazebo_worlds)/launch/willow_garage.launch"/> -->
+  <arg name="world" default="$(find odroid)/worlds/mesh.world"/>
+  <arg name="gui" default="true"/>
+  <arg name="args" default=""/>
+
+  <param name="/use_sim_time" value="true" />
+
+  <node name="gazebo" pkg="gazebo_ros" type="gzserver" args="$(arg world) $(arg args)" respawn="false" output="screen"/>
+
+    <!-- start gui -->
+  <group if="$(arg gui)">
+    <node name="gazebo_gui" pkg="gazebo_ros" type="gzclient" respawn="false" output="screen"/>
+  </group>
+  <!-- Spawn simulated quadrotor uav -->
+  <include file="$(find odroid)/launch/spawn_quadrotor.launch" >
+    <!-- <arg name="model" value="$(find ogm_ae)/robot_description/urdf/quadrotor_with_asus_with_hokuyo_utm30lx.urdf.xacro"/> -->
+    <arg name="model" value="$(find odroid)/robot_description/quad.urdf"/>
+    <!-- <remap form="/camera/depth/points" to="/cloud_in" /> -->
+  </include>
+
+  <!-- <node pkg="multi_layer_map" type="model_state.py" name="robot_fixed"/> -->
+
+</launch>

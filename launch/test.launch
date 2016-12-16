@@ -1,0 +1,7 @@
+<launch>
+  <!-- start gazebo with an empty plane -->
+<param name="/use_sim_time" value="true" />
+<node name="gazebo" pkg="gazebo_ros" type="gazebo" args="$(find odroid)/worlds/mesh.world" respawn="false" output="screen" />
+<!-- Spawn a robot into Gazebo -->
+<node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-file $(find odroid)/robot_description/quad.urdf -urdf -z 1 -model quad" />
+</launch>

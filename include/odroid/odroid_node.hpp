@@ -1,3 +1,5 @@
+#ifndef ODROID_NODE_H
+#define ODROID_NODE_H
 // System header files (gcc compiler on ODROID)
 #include <pthread.h>
 #include <stdio.h>
@@ -27,6 +29,9 @@
 #include "char_parse.h"
 // #include "VN100/include/vectornav.h"
 // #include "AUX_Global.h"
+#include <errno.h>
+// #include <wiringPiI2C.h>
+#include <linux/i2c-dev.h>
 
 #include <iostream>
 #include <eigen3/Eigen/Dense>
@@ -150,6 +155,7 @@ class odroid_node
 {
 private:
   double m, g, J[3][3];//mass, gravity, inertia
+  Matrix3f Je;
   // Desired Variables
   // Position:
   double xd[3], xd_dot[3], xd_ddot[3];
@@ -185,6 +191,11 @@ public:
   void ctl_callback();
 
   void vicon_callback();
+
+  void attitude_controller(double Rd[3][3], double Wd[3], double Wddot[3],
+        double W[3], double R[3][3], double del_t, double eiR_last[3],
+        double eR[3], double eW[3], double eiR[3],
+        double kR, double kW, double kiR_now, double f[6]);
       // Control_Nonliner Inputs:
       //  xd = f(t) desired position in inertial frame
       //  xd_dot = f(xd) desired velocity in inertial frame
@@ -214,5 +225,8 @@ public:
       // Control_Nonlinear Inputs & Outputs:
       //  eiX = integral position error
       //  eiR = integral attitude error
+      void print_J();
 
 };
+
+#endif

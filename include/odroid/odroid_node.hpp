@@ -107,7 +107,7 @@ double eiX[3] = {0, 0, 0};
 double eiR[3] = {0, 0, 0};
 
 // Output of Control_Nonlinear() and Command Execution
-double f[6];// Force of each motor/propeller/servo
+// VectorXd f;// Force of each motor/propeller/servo
 int mtr_addr[6]={41, 42, 43, 44, 45, 46};// Motor addresses 1-6
 int thr[6];// i2c motor commands
 int servo_addr[6]={0, 1, 2, 3, 4, 5};// Servo addresses 1-6
@@ -130,7 +130,6 @@ socklen_t client_ln;
 char buffer[1000], buffer_[1000];
 struct sockaddr_in serv_addr, cli_addr;
 
-int IMU_delay_for_CAD;
 
 
 // ROS includes.
@@ -169,6 +168,8 @@ private:
   // Measured Values in Vicon Frame
   double x_v[3];// position in the Vicon frame
   double quat_vm[4];// attitude of markers measured by Vicon system
+  bool IMU_flag;
+  VectorXd f;
 
 public:
   //! Constructor.
@@ -195,7 +196,7 @@ public:
   void attitude_controller(double Rd[3][3], double Wd[3], double Wddot[3],
         double W[3], double R[3][3], double del_t, double eiR_last[3],
         double eR[3], double eW[3], double eiR[3],
-        double kR, double kW, double kiR_now, double f[6]);
+        double kR, double kW, double kiR_now, VectorXd f);
       // Control_Nonliner Inputs:
       //  xd = f(t) desired position in inertial frame
       //  xd_dot = f(xd) desired velocity in inertial frame
@@ -226,6 +227,7 @@ public:
       //  eiX = integral position error
       //  eiR = integral attitude error
       void print_J();
+      void print_f();
 
 };
 

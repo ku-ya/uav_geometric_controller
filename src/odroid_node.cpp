@@ -9,12 +9,15 @@ odroid_node::odroid_node(){
     //  0 ,0,0
     Je <<  55710.50413e-7 ,  617.6577e-7   , -250.2846e-7 , 617.6577e-7    ,  55757.4605e-7 , 100.6760e-7 , -250.2846e-7  ,  100.6760e-7   , 105053.7595e-7;// kg*m^2
 
-
+    IMU_flag = false;
 }
 odroid_node::~odroid_node(){};
 
 void odroid_node::print_J(){
-    std::cout<<"J: "<<Je<<std::endl;
+    std::cout<<"J: \n"<<Je<<std::endl;
+}
+void odroid_node::print_f(){
+    std::cout<<"J: \n"<<f<<std::endl;
 }
 void odroid_node::imu_Callback(const sensor_msgs::Imu::ConstPtr& msg){
     W_raw[0] = msg->angular_velocity.x;
@@ -24,6 +27,8 @@ void odroid_node::imu_Callback(const sensor_msgs::Imu::ConstPtr& msg){
     theta = msg->orientation.y;
     phi = msg->orientation.z;
     // ROS_INFO("Imu Orientation x: [%f], y: [%f], z: [%f], w: [%f]", msg->orientation.x,msg->orientation.y,msg->orientation.z,msg->orientation.w);
+    IMU_flag = true;
+
 }
 
 
@@ -36,14 +41,25 @@ void odroid_node::key_callback(){}
 // }
 // Action for controller
 void odroid_node::ctl_callback(){
-
+    // Matrix3f m(2,2);
+    double Rd[3][3] = {{1.0 , 0.0 , 0.0},
+                       {0.0 , 1.0 , 0.0},
+                       {0.0 , 0.0 , 1.0}},
+           Wd[3]     = {0.0 , 0.0 , 0.0},
+           Wd_dot[3] = {0.0 , 0.0 , 0.0};
+    double  W_b[3] = {0,0,0};
+    double kR = 0, kW = 1, kiR_now = 0;
+   // attitude_controller(Rd, Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR, eR, eW, eiR, kR, kW, kiR_now, f);
+   // print_J();
+   // print_f();
 }
 // vicon information callback
 void odroid_node::vicon_callback(){}
+
 void odroid_node::attitude_controller(double Rd[3][3], double Wd[3], double Wddot[3],
       double W[3], double R[3][3], double del_t, double eiR_last[3],
       double eR[3], double eW[3], double eiR[3],
-      double kR, double kW, double kiR_now, double f[6]){
+      double kR, double kW, double kiR_now, VectorXd f){
         double trpR[3][3], trpRd[3][3], trpRd_R[3][3], trpR_Rd[3][3], inside_vee_3by3[3][3], vee_3by1[3], trpR_Rd_Wd[3],
         What[3][3], J_W[3], What_J_W[3], trpR_Rd_Wddot[3], What_trpR_Rd[3][3], What_trpR_Rd_Wd[3],
         Jmult[3], J_Jmult[3], M[3], FM[6], r[3], F_g[3], trpRe3[3], M_g[3], F_req;
@@ -139,16 +155,15 @@ int main(int argc, char **argv){
     odroid_node odnode;
     ros::Subscriber sub2 = nh.subscribe("imu",100,&odroid_node::imu_Callback,&odnode);
 
-    // Matrix3f m(2,2);
-    double Rd[3][3] = {{1.0 , 0.0 , 0.0},
-                       {0.0 , 1.0 , 0.0},
-                       {0.0 , 0.0 , 1.0}},
-           Wd[3]     = {0.0 , 0.0 , 0.0},
-           Wd_dot[3] = {0.0 , 0.0 , 0.0};
-    double  W_b[3] = {0,0,0};
-    double kR = 0, kW = 1, kiR_now = 0;
-   odnode.attitude_controller(Rd, Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR, eR, eW, eiR, kR, kW, kiR_now, f);
-   odnode.print_J();
-    ros::spin();
+    ros::Rate loop_rate(10);
+    int count = 0;
+   while (ros::ok()){
+         ros::spinOnce();
+         odnode.ctl_callback();
+
+         loop_rate.sleep();
+         // std::cout<<count<<std::endl;
+         ++count;
+   }
     return 0;
 }

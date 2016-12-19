@@ -1,6 +1,8 @@
 //#ifndef AUX_FUNCTIONS_H
 //#define AUX_FUNCTIONS_H
 #include "math.h"
+#include <eigen3/Eigen/Dense>
+using namespace Eigen;
 // Operational Functions
 
 // Function to read keypad commands on the Gumstix
@@ -71,7 +73,7 @@ double vector_vector (double xx[3],double yy[3], double Mvector[3][3])
     return 0;
 }
 
-void matrix_vector6 (double A[6][6],double B[6], double C[6])
+void matrix_vector6 (double A[6][6],double B[6], VectorXd C)
 {// Multiplies (6x6)*(6x1) = (6x1)
     int i,k;
     for (i = 0; i < 6; i++) {

@@ -28,6 +28,7 @@ odroid_node::odroid_node(){
             1.1154,   -0.6440,   -0.1725,    0.9641,   -0.3420,    0.7579,
             1.1154,    0.6440,    0.1725,   -0.9641,   -0.7712,    1.7092;
    invFMmat = temp;
+   ROS_INFO("Odroid node initialized");
 }
 odroid_node::~odroid_node(){};
 
@@ -83,11 +84,11 @@ void odroid_node::attitude_controller(Vector3d Wd, Vector3d Wddot, Vector3d W, M
    F_g = m * g * R.transpose() * e3;
    M_g = r.cross(F_g);
    //   Calculate eR (rotation matrix error)
-   Matrix3d trpRd_R, trpR_Rd, trpR, inside_vee_3by3;
+   Matrix3d trpRd_R, trpR_Rd, trpR, inside_vee_3by3,What;
    trpRd_R = Rd.transpose() * R;
    trpR_Rd = R.transpose() * Rd;
    inside_vee_3by3 = trpRd_R - trpR_Rd;
-   //  invskew(inside_vee_3by3, vee_3by1);// 3x1
+   eigen_invskew(inside_vee_3by3, vee_3by1);// 3x1
    eR = 0.5 * vee_3by1;
    // Calculate eW (angular velocity error in body-fixed frame)
    eW = W - trpR_Rd * Wd;
@@ -96,9 +97,9 @@ void odroid_node::attitude_controller(Vector3d Wd, Vector3d Wddot, Vector3d W, M
    eiR = eiR_last + del_t * eR;
    // Calculate 3 DOFs of M (controlled moment in body-fixed frame)
    // MATLAB: M = -kR*eR-kW*eW-kRi*eiR+cross(W,J*W)+J*(R'*Rd*Wddot-hat(W)*R'*Rd*Wd);
-   // skew(W, What);
+   eigen_skew(W, What);
    Vector3d J_W, What_J_W,Jmult, J_Jmult;
-   Matrix3d What;
+  //  Matrix3d What;
    What_J_W = What * J * W;
    Jmult = trpR_Rd * Wddot - What * trpR_Rd * Wd;
    J_Jmult = J * Jmult;

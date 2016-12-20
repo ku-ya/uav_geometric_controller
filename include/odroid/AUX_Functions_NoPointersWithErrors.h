@@ -1,6 +1,6 @@
-//#ifndef AUX_FUNCTIONS_H
-//#define AUX_FUNCTIONS_H
-
+#ifndef AUX_FUNCTIONS_H
+#define AUX_FUNCTIONS_H
+// #include <eigen3/Eigen/Dense.h>
 // Operational Functions
 
 // Function to read keypad commands on the Gumstix
@@ -115,6 +115,7 @@ double skew (double *xx, double skewx[3][3])
     return 0;
 }
 
+
 double invskew (double skewx[3][3], double xx[3])
 {// Obtains 3x1 vector from its skew-symmetric 3x3 matrix
     xx[0] = skewx[2][1];
@@ -122,6 +123,7 @@ double invskew (double skewx[3][3], double xx[3])
     xx[2] = skewx[1][0];
     return 0;
 }
+
 
 //double expmso3 (double r[3], double R[3][3])
 //{// Matrix exponential to obtain rotation matrix transition
@@ -547,4 +549,4 @@ void EAngles123_to_R(double angles[3], double R[3][3]){
 
 
 
-//#endif // AUX_H
+#endif // AUX_H

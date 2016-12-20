@@ -177,6 +177,27 @@ double invskew (double skewx[3][3], double xx[3])
     return 0;
 }
 
+
+void eigen_skew (Eigen::Vector3d  xx, Eigen::Matrix3d skewx)
+{// Obtains 3x3 skew-symmetric matrix from 3x1 vector
+    skewx(0,0) = 0;
+    skewx(0,1) = -xx(2);
+    skewx(0,2) = xx(1);
+    skewx(1,0) = xx(2);
+    skewx(1,1) = 0;
+    skewx(1,2) = -xx(0);
+    skewx(2,0) = -xx(1);
+    skewx(2,1) = xx(0);
+    skewx(2,2) = 0;
+}
+
+void eigen_invskew (Eigen::Matrix3d skewx, Eigen::Vector3d xx)
+{// Obtains 3x1 vector from its skew-symmetric 3x3 matrix
+    xx(0) = skewx(2,1);
+    xx(1) = skewx(0,2);
+    xx(2) = skewx(1,0);
+}
+
 //double expmso3 (double r[3], double R[3][3])
 //{// Matrix exponential to obtain rotation matrix transition
 //    double nr = 0.0,Sr[3][3],Sr2[3][3],ff1=0.0,ff2=0.0;

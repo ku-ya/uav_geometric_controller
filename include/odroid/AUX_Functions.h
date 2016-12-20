@@ -2,7 +2,7 @@
 //#define AUX_FUNCTIONS_H
 #include "math.h"
 #include <eigen3/Eigen/Dense>
-using namespace Eigen;
+// using namespace Eigen;
 // Operational Functions
 
 // Function to read keypad commands on the Gumstix
@@ -73,7 +73,8 @@ double vector_vector (double xx[3],double yy[3], double Mvector[3][3])
     return 0;
 }
 
-void matrix_vector6 (double A[6][6],double B[6], VectorXd C)
+
+void matrix_vector6 (double A[6][6],double B[6], double C[6])
 {// Multiplies (6x6)*(6x1) = (6x1)
     int i,k;
     for (i = 0; i < 6; i++) {
@@ -178,24 +179,24 @@ double invskew (double skewx[3][3], double xx[3])
 }
 
 
-void eigen_skew (Eigen::Vector3d  xx, Eigen::Matrix3d skewx)
+void eigen_skew (Eigen::Vector3d  x, Eigen::Matrix3d skewM)
 {// Obtains 3x3 skew-symmetric matrix from 3x1 vector
-    skewx(0,0) = 0;
-    skewx(0,1) = -xx(2);
-    skewx(0,2) = xx(1);
-    skewx(1,0) = xx(2);
-    skewx(1,1) = 0;
-    skewx(1,2) = -xx(0);
-    skewx(2,0) = -xx(1);
-    skewx(2,1) = xx(0);
-    skewx(2,2) = 0;
+    skewM(0,0) = 0;
+    skewM(0,1) = -x(2);
+    skewM(0,2) = x(1);
+    skewM(1,0) = x(2);
+    skewM(1,1) = 0;
+    skewM(1,2) = -x(0);
+    skewM(2,0) = -x(1);
+    skewM(2,1) = x(0);
+    skewM(2,2) = 0;
 }
 
-void eigen_invskew (Eigen::Matrix3d skewx, Eigen::Vector3d xx)
+void eigen_invskew (Eigen::Matrix3d skewM, Eigen::Vector3d x)
 {// Obtains 3x1 vector from its skew-symmetric 3x3 matrix
-    xx(0) = skewx(2,1);
-    xx(1) = skewx(0,2);
-    xx(2) = skewx(1,0);
+    x(0) = skewM(2,1);
+    x(1) = skewM(0,2);
+    x(2) = skewM(1,0);
 }
 
 //double expmso3 (double r[3], double R[3][3])

@@ -83,28 +83,25 @@ double RC_vel = 0.0139;
 double RC_IMU = 0.0054;
 
 // Intermediate Variables (Vicon to inertial, misc.)
-double R_s0b[3][3];// Body (b) to initial sensor attitude (s0)
-double R_eb_s[3][3];// Body (b) to inertial (e) calculated by IMU
-double R_vm[3][3];// Markers (m) to Vicon (v)
-double R_em[3][3];// Markers (m) to inertial (e)
-double R_ev[3][3]={{1.0  ,  0.0  ,  0.0},
-{0.0  , -1.0  ,  0.0},
-{0.0  ,  0.0  , -1.0}};// Vicon frame (v) to inertial frame (e) (fixed)
+Matrix3d R_s0b;// Body (b) to initial sensor attitude (s0)
+Matrix3d R_eb_s;// Body (b) to inertial (e) calculated by IMU
+Matrix3d R_vm;// Markers (m) to Vicon (v)
+Matrix3d R_em;// Markers (m) to inertial (e)
 
-double R_bm[3][3]={{1.0  ,  0.0  ,  0.0},
-{0.0  , -1.0  ,  0.0},
-{0.0  ,  0.0  , -1.0}};// Markers frame (m) to the body frame (b) (fixed)
+
+Matrix3d R_ev;
+
+
+
 
 // Measured Values for Controller
 double x_e[3], v_e[3];// Position and Velocity in inertial (e) frame
-double R_eb[3][3];// Body (b) to inertial (e) frame
+Matrix3d R_eb;// Body (b) to inertial (e) frame
 double E_angles_save[3];
 
 // Error Functions
-double eX[3], eV[3], eR[3], eW[3];
-// Integral errors begin at zero
-double eiX[3] = {0, 0, 0};
-double eiR[3] = {0, 0, 0};
+Vector3d eX, eV, eR, eW;
+
 
 // Output of Control_Nonlinear() and Command Execution
 // VectorXd f;// Force of each motor/propeller/servo
@@ -138,6 +135,7 @@ struct sockaddr_in serv_addr, cli_addr;
 
 // #include "ros/ros.h"
 #include <sensor_msgs/Imu.h>
+#include <std_msgs/String.h>
 // #include <iomanip>
 // #include <iostream>
 // Custom message includes. Auto-generated from msg/ directory.
@@ -148,28 +146,34 @@ struct sockaddr_in serv_addr, cli_addr;
 // Auto-generated from cfg/ directory.
 // #include <node_example/node_example_paramsConfig.h>
 
-using std::string;
+// using std::string;
 
 class odroid_node
 {
 private:
-  double m, g, J[3][3];//mass, gravity, inertia
-  Matrix3f Je;
+  double m, g;//mass, gravity, inertia
+  Matrix3d J;
   // Desired Variables
   // Position:
-  double xd[3], xd_dot[3], xd_ddot[3];
+  Vector3d xd, xd_dot, xd_ddot;
   // Attitude:
-  double Rd[3][3],  Wd[3],  Wd_dot[3];
-  double W_b[3];
+  Matrix3d Rd;
+  Vector3d  Wd, Wd_dot;
+  Vector3d W_b;
   // Gains
   double kx, kv, kiX, c1, kR, kW, kiR, c2;
   float phi, theta, psi, W_raw[3];
   Matrix2d e; //inertial frame,
   // Measured Values in Vicon Frame
-  double x_v[3];// position in the Vicon frame
+  Vector3d x_v;// position in the Vicon frame
   double quat_vm[4];// attitude of markers measured by Vicon system
   bool IMU_flag;
   VectorXd f;
+  Matrix3d R_bm;
+  // Integral errors begin at zero
+  VectorXd eiX, eiR;
+  MatrixXd invFMmat;
+
 
 public:
   //! Constructor.
@@ -187,22 +191,22 @@ public:
   //! Callback function for subscriber.
   void imu_Callback(const sensor_msgs::Imu::ConstPtr& msg);
 
-  void key_callback();
+  void key_callback(const std_msgs::String::ConstPtr& msg);
 
   void ctl_callback();
 
   void vicon_callback();
 
-  void attitude_controller(double Rd[3][3], double Wd[3], double Wddot[3],
-        double W[3], double R[3][3], double del_t, double eiR_last[3],
-        double eR[3], double eW[3], double eiR[3],
-        double kR, double kW, double kiR_now, VectorXd f);
+  void attitude_controller(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last, VectorXd eR, VectorXd eW, VectorXd eiR, double kR, double kW, double kiR_now, VectorXd f);
+  //, VectorXd Wd, VectorXd Wddot,
+        // VectorXd W, Matrix3d R, double del_t, VectorXd eiR_last,
+        // VectorXd eR, VectorXd eW, VectorXd eiR, double kR, double kW, double kiR_now, VectorXd f);
       // Control_Nonliner Inputs:
       //  xd = f(t) desired position in inertial frame
       //  xd_dot = f(xd) desired velocity in inertial frame
       //  xd_ddot = f(xd) desired acceleration in inertial frame
       //  Rd = f(t) desired attitude (usually using local coordinates)
-      //  Wd = f(Rd) desired angular velocity in the body-fixed frame
+      //  Wd = f(Rd) desired angular velocity in the body-fixed frae
       //  Wd_dot = f(R) desired angular acceleration in body-fixed frame
       //  x_e = measured position by Vicon converted to inerial frame
       //  Vel_Inerial = estimated velocity (low-pass filter) in inertial frame

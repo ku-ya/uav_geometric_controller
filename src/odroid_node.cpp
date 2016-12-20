@@ -35,7 +35,7 @@ void odroid_node::print_J(){
     std::cout<<"J: \n"<<J<<std::endl;
 }
 void odroid_node::print_f(){
-    std::cout<<"J: \n"<<f<<std::endl;
+    std::cout<<"J: \n"<<this->f<<std::endl;
 }
 
 // callback for IMU sensor deta
@@ -54,7 +54,6 @@ void odroid_node::imu_Callback(const sensor_msgs::Imu::ConstPtr& msg){
     IMU_flag = true;
 }
 
-
 // callback for key Inputs
 void odroid_node::key_callback(const std_msgs::String::ConstPtr&  msg){
    std::cout<<*msg<<std::endl;
@@ -65,7 +64,9 @@ void odroid_node::ctl_callback(){
    Wd = VectorXd::Zero(3); Wd_dot = VectorXd::Zero(3);
    W_b = VectorXd::Zero(3);
 
-   double kR = 0, kW = 1, kiR_now = 0;
+   double kR = 1, kW = 1, kiR_now = 0;
+
+   GetControllerGain(&kx, &kv, &kiX, &c1, &kR, &kW, &kiR, &c2);
    attitude_controller(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR, eR, eW, eiR, kR, kW, kiR_now, f);
    // print_J();
    // print_f();
@@ -76,7 +77,6 @@ void odroid_node::vicon_callback(){}
 
 void odroid_node::attitude_controller(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last, VectorXd eR, VectorXd eW, VectorXd eiR, double kR, double kW, double kiR_now, VectorXd f){
    Matrix3d Rd = MatrixXd::Identity(3,3);
-
    Vector3d e3(0,0,1), b3(0,0,1) , F_g, r, M_g, vee_3by1, trpRe3;
    double l = 0;//.05;// length of rod connecting to the spherical joint
    r = -l * b3;
@@ -115,8 +115,8 @@ void odroid_node::attitude_controller(Vector3d Wd, Vector3d Wddot, Vector3d W, M
    FM[4] = M[1];
    FM[5] = M[2];
 
-   f = invFMmat * FM;
-   // std::cout<<"force: \n"<<f<<std::endl;
+   this->f = invFMmat * FM;
+   // std::cout<<"force: \n"<<this->f<<std::endl;
 }
 
 

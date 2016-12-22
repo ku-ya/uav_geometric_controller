@@ -31,8 +31,6 @@ odroid_node::odroid_node(){
             1.1154,    0.6440,    0.1725,   -0.9641,   -0.7712,    1.7092;
    GetControllerGain(&kx, &kv, &kiX, &c1, &kR, &kW, &kiR, &c2);
    ROS_INFO("Odroid node initialized");
-
-
 }
 odroid_node::~odroid_node(){};
 
@@ -42,14 +40,12 @@ void odroid_node::print_J(){
 void odroid_node::print_f(){
     std::cout<<"force: "<<this->f.transpose()<<std::endl;
 }
-
 // callback for IMU sensor det
 bool odroid_node::getIMU(){return IMU_flag;}
 void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
    W_raw(0) = msg->angular_velocity.x;
    W_raw(1) = msg->angular_velocity.y;
    W_raw(2) = msg->angular_velocity.z;
-
    W_b = W_raw;
    tf::Quaternion q(msg->orientation.x, msg->orientation.y, msg->orientation.z, msg->orientation.w);
    tf::Matrix3x3 m(q);
@@ -71,20 +67,16 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
    R_vm(2,0) = cos(phi)*sin(theta)*cos(psi)+sin(phi)*sin(psi);
    R_vm(2,1) = cos(phi)*sin(theta)*sin(psi)-sin(phi)*cos(psi);
    R_vm(2,2) = cos(phi)*cos(theta);
-
    R_eb = R_vm.transpose();
-
    // ROS_INFO("Imu Orientation x: [%f], y: [%f], z: [%f], w: [%f]", msg->orientation.x,msg->orientation.y,msg->orientation.z,msg->orientation.w);
    if(!IMU_flag){ ROS_INFO("IMU ready");}
    IMU_flag = true;
 }
-
 // callback for key Inputs
 void odroid_node::key_callback(const std_msgs::String::ConstPtr&  msg){
    std::cout<<*msg<<std::endl;
    // TODO: case function here for changing parameter dynamically. Or just make ros dynamic reconfigure file.
 }
-
 // Action for controller
 void odroid_node::ctl_callback(){
    VectorXd Wd, Wd_dot;
@@ -113,20 +105,6 @@ void odroid_node::ctl_callback(){
    // std::cout<<kx<<" "<<kv<<" "<<kiX<<" "<<c1<<" "<<kR<<" "<<kR<<" "<<kW<<" "<<kiR<<" "<<c2<<std::endl;
    del_t_CADS = 0.1;
    GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR, kiR_now);
-   // double dRd[3][3],  dWd[3],  dWddot[3],   dW[3],  dR[3][3],   deiR_last[3],  deR[3],  deW[3],  deiR[3], dkiR_now,  dJ[3][3],  df[6];
-   // for(int i = 0;i<W_b.size();i++){dW[i] = W_b(i);}
-   // for(int i = 0;i<3;i++){
-   //    for(int j = 0; j < 3; j++){
-   //       dR[i][j] = R_eb(i,j);
-   //       dJ[i][j] = J(i,j);
-   //    }
-   // }
-
-   // GeometricControl_SphericalJoint_3DOF(dRd, dWd, dWddot, dW,  dR,  del_t_CADS,  deiR_last, deR,  deW,  deiR,  kR,  kW,  dkiR_now,  m,  g,  dJ,  df);
-   // for(int i = 0;i<6;i++){
-   // cout<<df[i]<<",";
-   // }
-   // cout<<endl;
    // print_J();
    print_f();
 
@@ -135,6 +113,54 @@ void odroid_node::ctl_callback(){
 // vicon information callback
 void odroid_node::vicon_callback(){}
 
+void odroid_node::motor_control(){
+   // Open i2c:
+// fhi2c = open("/dev/i2c-1", O_RDWR);// Chris
+// printf("Opening i2c port...\n");
+// // if(fhi2c!=3)
+// //     printf("ERROR opening i2c port.\n");
+// // else
+// //     printf("The i2c port is open.\n");
+// usleep(100000);
+// tcflush(fhi2c, TCIFLUSH);
+// usleep(100000);
+//
+// // Call and response from motors
+// printf("Checking motors...\n");
+// int motornum, motoraddr, motorworks;
+// int thr0 = 0;// 0 speed test command
+// char PressEnter;
+//
+// for(motornum = 1; motornum <= 6; motornum++){
+//  motoraddr = motornum+40;// 1, 2, 3, ... -> 41, 42, 43, ...
+//  while(1){
+//     motorworks = 1;// will remain 1 if all works properly
+//     if(ioctl(fhi2c, I2C_SLAVE, motoraddr)<0){
+//      printf("ERROR: motor %i ioctl\n", motornum);
+//      motorworks = 0;// i2c address not called
+//     }
+//     usleep(10);
+//     if(write(fhi2c, &thr0, 1)!=1){
+//      printf("ERROR: motor %i write\n", motornum);
+//      motorworks = 0;
+//     }
+//     usleep(10);
+//     tcflush(fhi2c, TCIOFLUSH);
+//     if(motorworks == 1){
+//      printf("Motor %i working...\n", motornum);
+//      break;
+//     }
+//     else{
+//      printf("Fix motor %i, then press ENTER.\n\n", motornum);
+//      printf("Note: another i2c device may interupt the signal if\n");
+//      printf("any i2c wires are attached to unpowered components.\n");
+//      scanf("%c",&PressEnter);
+//      break;
+//     }
+//  }
+// }
+// printf("All motors are working.\n");
+}
 void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last, double kiR_now){
    Matrix3d Rd = MatrixXd::Identity(3,3);
    Vector3d e3(0,0,1), b3(0,0,1), vee_3by1;

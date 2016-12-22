@@ -1,44 +1,31 @@
 #ifndef ODROID_NODE_H
 #define ODROID_NODE_H
 // System header files (gcc compiler on ODROID)
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <errno.h>
 #include <math.h>
-#include <linux/i2c-dev.h>
-#include <string.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <termios.h>
-#include <stdint.h>
-#include <stdbool.h>
 
 #include "AUX_Functions.h"
 #include "Controllers.h"
 #include "Gains.h"
-#include "serial1.h"
-#include "serial2.h"
-#include "Xbee.h"
+// #include "serial1.h"
+// #include "serial2.h"
+// #include "Xbee.h"
 // #include "PCA9685.h"
 #include "ForcesTorques_i2c.h"
-#include "char_parse.h"
-// #include "VN100/include/vectornav.h"
-// #include "AUX_Global.h"
-#include <errno.h>
-// #include <wiringPiI2C.h>
 #include <linux/i2c-dev.h>
 
 #include <iostream>
 #include <vector>
 #include <eigen3/Eigen/Dense>
+// ROS includes.
+#include "ros/ros.h"
+#include "ros/time.h"
+
 using namespace Eigen;
-// 4 Threads: Keypad, Vicon data, Controller
-#define NUM_THREADS 3
 
 // Pi constant and IMU offset
 #define PI 3.14159265359
@@ -58,11 +45,7 @@ using namespace Eigen;
 #define ALLLED_OFF_L 0xFC
 #define ALLLED_OFF_H 0xFD
 #define i2c_addr 0x40
-// ROS includes.
-#include "ros/ros.h"
-#include "ros/time.h"
 
-// #include "ros/ros.h"
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/String.h>
 // #include <iomanip>
@@ -74,7 +57,6 @@ using namespace Eigen;
 #include <dynamic_reconfigure/server.h>
 // Auto-generated from cfg/ directory.
 // #include <node_example/node_example_paramsConfig.h>
-
 class odroid_node
 {
 private:
@@ -209,7 +191,7 @@ public:
   void vicon_callback();
   //! Controller function
   void GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last, double kiR_now);
-
+  void motor_control();
   void print_J();
   void print_f();
   bool getIMU();

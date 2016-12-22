@@ -213,11 +213,15 @@ void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector
    cout<<thr[i]<<", ";} cout<<endl;
 }
 void callback(odroid::GainsConfig &config, uint32_t level) {
-  ROS_INFO("Reconfigure Request: %d %f %s %s %d",
-            config.int_param, config.double_param,
-            config.str_param.c_str(),
-            config.bool_param?"True":"False",
-            config.size);
+   ROS_INFO("Reconfigure Request: %f %s %s",
+             config.kR,
+             config.IMU?"True":"False",
+             config.Motor?"True":"False");
+  // ROS_INFO("Reconfigure Request: %d %f %s %s %d",
+  //           config.int_param, config.double_param,
+  //           config.str_param.c_str(),
+  //           config.bool_param?"True":"False",
+  //           config.size);
 }
 
 int main(int argc, char **argv){

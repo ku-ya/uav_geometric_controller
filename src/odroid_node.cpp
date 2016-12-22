@@ -5,13 +5,11 @@
 using namespace std;
 
 odroid_node::odroid_node(){
-   m = 1.25;
-   g = 9.81;
+   m = 1.25; g = 9.81;
    J <<  55710.50413e-7, 617.6577e-7, -250.2846e-7,
             617.6577e-7,  55757.4605e-7, 100.6760e-7,
          -250.2846e-7, 100.6760e-7, 105053.7595e-7;// kg*m^2
    IMU_flag = false;
-
    f = VectorXd::Zero(6);
    R_bm <<  1.0, 0.0, 0.0,
             0.0, -1.0, 0.0,
@@ -22,7 +20,6 @@ odroid_node::odroid_node(){
    eiX = VectorXd::Zero(3);
    eiR = VectorXd::Zero(3);
    // Given the UAV arm length of 0.31 m and a prop. angle of 15 deg.
-   // invFMmat
    invFMmat <<  0.0000,    1.2879,   -0.1725,   -0.0000,    1.1132,    0.3071,
             -1.1154,    0.6440,    0.1725,    0.9641,   -0.3420,    0.7579,
             -1.1154,   -0.6440,   -0.1725,   -0.9641,   -0.7712,    1.7092,
@@ -113,7 +110,23 @@ void odroid_node::ctl_callback(){
 // vicon information callback
 void odroid_node::vicon_callback(){}
 
-void odroid_node::motor_control(){
+void odroid_node::motor_command(){
+   // Execute motor output commands
+   for(int i = 0; i < 6; i++){
+    // printf("Motor %i I2C write command of %i to address %i (%e N).\n", i, thr[i], mtr_addr[i], f[i]);
+   //  tcflush(fhi2c, TCIOFLUSH);
+   //  usleep(500);
+   //  if(ioctl(fhi2c, I2C_SLAVE, mtr_addr[i])<0)
+   //  printf("ERROR: ioctl\n");
+   //  if(MOTOR_ON == false)// set motor speed to zero
+   //  thr[i] = 0;
+    // else if(MotorWarmup == true)// warm up motors at 20 throttle command
+    // thr[i] = 20;
+   //  while(write(fhi2c, &thr[i], 1)!=1)
+   //  printf("ERROR: Motor %i I2C write command of %i to address %i (%e N) not sent.\n", i, thr[i], mtr_addr[i], f[i]);
+   }
+}
+void odroid_node::open_I2C(){
    // Open i2c:
 // fhi2c = open("/dev/i2c-1", O_RDWR);// Chris
 // printf("Opening i2c port...\n");
@@ -207,7 +220,6 @@ int main(int argc, char **argv){
    odroid_node odnode;
    ros::Subscriber sub2 = nh.subscribe("raw_imu",100,&odroid_node::imu_callback,&odnode);
    ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
-
    ros::Rate loop_rate(10);
    int count = 0;
    while (ros::ok()){

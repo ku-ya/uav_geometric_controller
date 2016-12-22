@@ -191,7 +191,8 @@ public:
   void vicon_callback();
   //! Controller function
   void GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last, double kiR_now);
-  void motor_control();
+  void motor_command();
+  void open_I2C();
   void print_J();
   void print_f();
   bool getIMU();

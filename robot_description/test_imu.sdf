@@ -1,0 +1,73 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="test_imu">
+    <link name="link">
+      <inertial>
+        <pose>0 0 0 0 0 0</pose>
+        <mass>10</mass>
+        <inertia>
+          <ixx>1.67</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1.67</iyy>
+          <iyz>0</iyz>
+          <izz>1.67</izz>
+        </inertia>
+      </inertial>
+      <collision name="collision">
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1 1 1</size>
+          </box>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>1.0</mu2>
+            </ode>
+          </friction>
+          <contact>
+            <ode>
+              <kp>10000000.0</kp>
+              <kd>1.0</kd>
+              <min_depth>0.001</min_depth>
+              <max_vel>0.1</max_vel>
+            </ode>
+          </contact>
+        </surface>
+      </collision>
+      <visual name="visual">
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1 1 1</size>
+          </box>
+        </geometry>
+	<material>
+          <script>
+            <name>Gazebo/Red</name>
+            <uri>__default__</uri>
+          </script>
+        </material>
+      </visual>
+      <sensor name='imu_sensor' type='imu'>
+        <always_on>1</always_on>
+        <update_rate>1000</update_rate>
+        <visualize>1</visualize>
+        <topic>__default_topic__</topic>
+        <imu/>
+        <plugin name='imu_plugin' filename='libgazebo_ros_imu_sensor.so'>
+	  <topicName>imu_data</topicName>
+	  <bodyName>link</bodyName>
+	  <updateRateHZ>1.0</updateRateHZ>
+	  <gaussianNoise>0.0</gaussianNoise>
+	  <xyzOffset>0 0 0</xyzOffset>
+	  <rpyOffset>0 0 0</rpyOffset>
+        </plugin>
+	<pose>0 0 0 0 0 0</pose>
+      </sensor>
+    </link>
+  </model>
+</sdf>

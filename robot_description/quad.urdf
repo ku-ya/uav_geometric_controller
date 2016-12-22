@@ -16,7 +16,7 @@
       </link>
     </model>
   </link>
-  <!-- <gazebo reference="base_link">
+  <gazebo reference="base_link">
   <plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
     <alwaysOn>true</alwaysOn>
     <bodyName>base_link</bodyName>
@@ -25,5 +25,5 @@
     <gaussianNoise>0.0</gaussianNoise>
     <updateRate>100.0</updateRate>
   </plugin>
-</gazebo> -->
+</gazebo>
 </robot>

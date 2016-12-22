@@ -145,11 +145,7 @@
 //   }
 
 
-  void GeometricControl_SphericalJoint_3DOF (double Rd[3][3], double Wd[3], double Wddot[3],
-    double W[3], double R[3][3], double del_t, double eiR_last[3],
-    double eR[3], double eW[3], double eiR[3],
-    double kR, double kW, double kiR_now,
-    double m, double g, double J[3][3], double f[6])
+  void GeometricControl_SphericalJoint_3DOF (double Rd[3][3], double Wd[3], double Wddot[3],    double W[3], double R[3][3], double del_t, double eiR_last[3], double eR[3], double eW[3], double eiR[3], double kR, double kW, double kiR_now, double m, double g, double J[3][3], double f[6])
     {
       double trpR[3][3], trpRd[3][3], trpRd_R[3][3], trpR_Rd[3][3], inside_vee_3by3[3][3], vee_3by1[3], trpR_Rd_Wd[3],
       What[3][3], J_W[3], What_J_W[3], trpR_Rd_Wddot[3], What_trpR_Rd[3][3], What_trpR_Rd_Wd[3],

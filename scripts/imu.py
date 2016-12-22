@@ -4,6 +4,43 @@ import rospy
 from std_msgs.msg import String
 from sensor_msgs.msg import Imu
 import tf
+import csv
+import numpy as np
+
+all_data = []
+
+# all_data = []
+
+def openfile():
+    global all_data
+    with open('system_data.txt', 'rb') as csvfile:
+        data = csv.reader(csvfile, delimiter=',')
+        for i, row in enumerate(data):
+            all_data.append(row)
+
+
+def readfile(line):
+    global all_data
+    if(line < len(all_data)):
+        row = all_data[line]
+    # for row in data:
+        # print ', '.join(row)
+        euler_angles = [row[i] for i in np.arange(3,0,-1)]
+        f = [row[i] for i in range(17,23)]
+        print euler_angles
+        print f
+    # delta_t = data{1};
+    # euler_angles = [data{4}, data{3}, data{2}];
+    # eR = [data{5}, data{6}, data{7}];
+    # eW = [data{8}, data{9}, data{10}];
+    # eI = [data{11}, data{12}, data{13}];
+    # F = data{14};
+    # M = [data{15}, data{16}, data{17}];
+    # f = [data{18} data{19}, data{20}, data{21}, data{22}, data{23}];
+    # thr = [data{24}, data{25}, data{26}, data{27}, data{28}, data{29}];
+    # R = [data{30}, data{31}, data{32}, data{33}, data{34}, data{35}, data{36}, data{37}, data{38}];
+    # Rdot = [data{39}, data{40}, data{41}, data{42}, data{43}, data{44}, data{45}, data{46}, data{47}];
+    # W = [data{48}, data{49}, data{50}];
 
 def talker():
     pub = rospy.Publisher('imu', Imu, queue_size=10)
@@ -46,7 +83,9 @@ def talker():
         rate.sleep()
 
 if __name__ == '__main__':
-    try:
-        talker()
-    except rospy.ROSInterruptException:
-        pass
+    data = openfile()
+    readfile(1)
+    # try:
+    #     talker()
+    # except rospy.ROSInterruptException:
+    #     pass

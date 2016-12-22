@@ -1,4 +1,6 @@
 #include <odroid/odroid_node.hpp>
+#include <tf/transform_datatypes.h>
+
 // User header files
 using namespace std;
 
@@ -37,7 +39,7 @@ void odroid_node::print_J(){
     std::cout<<"J: \n"<<J<<std::endl;
 }
 void odroid_node::print_f(){
-    std::cout<<"J: \n"<<this->f<<std::endl;
+    std::cout<<"f: \n"<<this->f.transpose()<<std::endl;
 }
 
 // callback for IMU sensor deta
@@ -49,9 +51,31 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
    W_raw(0) = msg->angular_velocity.x;
    W_raw(1) = msg->angular_velocity.y;
    W_raw(2) = msg->angular_velocity.z;
-   psi = msg->orientation.x;
-   theta = msg->orientation.y;
-   phi = msg->orientation.z;
+
+   W_b = W_raw;
+   tf::Quaternion q(msg->orientation.x, msg->orientation.y, msg->orientation.z, msg->orientation.w);
+   tf::Matrix3x3 m(q);
+   double roll, pitch, yaw;
+   m.getRPY(roll, pitch, yaw);
+   roll = 13.433000;
+   pitch = -17.971001;
+   yaw = -42.332001;
+   psi = roll; //msg->orientation.x;
+   theta = pitch;//msg->orientation.y;
+   phi = yaw; //msg->orientation.z;
+   // cout<<"psi: "<<psi<<" theta: "<<theta<<" phi: "<<phi<<endl;
+   R_vm(0,0) = cos(theta)*cos(psi);
+   R_vm(0,1) = cos(theta)*sin(psi);
+   R_vm(0,2) = -sin(theta);
+   R_vm(1,0) = sin(phi)*sin(theta)*cos(psi)-cos(phi)*sin(psi);
+   R_vm(1,1) = sin(phi)*sin(theta)*sin(psi)+cos(phi)*cos(psi);
+   R_vm(1,2) = sin(phi)*cos(theta);
+   R_vm(2,0) = cos(phi)*sin(theta)*cos(psi)+sin(phi)*sin(psi);
+   R_vm(2,1) = cos(phi)*sin(theta)*sin(psi)-sin(phi)*cos(psi);
+   R_vm(2,2) = cos(phi)*cos(theta);
+
+   R_eb = R_vm.transpose();
+
    // ROS_INFO("Imu Orientation x: [%f], y: [%f], z: [%f], w: [%f]", msg->orientation.x,msg->orientation.y,msg->orientation.z,msg->orientation.w);
    if(!IMU_flag){ ROS_INFO("IMU ready");}
    IMU_flag = true;
@@ -63,61 +87,67 @@ void odroid_node::key_callback(const std_msgs::String::ConstPtr&  msg){
 }
 // Action for controller
 void odroid_node::ctl_callback(){
-   VectorXd Wd, Wd_dot, W_b;
+   VectorXd Wd, Wd_dot;
    Wd = VectorXd::Zero(3); Wd_dot = VectorXd::Zero(3);
-   W_b = VectorXd::Zero(3);
 
-   double kR = 1, kW = 1, kiR_now = 0;
-
+   // double kR, kW, kiR_now = 0;
+   double kiR_now = 0;
    GetControllerGain(&kx, &kv, &kiX, &c1, &kR, &kW, &kiR, &c2);
-   GeometricControl_SphericalJoint_3DOF(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR, eR, eW, eiR, kR, kW, kiR_now);
+   // std::cout<<R_eb<<std::endl;
+   del_t_CADS = 0.01;
+   GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR, kiR_now);
+   double dRd[3][3],  dWd[3],  dWddot[3],   dW[3],  dR[3][3],   deiR_last[3],  deR[3],  deW[3],  deiR[3], dkiR_now,  dJ[3][3],  df[6];
+   for(int i = 0;i<W_b.size();i++){dW[i] = W_b(i);}
+   for(int i = 0;i<3;i++){
+      for(int j = 0; j < 3; j++){
+         dR[i][j] = R_eb(i,j);
+         dJ[i][j] = J(i,j);
+      }
+   }
+
+   GeometricControl_SphericalJoint_3DOF(dRd, dWd, dWddot, dW,  dR,  del_t_CADS,  deiR_last, deR,  deW,  deiR,  kR,  kW,  dkiR_now,  m,  g,  dJ,  df);
+   for(int i = 0;i<6;i++){
+   cout<<df[i]<<",";
+   }
+   cout<<endl;
    // print_J();
-   // print_f();
+   print_f();
 }
 
 // vicon information callback
 void odroid_node::vicon_callback(){}
 
-void odroid_node::GeometricControl_SphericalJoint_3DOF(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last, VectorXd eR, VectorXd eW, VectorXd eiR, double kR, double kW, double kiR_now){
+void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last, double kiR_now){
    Matrix3d Rd = MatrixXd::Identity(3,3);
-   Vector3d e3(0,0,1), b3(0,0,1) , F_g, r, M_g, vee_3by1, trpRe3;
+   Vector3d e3(0,0,1), b3(0,0,1), vee_3by1;
    double l = 0;//.05;// length of rod connecting to the spherical joint
-   r = -l * b3;
-   F_g = m * g * R.transpose() * e3;
-   M_g = r.cross(F_g);
+   Vector3d r = -l * b3;
+   Vector3d F_g = m * g * R.transpose() * e3;
+   Vector3d M_g = r.cross(F_g);
    //   Calculate eR (rotation matrix error)
-   Matrix3d trpRd_R, trpR_Rd, trpR, inside_vee_3by3,What;
-   trpRd_R = Rd.transpose() * R;
-   trpR_Rd = R.transpose() * Rd;
-   inside_vee_3by3 = trpRd_R - trpR_Rd;
+   Matrix3d inside_vee_3by3 = Rd.transpose() * R - R.transpose() * Rd;
    eigen_invskew(inside_vee_3by3, vee_3by1);// 3x1
-   eR = 0.5 * vee_3by1;
+   Vector3d eR = 0.5 * vee_3by1;
    // Calculate eW (angular velocity error in body-fixed frame)
-   eW = W - trpR_Rd * Wd;
+   Vector3d eW = W - R.transpose() * Rd * Wd;
    // Update integral term of control
    // Attitude:
-   eiR = eiR_last + del_t * eR;
+   Vector3d eiR = eiR_last + del_t * eR;
+   eiR_last = eiR;
    // Calculate 3 DOFs of M (controlled moment in body-fixed frame)
    // MATLAB: M = -kR*eR-kW*eW-kRi*eiR+cross(W,J*W)+J*(R'*Rd*Wddot-hat(W)*R'*Rd*Wd);
+   Matrix3d What;
    eigen_skew(W, What);
-   Vector3d J_W, What_J_W,Jmult, J_Jmult;
-  //  Matrix3d What;
-   What_J_W = What * J * W;
-   Jmult = trpR_Rd * Wddot - What * trpR_Rd * Wd;
-   J_Jmult = J * Jmult;
-   Vector3d M;
-   M = -kR * eR - kW * eW - kiR_now * eiR + What_J_W + J_Jmult - M_g;
+   Vector3d What_J_W = What * J * W;
+   Vector3d Jmult = R.transpose() * Rd * Wddot - What * R.transpose() * Rd * Wd;
+   Vector3d J_Jmult = J * Jmult;
+   Vector3d M = -kR * eR - kW * eW - kiR_now * eiR + What_J_W + J_Jmult - M_g;
    // To try different motor speeds, choose a force in the radial direction
    double F_req = -m*g;// N
    // Convert forces & moments to f_i for i = 1:6 (forces of i-th prop)
    VectorXd FM(6);
-   FM[0] = 0.0;
-   FM[1] = 0.0;
-   FM[2] = F_req;
-   FM[3] = M[0];
-   FM[4] = M[1];
-   FM[5] = M[2];
-
+   FM(0) = 0.0; FM(1) = 0.0; FM(2) = F_req;
+   FM(3) = M(0); FM(4) = M(1); FM(5) = M(2);
    this->f = invFMmat * FM;
    // std::cout<<"force: \n"<<this->f<<std::endl;
 }
@@ -128,7 +158,7 @@ int main(int argc, char **argv){
    ros::init(argc,argv,"hexacopter");
    ros::NodeHandle nh;
    odroid_node odnode;
-   ros::Subscriber sub2 = nh.subscribe("imu",100,&odroid_node::imu_callback,&odnode);
+   ros::Subscriber sub2 = nh.subscribe("raw_imu",100,&odroid_node::imu_callback,&odnode);
    ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
 
    ros::Rate loop_rate(10);

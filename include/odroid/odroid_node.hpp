@@ -55,7 +55,7 @@ using namespace Eigen;
 
 // Dynamic reconfigure includes.
 #include <dynamic_reconfigure/server.h>
-// #include <dynamic_tutorials/TutorialsConfig.h>
+#include <odroid/GainsConfig.h>
 // Auto-generated from cfg/ directory.
 // #include <node_example/node_example_paramsConfig.h>
 class odroid_node

@@ -212,13 +212,13 @@ void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector
    for(int i = 0;i<6;i++){
    cout<<thr[i]<<", ";} cout<<endl;
 }
-// void callback(dynamic_tutorials::TutorialsConfig &config, uint32_t level) {
-//   ROS_INFO("Reconfigure Request: %d %f %s %s %d",
-//             config.int_param, config.double_param,
-//             config.str_param.c_str(),
-//             config.bool_param?"True":"False",
-//             config.size);
-// }
+void callback(odroid::GainsConfig &config, uint32_t level) {
+  ROS_INFO("Reconfigure Request: %d %f %s %s %d",
+            config.int_param, config.double_param,
+            config.str_param.c_str(),
+            config.bool_param?"True":"False",
+            config.size);
+}
 
 int main(int argc, char **argv){
    // ros::init(argc, argv, "imu_listener");
@@ -228,10 +228,10 @@ int main(int argc, char **argv){
    ros::Subscriber sub2 = nh.subscribe("raw_imu",100,&odroid_node::imu_callback,&odnode);
    ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
 
-   // dynamic_reconfigure::Server<dynamic_tutorials::TutorialsConfig> server;
-   // dynamic_reconfigure::Server<dynamic_tutorials::TutorialsConfig>::CallbackType f;
-   // f = boost::bind(&callback, _1, _2);
-   // server.setCallback(f);
+   dynamic_reconfigure::Server<odroid::GainsConfig> server;
+   dynamic_reconfigure::Server<odroid::GainsConfig>::CallbackType f;
+   f = boost::bind(&callback, _1, _2);
+   server.setCallback(f);
 
    ros::Rate loop_rate(10);
    int count = 0;

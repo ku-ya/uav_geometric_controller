@@ -23,15 +23,16 @@ odroid_node::odroid_node(){
    eiR = VectorXd::Zero(3);
    // Given the UAV arm length of 0.31 m and a prop. angle of 15 deg.
    // invFMmat
-   MatrixXd temp(6,6);
-   temp <<  0.0000,    1.2879,   -0.1725,   -0.0000,    1.1132,    0.3071,
+   invFMmat <<  0.0000,    1.2879,   -0.1725,   -0.0000,    1.1132,    0.3071,
             -1.1154,    0.6440,    0.1725,    0.9641,   -0.3420,    0.7579,
             -1.1154,   -0.6440,   -0.1725,   -0.9641,   -0.7712,    1.7092,
             -0.0000,   -1.2879,    0.1725,         0,    1.1132,    0.3071,
             1.1154,   -0.6440,   -0.1725,    0.9641,   -0.3420,    0.7579,
             1.1154,    0.6440,    0.1725,   -0.9641,   -0.7712,    1.7092;
-   invFMmat = temp;
+   GetControllerGain(&kx, &kv, &kiX, &c1, &kR, &kW, &kiR, &c2);
    ROS_INFO("Odroid node initialized");
+
+
 }
 odroid_node::~odroid_node(){};
 
@@ -39,14 +40,11 @@ void odroid_node::print_J(){
     std::cout<<"J: \n"<<J<<std::endl;
 }
 void odroid_node::print_f(){
-    std::cout<<"f: \n"<<this->f.transpose()<<std::endl;
+    std::cout<<"force: "<<this->f.transpose()<<std::endl;
 }
 
-// callback for IMU sensor deta
-// void IMU_callback(const sensor_msgs::Imu::ConstPtr& msg){
-    // ROS_INFO("Imu Seq: [%d]", msg->header.seq);
-  // ROS_INFO("Imu Orientation x: [%f], y: [%f], z: [%f], w: [%f]", msg->orientation.x,msg->orientation.y,msg->orientation.z,msg->orientation.w);
-// }
+// callback for IMU sensor det
+bool odroid_node::getIMU(){return IMU_flag;}
 void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
    W_raw(0) = msg->angular_velocity.x;
    W_raw(1) = msg->angular_velocity.y;
@@ -57,9 +55,9 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
    tf::Matrix3x3 m(q);
    double roll, pitch, yaw;
    m.getRPY(roll, pitch, yaw);
-   roll = 13.433000;
-   pitch = -17.971001;
-   yaw = -42.332001;
+   roll = 30/180*M_PI;
+   pitch = 0;
+   yaw = 0;
    psi = roll; //msg->orientation.x;
    theta = pitch;//msg->orientation.y;
    phi = yaw; //msg->orientation.z;
@@ -84,34 +82,54 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
 // callback for key Inputs
 void odroid_node::key_callback(const std_msgs::String::ConstPtr&  msg){
    std::cout<<*msg<<std::endl;
+   // TODO: case function here for changing parameter dynamically. Or just make ros dynamic reconfigure file.
 }
+
 // Action for controller
 void odroid_node::ctl_callback(){
    VectorXd Wd, Wd_dot;
    Wd = VectorXd::Zero(3); Wd_dot = VectorXd::Zero(3);
+   double kiR_now = 0.0;
+   //
+   // W_b << 0,0.0,0.5;
+   // psi = 30/180*M_PI; //msg->orientation.x;
+   // theta = 30/180*M_PI;//msg->orientation.y;
+   // phi = 30/180*M_PI; //msg->orientation.z;
+   // // cout<<"psi: "<<psi<<" theta: "<<theta<<" phi: "<<phi<<endl;
+   // R_vm(0,0) = cos(theta)*cos(psi);
+   // R_vm(0,1) = cos(theta)*sin(psi);
+   // R_vm(0,2) = -sin(theta);
+   // R_vm(1,0) = sin(phi)*sin(theta)*cos(psi)-cos(phi)*sin(psi);
+   // R_vm(1,1) = sin(phi)*sin(theta)*sin(psi)+cos(phi)*cos(psi);
+   // R_vm(1,2) = sin(phi)*cos(theta);
+   // R_vm(2,0) = cos(phi)*sin(theta)*cos(psi)+sin(phi)*sin(psi);
+   // R_vm(2,1) = cos(phi)*sin(theta)*sin(psi)-sin(phi)*cos(psi);
+   // R_vm(2,2) = cos(phi)*cos(theta);
+   //
+   // R_eb = R_vm.transpose();
+   //
+   // GetControllerGain(&kx, &kv, &kiX, &c1, &kR, &kW, &kiR, &c2);
 
-   // double kR, kW, kiR_now = 0;
-   double kiR_now = 0;
-   GetControllerGain(&kx, &kv, &kiX, &c1, &kR, &kW, &kiR, &c2);
-   // std::cout<<R_eb<<std::endl;
-   del_t_CADS = 0.01;
+   // std::cout<<kx<<" "<<kv<<" "<<kiX<<" "<<c1<<" "<<kR<<" "<<kR<<" "<<kW<<" "<<kiR<<" "<<c2<<std::endl;
+   del_t_CADS = 0.1;
    GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR, kiR_now);
-   double dRd[3][3],  dWd[3],  dWddot[3],   dW[3],  dR[3][3],   deiR_last[3],  deR[3],  deW[3],  deiR[3], dkiR_now,  dJ[3][3],  df[6];
-   for(int i = 0;i<W_b.size();i++){dW[i] = W_b(i);}
-   for(int i = 0;i<3;i++){
-      for(int j = 0; j < 3; j++){
-         dR[i][j] = R_eb(i,j);
-         dJ[i][j] = J(i,j);
-      }
-   }
+   // double dRd[3][3],  dWd[3],  dWddot[3],   dW[3],  dR[3][3],   deiR_last[3],  deR[3],  deW[3],  deiR[3], dkiR_now,  dJ[3][3],  df[6];
+   // for(int i = 0;i<W_b.size();i++){dW[i] = W_b(i);}
+   // for(int i = 0;i<3;i++){
+   //    for(int j = 0; j < 3; j++){
+   //       dR[i][j] = R_eb(i,j);
+   //       dJ[i][j] = J(i,j);
+   //    }
+   // }
 
-   GeometricControl_SphericalJoint_3DOF(dRd, dWd, dWddot, dW,  dR,  del_t_CADS,  deiR_last, deR,  deW,  deiR,  kR,  kW,  dkiR_now,  m,  g,  dJ,  df);
-   for(int i = 0;i<6;i++){
-   cout<<df[i]<<",";
-   }
-   cout<<endl;
+   // GeometricControl_SphericalJoint_3DOF(dRd, dWd, dWddot, dW,  dR,  del_t_CADS,  deiR_last, deR,  deW,  deiR,  kR,  kW,  dkiR_now,  m,  g,  dJ,  df);
+   // for(int i = 0;i<6;i++){
+   // cout<<df[i]<<",";
+   // }
+   // cout<<endl;
    // print_J();
    print_f();
+
 }
 
 // vicon information callback
@@ -148,10 +166,13 @@ void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector
    VectorXd FM(6);
    FM(0) = 0.0; FM(1) = 0.0; FM(2) = F_req;
    FM(3) = M(0); FM(4) = M(1); FM(5) = M(2);
-   this->f = invFMmat * FM;
-   // std::cout<<"force: \n"<<this->f<<std::endl;
-}
+   f = invFMmat * FM;
 
+   OutputMotor(f,thr);
+   cout<<"Thruttle motor out: ";
+   for(int i = 0;i<6;i++){
+   cout<<thr[i]<<", ";} cout<<endl;
+}
 
 int main(int argc, char **argv){
    // ros::init(argc, argv, "imu_listener");
@@ -165,7 +186,9 @@ int main(int argc, char **argv){
    int count = 0;
    while (ros::ok()){
       ros::spinOnce();
-      odnode.ctl_callback();
+      if(odnode.getIMU()){
+         odnode.ctl_callback();
+      }
       loop_rate.sleep();
       // std::cout<<count<<std::endl;
       ++count;

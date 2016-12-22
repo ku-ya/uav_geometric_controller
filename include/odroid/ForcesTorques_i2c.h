@@ -1,7 +1,8 @@
 // Control code executes this function to find motor and servo commands:
 #define NumTestedInd 11
+#include <eigen3/Eigen/Dense>
 
-void OutputMotor(double f[6], int thr[6]){
+void OutputMotor(Eigen::VectorXd f, int thr[6]){
     int i;
     double a =  6.0252E-5;
     double b =  8.4086E-3;
@@ -26,25 +27,7 @@ void OutputMotor(double f[6], int thr[6]){
             thr[i]=240.0;
         if(thr[i] < 0.0)
             thr[i]=0.0;
-
-            // thr_print[i] = thr[i];
     }
-    //printf("%i \t %i \t %i \t %i \t %i \t %i \n",thr[0],thr[1],thr[2],thr[3],thr[4],thr[5]);
-
-    // for saving data
-    // fi_print[0] = f[0];
-    // fi_print[1] = f[1];
-    // fi_print[2] = f[2];
-    // fi_print[3] = f[3];
-    // fi_print[4] = f[4];
-    // fi_print[5] = f[5];
-    //
-    // thr_print[0] = thr[0];
-    // thr_print[1] = thr[1];
-    // thr_print[2] = thr[2];
-    // thr_print[3] = thr[3];
-    // thr_print[4] = thr[4];
-    // thr_print[5] = thr[5];
 }
 
 

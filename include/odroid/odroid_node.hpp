@@ -115,8 +115,8 @@ private:
 
   // Integral errors begin at zero
   VectorXd eiX, eiR;
-  MatrixXd invFMmat;
-
+  Eigen::Matrix<double, 6, 6> invFMmat;
+  // Eigen::Matrix<int, 6, 1> thr;
   // Calibrating and Temporary Saving IMU Data
   double phi_bias, theta_bias, psi_bias, W1_bias, W2_bias, W3_bias;
   double W_b_[3], W_b_noisy[3];// Angular velocity of previous loop
@@ -212,6 +212,7 @@ public:
 
   void print_J();
   void print_f();
+  bool getIMU();
 };
 
 #endif

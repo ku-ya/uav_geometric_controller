@@ -112,66 +112,66 @@ void odroid_node::vicon_callback(){}
 void odroid_node::motor_command(){
    // Execute motor output commands
    for(int i = 0; i < 6; i++){
-    // printf("Motor %i I2C write command of %i to address %i (%e N).\n", i, thr[i], mtr_addr[i], f[i]);
-   //  tcflush(fhi2c, TCIOFLUSH);
-   //  usleep(500);
-   //  if(ioctl(fhi2c, I2C_SLAVE, mtr_addr[i])<0)
-   //  printf("ERROR: ioctl\n");
-   //  if(MOTOR_ON == false)// set motor speed to zero
-   //  thr[i] = 0;
-    // else if(MotorWarmup == true)// warm up motors at 20 throttle command
-    // thr[i] = 20;
-   //  while(write(fhi2c, &thr[i], 1)!=1)
-   //  printf("ERROR: Motor %i I2C write command of %i to address %i (%e N) not sent.\n", i, thr[i], mtr_addr[i], f[i]);
+    printf("Motor %i I2C write command of %i to address %i (%e N).\n", i, thr[i], mtr_addr[i], f[i]);
+    tcflush(fhi2c, TCIOFLUSH);
+    usleep(500);
+    if(ioctl(fhi2c, I2C_SLAVE, mtr_addr[i])<0)
+    printf("ERROR: ioctl\n");
+    if(MOTOR_ON == false)// set motor speed to zero
+    thr[i] = 0;
+    else if(MotorWarmup == true)// warm up motors at 20 throttle command
+    thr[i] = 20;
+    while(write(fhi2c, &thr[i], 1)!=1)
+    printf("ERROR: Motor %i I2C write command of %i to address %i (%e N) not sent.\n", i, thr[i], mtr_addr[i], f[i]);
    }
 }
 void odroid_node::open_I2C(){
    // Open i2c:
-// fhi2c = open("/dev/i2c-1", O_RDWR);// Chris
-// printf("Opening i2c port...\n");
-// // if(fhi2c!=3)
-// //     printf("ERROR opening i2c port.\n");
-// // else
-// //     printf("The i2c port is open.\n");
-// usleep(100000);
-// tcflush(fhi2c, TCIFLUSH);
-// usleep(100000);
-//
-// // Call and response from motors
-// printf("Checking motors...\n");
-// int motornum, motoraddr, motorworks;
-// int thr0 = 0;// 0 speed test command
-// char PressEnter;
-//
-// for(motornum = 1; motornum <= 6; motornum++){
-//  motoraddr = motornum+40;// 1, 2, 3, ... -> 41, 42, 43, ...
-//  while(1){
-//     motorworks = 1;// will remain 1 if all works properly
-//     if(ioctl(fhi2c, I2C_SLAVE, motoraddr)<0){
-//      printf("ERROR: motor %i ioctl\n", motornum);
-//      motorworks = 0;// i2c address not called
-//     }
-//     usleep(10);
-//     if(write(fhi2c, &thr0, 1)!=1){
-//      printf("ERROR: motor %i write\n", motornum);
-//      motorworks = 0;
-//     }
-//     usleep(10);
-//     tcflush(fhi2c, TCIOFLUSH);
-//     if(motorworks == 1){
-//      printf("Motor %i working...\n", motornum);
-//      break;
-//     }
-//     else{
-//      printf("Fix motor %i, then press ENTER.\n\n", motornum);
-//      printf("Note: another i2c device may interupt the signal if\n");
-//      printf("any i2c wires are attached to unpowered components.\n");
-//      scanf("%c",&PressEnter);
-//      break;
-//     }
-//  }
-// }
-// printf("All motors are working.\n");
+   fhi2c = open("/dev/i2c-1", O_RDWR);// Chris
+   printf("Opening i2c port...\n");
+   if(fhi2c!=3)
+    printf("ERROR opening i2c port.\n");
+   else
+    printf("The i2c port is open.\n");
+    usleep(100000);
+   tcflush(fhi2c, TCIFLUSH);
+   usleep(100000);
+
+   // Call and response from motors
+   printf("Checking motors...\n");
+   int motornum, motoraddr, motorworks;
+   int thr0 = 0;// 0 speed test command
+   char PressEnter;
+
+   for(motornum = 1; motornum <= 6; motornum++){
+    motoraddr = motornum+40;// 1, 2, 3, ... -> 41, 42, 43, ...
+ while(1){
+    motorworks = 1;// will remain 1 if all works properly
+    if(ioctl(fhi2c, I2C_SLAVE, motoraddr)<0){
+     printf("ERROR: motor %i ioctl\n", motornum);
+     motorworks = 0;// i2c address not called
+    }
+    usleep(10);
+    if(write(fhi2c, &thr0, 1)!=1){
+     printf("ERROR: motor %i write\n", motornum);
+     motorworks = 0;
+    }
+    usleep(10);
+    tcflush(fhi2c, TCIOFLUSH);
+    if(motorworks == 1){
+     printf("Motor %i working...\n", motornum);
+     break;
+    }
+    else{
+     printf("Fix motor %i, then press ENTER.\n\n", motornum);
+     printf("Note: another i2c device may interupt the signal if\n");
+     printf("any i2c wires are attached to unpowered components.\n");
+     scanf("%c",&PressEnter);
+     break;
+    }
+ }
+   }
+printf("All motors are working.\n");
 }
 void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last, double kiR_now){
    Matrix3d Rd = MatrixXd::Identity(3,3);
@@ -243,6 +243,8 @@ int main(int argc, char **argv){
    dynamic_reconfigure::Server<odroid::GainsConfig>::CallbackType f;
    f = boost::bind(&odroid_node::callback, &odnode, _1, _2);
    server.setCallback(f);
+
+   odnode.open_I2C();
 
    ros::Rate loop_rate(5);
    int count = 0;

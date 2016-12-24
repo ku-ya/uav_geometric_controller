@@ -10,9 +10,10 @@ Odroid node class implementation for ROS
 - VN100 IMU driver for ROS has been tested with kinetic [link](https://github.com/KumarRobotics/imu_vn_100)
 - Hector quadrotor repository for simulation testing
 - Dynamic reconfiguration for gains and value prints on console
+- I2C command function for motor control
+  - install i2c-dev for linux
 
 TODO:
-- I2C communication function
 - Hardware test
 - Check gazebo IMU sensor plugin (https://github.com/alessandrosettimi/test_imu_sensor)
 - Clear unnecessary header files and functions

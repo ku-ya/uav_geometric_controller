@@ -50,14 +50,12 @@ using namespace Eigen;
 #include <std_msgs/String.h>
 // #include <iomanip>
 // #include <iostream>
-// Custom message includes. Auto-generated from msg/ directory.
-// #include "node_example/node_example_data.h"
 
 // Dynamic reconfigure includes.
 #include <dynamic_reconfigure/server.h>
-#include <odroid/GainsConfig.h>
 // Auto-generated from cfg/ directory.
-// #include <node_example/node_example_paramsConfig.h>
+#include <odroid/GainsConfig.h>
+
 class odroid_node
 {
 private:
@@ -92,7 +90,8 @@ private:
   // Measured Values in Vicon Frame
   Vector3d x_v;// position in the Vicon frame
   double quat_vm[4];// attitude of markers measured by Vicon system
-  bool IMU_flag;
+
+  bool IMU_flag, print_imu, print_f, print_thr;
   VectorXd f;
   Matrix3d R_bm;
 
@@ -190,12 +189,14 @@ public:
   void ctl_callback();
   //! Vicon sensor message subscriber
   void vicon_callback();
+  //! dynamic reconfigure callback
+  void callback(odroid::GainsConfig &config, uint32_t level);
   //! Controller function
   void GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last, double kiR_now);
   void motor_command();
   void open_I2C();
   void print_J();
-  void print_f();
+  void print_force();
   bool getIMU();
 };
 

@@ -34,7 +34,7 @@ odroid_node::~odroid_node(){};
 void odroid_node::print_J(){
     std::cout<<"J: \n"<<J<<std::endl;
 }
-void odroid_node::print_f(){
+void odroid_node::print_force(){
     std::cout<<"force: "<<this->f.transpose()<<std::endl;
 }
 // callback for IMU sensor det
@@ -103,8 +103,7 @@ void odroid_node::ctl_callback(){
    del_t_CADS = 0.01;
    GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR, kiR_now);
    // print_J();
-   print_f();
-
+   // print_f();
 }
 
 // vicon information callback
@@ -207,16 +206,24 @@ void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector
    FM(3) = M(0); FM(4) = M(1); FM(5) = M(2);
    f = invFMmat * FM;
 
+
+   if(print_f){print_force();}
+
    OutputMotor(f,thr);
-   cout<<"Thruttle motor out: ";
-   for(int i = 0;i<6;i++){
-   cout<<thr[i]<<", ";} cout<<endl;
+   if(print_thr){
+      cout<<"Thruttle motor out: ";
+      for(int i = 0;i<6;i++){
+      cout<<thr[i]<<", ";} cout<<endl;
+   }
 }
-void callback(odroid::GainsConfig &config, uint32_t level) {
+void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
    ROS_INFO("Reconfigure Request: %f %s %s",
              config.kR,
-             config.IMU?"True":"False",
+             config.print_imu?"True":"False",
              config.Motor?"True":"False");
+   print_f = config.print_f;
+   print_imu = config.print_imu;
+   print_thr = config.print_thr;
   // ROS_INFO("Reconfigure Request: %d %f %s %s %d",
   //           config.int_param, config.double_param,
   //           config.str_param.c_str(),
@@ -234,16 +241,16 @@ int main(int argc, char **argv){
 
    dynamic_reconfigure::Server<odroid::GainsConfig> server;
    dynamic_reconfigure::Server<odroid::GainsConfig>::CallbackType f;
-   f = boost::bind(&callback, _1, _2);
+   f = boost::bind(&odroid_node::callback, &odnode, _1, _2);
    server.setCallback(f);
 
-   ros::Rate loop_rate(10);
+   ros::Rate loop_rate(5);
    int count = 0;
    while (ros::ok()){
       ros::spinOnce();
-      if(odnode.getIMU()){
+      // if(odnode.getIMU()){
          odnode.ctl_callback();
-      }
+      // }
       loop_rate.sleep();
       // std::cout<<count<<std::endl;
       ++count;

@@ -11,7 +11,6 @@
 #define kv_mid 0.5
 #define kv_high 4.8
 
-// Attitude Proportional
 #define kR_low 0.62
 #define kR_mid 0.72
 #define kR_high 1.95

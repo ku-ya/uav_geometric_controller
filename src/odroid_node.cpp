@@ -79,31 +79,23 @@ void odroid_node::ctl_callback(){
    VectorXd Wd, Wd_dot;
    Wd = VectorXd::Zero(3); Wd_dot = VectorXd::Zero(3);
    double kiR_now = 0.0;
-   //
-   // W_b << 0,0.0,0.5;
-   // psi = 30/180*M_PI; //msg->orientation.x;
-   // theta = 30/180*M_PI;//msg->orientation.y;
-   // phi = 30/180*M_PI; //msg->orientation.z;
-   // // cout<<"psi: "<<psi<<" theta: "<<theta<<" phi: "<<phi<<endl;
-   // R_vm(0,0) = cos(theta)*cos(psi);
-   // R_vm(0,1) = cos(theta)*sin(psi);
-   // R_vm(0,2) = -sin(theta);
-   // R_vm(1,0) = sin(phi)*sin(theta)*cos(psi)-cos(phi)*sin(psi);
-   // R_vm(1,1) = sin(phi)*sin(theta)*sin(psi)+cos(phi)*cos(psi);
-   // R_vm(1,2) = sin(phi)*cos(theta);
-   // R_vm(2,0) = cos(phi)*sin(theta)*cos(psi)+sin(phi)*sin(psi);
-   // R_vm(2,1) = cos(phi)*sin(theta)*sin(psi)-sin(phi)*cos(psi);
-   // R_vm(2,2) = cos(phi)*cos(theta);
-   //
-   // R_eb = R_vm.transpose();
-   //
-   // GetControllerGain(&kx, &kv, &kiX, &c1, &kR, &kW, &kiR, &c2);
-
-   // std::cout<<kx<<" "<<kv<<" "<<kiX<<" "<<c1<<" "<<kR<<" "<<kR<<" "<<kW<<" "<<kiR<<" "<<c2<<std::endl;
+   W_b << 0,0.0,0.5;
+   psi = 30/180*M_PI; //msg->orientation.x;
+   theta = 30/180*M_PI;//msg->orientation.y;
+   phi = 30/180*M_PI; //msg->orientation.z;
+   // cout<<"psi: "<<psi<<" theta: "<<theta<<" phi: "<<phi<<endl;
+   R_vm(0,0) = cos(theta)*cos(psi);
+   R_vm(0,1) = cos(theta)*sin(psi);
+   R_vm(0,2) = -sin(theta);
+   R_vm(1,0) = sin(phi)*sin(theta)*cos(psi)-cos(phi)*sin(psi);
+   R_vm(1,1) = sin(phi)*sin(theta)*sin(psi)+cos(phi)*cos(psi);
+   R_vm(1,2) = sin(phi)*cos(theta);
+   R_vm(2,0) = cos(phi)*sin(theta)*cos(psi)+sin(phi)*sin(psi);
+   R_vm(2,1) = cos(phi)*sin(theta)*sin(psi)-sin(phi)*cos(psi);
+   R_vm(2,2) = cos(phi)*cos(theta);
+   R_eb = R_vm.transpose();
    del_t_CADS = 0.01;
    GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR, kiR_now);
-   // print_J();
-   // print_f();
 }
 
 // vicon information callback
@@ -206,7 +198,6 @@ void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector
    FM(3) = M(0); FM(4) = M(1); FM(5) = M(2);
    f = invFMmat * FM;
 
-
    if(print_f){print_force();}
 
    OutputMotor(f,thr);
@@ -224,6 +215,14 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
    print_f = config.print_f;
    print_imu = config.print_imu;
    print_thr = config.print_thr;
+   // Attitude controller gains
+   kR = config.kR;
+   kW = config.kW;
+   kiR = config.kiR;
+   // Position controller gains
+   kx = config.kx;
+   kv = config.kv;
+   kiX = config.kiX;
   // ROS_INFO("Reconfigure Request: %d %f %s %s %d",
   //           config.int_param, config.double_param,
   //           config.str_param.c_str(),

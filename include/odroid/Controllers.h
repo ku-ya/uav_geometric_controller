@@ -3,17 +3,11 @@
 #ifndef CONTROLLERS_H
 #define CONTROLLERS_H
 #include <eigen3/Eigen/Dense>
+#include "odroid_node.hpp"
+using namespace Eigen;
 
-// void GeometricController_6DOF(double xd[3], double xd_dot[3], double xd_ddot[3], double Rd[3][3], double Wd[3], double Wddot[3],
-//   double x_e[3], double v_e[3], double W[3], double R[3][3], double del_t,  double eiX_last[3], double eiR_last[3],
-//   double eX[3], double eV[3], double eR[3], double eW[3], double eiX[3], double eiR[3],
-//   double kx, double kv, double kiX_now, double kR, double kW, double kiR_now,
-//   double m, double g, double J[3][3], double f[6])
+// void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R, double del_t,  Vector3d eiX_last, Vector3d eiR_last, Vector3d eX, Vector3d eV, Vector3d eR, Vector3d eW, Vector3d eiX, Vector3d eiR, double kx, double kv, double kiX_now, double kR, double kW, double kiR_now)
 //   {
-//     double trpR[3][3], trpRd[3][3], trpRd_R[3][3], trpR_Rd[3][3], inside_vee_3by3[3][3], vee_3by1[3], trpR_Rd_Wd[3],
-//     A[3], F[3], What[3][3], J_W[3], What_J_W[3], trpR_Rd_Wddot[3], What_trpR_Rd[3][3], What_trpR_Rd_Wd[3],
-//     Jmult[3], J_Jmult[3], M[3], FM[6];
-//
 //     //    // Given the UAV arm length of 0.13 m,
 //     //    double invFMmat[6][6] = {{ 0,       0.6667, -0.1925,  0,       2.9608, 2.5641},
 //     //                             {-0.5774,  0.3333,  0.1925,  2.5641, -1.4804, 2.5641},
@@ -31,89 +25,54 @@
 //     //                             {0.5774,    0.3333,    0.1925,   -1.0753,   -0.6208,    1.0753}};
 //
 //     // Given the UAV arm length of 0.31 m and a prop. angle of 15 deg.
-//     double invFMmat[6][6] = {  {  0.0000,    1.2879,   -0.1725,   -0.0000,    1.1132,    0.3071},
-//     { -1.1154,    0.6440,    0.1725,    0.9641,   -0.3420,    0.7579},
-//     { -1.1154,   -0.6440,   -0.1725,   -0.9641,   -0.7712,    1.7092},
-//     { -0.0000,   -1.2879,    0.1725,         0,    1.1132,    0.3071},
-//     {  1.1154,   -0.6440,   -0.1725,    0.9641,   -0.3420,    0.7579},
-//     {  1.1154,    0.6440,    0.1725,   -0.9641,   -0.7712,    1.7092}};
+//     Eigen::Matrix<double, 6,6 > invFMmat;
+//     invFMmat <<  0.0000,    1.2879,   -0.1725,   -0.0000,    1.1132,    0.3071,
+//      -1.1154,    0.6440,    0.1725,    0.9641,   -0.3420,    0.7579,
+//      -1.1154,   -0.6440,   -0.1725,   -0.9641,   -0.7712,    1.7092,
+//      -0.0000,   -1.2879,    0.1725,         0,    1.1132,    0.3071,
+//       1.1154,   -0.6440,   -0.1725,    0.9641,   -0.3420,    0.7579,
+//       1.1154,    0.6440,    0.1725,   -0.9641,   -0.7712,    1.7092;
 //
 //     // Calculate eX (position error in inertial frame)
-//     eX[0] = x_e[0]-xd[0];
-//     eX[1] = x_e[1]-xd[1];
-//     eX[2] = x_e[2]-xd[2];
-//
+//     eX = x_e - xd;
 //     //    printf("eX[0] = %E\neX[1] = %E\neX[2] = %E\n\n", eX[0], eX[1], eX[2]);
-//
 //     // Calculate eV (velocity error in inertial frame)
-//     eV[0] = v_e[0]-xd_dot[0];
-//     eV[1] = v_e[1]-xd_dot[1];
-//     eV[2] = v_e[2]-xd_dot[2];
-//
+//     eV = v_e - xd_dot;
 //     // Calculate eR (rotation matrix error)
-//     transpose(R, trpR);// 3x3
-//     transpose(Rd, trpRd);// 3x3
-//     Matrix_multipication(trpRd, R, trpRd_R);// 3x3
-//     Matrix_multipication(trpR, Rd, trpR_Rd);// 3x3
 //     // Take 9 elements of difference
-//     inside_vee_3by3[0][0] = trpRd_R[0][0]-trpR_Rd[0][0];
-//     inside_vee_3by3[0][1] = trpRd_R[0][1]-trpR_Rd[0][1];
-//     inside_vee_3by3[0][2] = trpRd_R[0][2]-trpR_Rd[0][2];
-//     inside_vee_3by3[1][0] = trpRd_R[1][0]-trpR_Rd[1][0];
-//     inside_vee_3by3[1][1] = trpRd_R[1][1]-trpR_Rd[1][1];
-//     inside_vee_3by3[1][2] = trpRd_R[1][2]-trpR_Rd[1][2];
-//     inside_vee_3by3[2][0] = trpRd_R[2][0]-trpR_Rd[2][0];
-//     inside_vee_3by3[2][1] = trpRd_R[2][1]-trpR_Rd[2][1];
-//     inside_vee_3by3[2][2] = trpRd_R[2][2]-trpR_Rd[2][2];
-//     invskew(inside_vee_3by3, vee_3by1);// 3x1
-//     eR[0] = 0.5*vee_3by1[0];
-//     eR[1] = 0.5*vee_3by1[1];
-//     eR[2] = 0.5*vee_3by1[2];
+//     Matrix3d inside_vee_3by3 = Rd.transpose() * R - R.transpose() * Rd;
+//     Matrix3d vee_3by1;
+//     eigen_invskew(inside_vee_3by3, vee_3by1);// 3x1
+//
+//     eR = 0.5 * vee_3by1;
 //
 //     // Calculate eW (angular velocity error in body-fixed frame)
-//     matrix_vector(trpR_Rd, Wd, trpR_Rd_Wd);// 3x1
-//     eW[0] = W[0]-trpR_Rd_Wd[0];
-//     eW[1] = W[1]-trpR_Rd_Wd[1];
-//     eW[2] = W[2]-trpR_Rd_Wd[2];
-//
+//     eW =  W -  R.transpose() * Rd * Wd;
 //     // Update integral term of control
 //     // Position:
-//     eiX[0] = eiX_last[0]+(del_t)*eX[0];
-//     eiX[1] = eiX_last[1]+(del_t)*eX[1];
-//     eiX[2] = eiX_last[2]+(del_t)*eX[2];
+//     eiX = eiX_last + del_t * eX;
 //     // Attitude:
-//     eiR[0] = eiR_last[0]+(del_t)*eR[0];//(c2*eR[0]+(eW[0]));
-//     eiR[1] = eiR_last[1]+(del_t)*eR[1];//(c2*eR[1]+(eW[1]));
-//     eiR[2] = eiR_last[2]+(del_t)*eR[2];//(c2*eR[2]+(eW[2]));
+//     eiR = eiR_last + del_t * eR;// (c2*eR + eW);
 //
 //     // Calculate 3 DOFs of F (controlled force in body-fixed frame)
 //     // MATLAB: F = R'*(-kx*ex-kv*ev-Ki*eiX-m*g*e3+m*xd_2dot);
-//     A[0] = -kx*eX[0]-kv*eV[0]-kiX_now*eiX[0]+m*xd_ddot[0];
-//     A[1] = -kx*eX[1]-kv*eV[1]-kiX_now*eiX[1]+m*xd_ddot[1];
-//     A[2] = -kx*eX[2]-kv*eV[2]-kiX_now*eiX[2]+m*xd_ddot[2]-m*g;
-//     matrix_vector(trpR, A, F);// 3x1 in bff
+//     Vector3d A = - kx*eX - kv*eV - kiX_now*eiX + m*xd_ddot + Vector3d(0,0,-m*g);
 //
+//     // A[0] = -kx*eX[0]-kv*eV[0]-kiX_now*eiX[0]+m*xd_ddot[0];
+//     // A[1] = -kx*eX[1]-kv*eV[1]-kiX_now*eiX[1]+m*xd_ddot[1];
+//     // A[2] = -kx*eX[2]-kv*eV[2]-kiX_now*eiX[2]+m*xd_ddot[2]-m*g;
+//     Vector3d F = R.transpose() * A;
 //     // Calculate 3 DOFs of M (controlled moment in body-fixed frame)
 //     // MATLAB: M = -kR*eR-kW*eW-kRi*eiR+cross(W,J*W)+J*(R'*Rd*Wddot-hat(W)*R'*Rd*Wd);
-//     skew(W, What);
-//     //printf("What is %f.\n", What);
-//     matrix_vector(J, W, J_W);
-//     //printf("J_W is %f.\n", J_W);
-//     matrix_vector(What, J_W, What_J_W);
-//     //printf("What_J_W is %f.\n", What_J_W);
-//     matrix_vector(trpR_Rd, Wddot, trpR_Rd_Wddot);
-//     Matrix_multipication (What, trpR_Rd, What_trpR_Rd);
-//     matrix_vector(What_trpR_Rd, Wd, What_trpR_Rd_Wd);
-//     Jmult[0] = trpR_Rd_Wddot[0]-What_trpR_Rd_Wd[0];
-//     Jmult[1] = trpR_Rd_Wddot[1]-What_trpR_Rd_Wd[1];
-//     Jmult[2] = trpR_Rd_Wddot[2]-What_trpR_Rd_Wd[2];
-//     matrix_vector(J, Jmult, J_Jmult);
-//
-//     M[0] = -kR*eR[0]-kW*eW[0]-kiR_now*eiR[0]+What_J_W[0]+J_Jmult[0];
-//     M[1] = -kR*eR[1]-kW*eW[1]-kiR_now*eiR[1]+What_J_W[1]+J_Jmult[1];
-//     M[2] = -kR*eR[2]-kW*eW[2]-kiR_now*eiR[2]+What_J_W[2]+J_Jmult[2];
+//     Matrix3d What;
+//     eigen_skew(W, What);
+//     Matrix3d M = -kR*eR-kW*eW-kiR_now*eiR+What * J * W + J * (R.transpose()*Rd*Wddot - What*R.transpose()*Rd*Wd);
+//     // M[0] = -kR*eR[0]-kW*eW[0]-kiR_now*eiR[0]+What_J_W[0]+J_Jmult[0];
+//     // M[1] = -kR*eR[1]-kW*eW[1]-kiR_now*eiR[1]+What_J_W[1]+J_Jmult[1];
+//     // M[2] = -kR*eR[2]-kW*eW[2]-kiR_now*eiR[2]+What_J_W[2]+J_Jmult[2];
 //
 //     // Convert forces & moments to f_i for i = 1:6 (forces of i-th prop)
+//     Matrix<double, 6, 1> FM;
 //     FM[0] = F[0];
 //     FM[1] = F[1];
 //     FM[2] = F[2];
@@ -139,9 +98,8 @@
 //     //           m, M[0], M[1], M[2], kx, kxeX[0], kxeX[1], kxeX[2], kv, kveV[0], kveV[1], kveV[2], kiR_now, kiXeiX[0], kiXeiX[1], kiXeiX[2],
 //     //           kR, kReR[0], kReR[1], kReR[2], kW, kWeW[0], kWeW[1], kWeW[2], kiR_now, kiReiR[0], kiReiR[1], kiReiR[2]);
 //
-//     matrix_vector6(invFMmat, FM, f);
-//
-//     return;
+//     // matrix_vector6(invFMmat, FM, f);
+//     f = invFMmat * FM;
 //   }
 
 

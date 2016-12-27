@@ -1,16 +1,15 @@
 #include <odroid/odroid_node.hpp>
 #include <tf/transform_datatypes.h>
-
 // User header files
 using namespace std;
-
+using namespace Eigen;
 odroid_node::odroid_node(){
    m = 1.25; g = 9.81;
    J <<  55710.50413e-7, 617.6577e-7, -250.2846e-7,
             617.6577e-7,  55757.4605e-7, 100.6760e-7,
          -250.2846e-7, 100.6760e-7, 105053.7595e-7;// kg*m^2
    IMU_flag = false;
-   f = VectorXd::Zero(6);
+   // f = VectorXd::Zero(6);
    R_bm <<  1.0, 0.0, 0.0,
             0.0, -1.0, 0.0,
             0.0, 0.0, -1.0;// Markers frame (m) to the body frame (b) (fixed)
@@ -108,13 +107,13 @@ void odroid_node::motor_command(){
     tcflush(fhi2c, TCIOFLUSH);
     usleep(500);
     if(ioctl(fhi2c, I2C_SLAVE, mtr_addr[i])<0)
-    printf("ERROR: ioctl\n");
+      printf("ERROR: ioctl\n");
     if(MOTOR_ON == false)// set motor speed to zero
-    thr[i] = 0;
+      thr[i] = 0;
     else if(MotorWarmup == true)// warm up motors at 20 throttle command
-    thr[i] = 20;
+      thr[i] = 20;
     while(write(fhi2c, &thr[i], 1)!=1)
-    printf("ERROR: Motor %i I2C write command of %i to address %i (%e N) not sent.\n", i, thr[i], mtr_addr[i], f[i]);
+      printf("ERROR: Motor %i I2C write command of %i to address %i (%e N) not sent.\n", i, thr[i], mtr_addr[i], f[i]);
    }
 }
 void odroid_node::open_I2C(){
@@ -136,34 +135,34 @@ void odroid_node::open_I2C(){
    char PressEnter;
 
    for(motornum = 1; motornum <= 6; motornum++){
-    motoraddr = motornum+40;// 1, 2, 3, ... -> 41, 42, 43, ...
- while(1){
-    motorworks = 1;// will remain 1 if all works properly
-    if(ioctl(fhi2c, I2C_SLAVE, motoraddr)<0){
-     printf("ERROR: motor %i ioctl\n", motornum);
-     motorworks = 0;// i2c address not called
-    }
-    usleep(10);
-    if(write(fhi2c, &thr0, 1)!=1){
-     printf("ERROR: motor %i write\n", motornum);
-     motorworks = 0;
-    }
-    usleep(10);
-    tcflush(fhi2c, TCIOFLUSH);
-    if(motorworks == 1){
-     printf("Motor %i working...\n", motornum);
-     break;
-    }
-    else{
-     printf("Fix motor %i, then press ENTER.\n\n", motornum);
-     printf("Note: another i2c device may interupt the signal if\n");
-     printf("any i2c wires are attached to unpowered components.\n");
-     scanf("%c",&PressEnter);
-     break;
-    }
- }
+      motoraddr = motornum+40;// 1, 2, 3, ... -> 41, 42, 43, ...
+      while(1){
+         motorworks = 1;// will remain 1 if all works properly
+         if(ioctl(fhi2c, I2C_SLAVE, motoraddr)<0){
+            printf("ERROR: motor %i ioctl\n", motornum);
+            motorworks = 0;// i2c address not called
+         }
+         usleep(10);
+         if(write(fhi2c, &thr0, 1)!=1){
+            printf("ERROR: motor %i write\n", motornum);
+            motorworks = 0;
+         }
+         usleep(10);
+         tcflush(fhi2c, TCIOFLUSH);
+         if(motorworks == 1){
+            printf("Motor %i working...\n", motornum);
+         break;
+         }
+         else{
+         printf("Fix motor %i, then press ENTER.\n\n", motornum);
+         printf("Note: another i2c device may interupt the signal if\n");
+         printf("any i2c wires are attached to unpowered components.\n");
+         scanf("%c",&PressEnter);
+         break;
+         }
+      }
    }
-printf("All motors are working.\n");
+   printf("All motors are working.\n");
 }
 void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last, double kiR_now){
    Matrix3d Rd = MatrixXd::Identity(3,3);
@@ -207,7 +206,6 @@ void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector
       cout<<thr[i]<<", ";} cout<<endl;
    }
 }
-
 void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R, double del_t,  Vector3d eiX_last, Vector3d eiR_last, double kiX_now, double kiR_now)
   {
     //    // Given the UAV arm length of 0.13 m,
@@ -217,7 +215,6 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     //                             { 0,      -0.6667,  0.1925,  0,       2.9608, 2.5641},
     //                             { 0.5774, -0.3333, -0.1925,  2.5641, -1.4804, 2.5641},
     //                             { 0.5774,  0.3333,  0.1925, -2.5641, -1.4804, 2.5641}};
-
     // Given the UAV arm length of 0.31 m,
     // double invFMmat[6][6] = {  {-0.0000,0.6667,   -0.1925,    0.0000,    1.2416,   1.0753},
     //                            {-0.5774,0.3333,    0.1925,    1.0753,   -0.6208,    1.0753},
@@ -225,10 +222,8 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     //                            {-0.0000,-0.6667,    0.1925,    0.0000,    1.2416,    1.0753},
     //                             {0.5774,-0.3333,   -0.1925,    1.0753,   -0.6208,    1.0753},
     //                             {0.5774,0.3333,    0.1925,   -1.0753,   -0.6208,    1.0753}};
-
     // Calculate eX (position error in inertial frame)
     Vector3d eX = x_e - xd;
-    //    printf("eX[0] = %E\neX[1] = %E\neX[2] = %E\n\n", eX[0], eX[1], eX[2]);
     // Calculate eV (velocity error in inertial frame)
     Vector3d eV = v_e - xd_dot;
     // Calculate eR (rotation matrix error)
@@ -237,7 +232,6 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     Vector3d vee_3by1;
     eigen_invskew(inside_vee_3by3, vee_3by1);// 3x1
     Vector3d eR = 0.5 * vee_3by1;
-
     // Calculate eW (angular velocity error in body-fixed frame)
     Vector3d eW =  W -  R.transpose() * Rd * Wd;
     // Update integral term of control
@@ -245,14 +239,9 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     Vector3d eiX = eiX_last + del_t * eX;
     // Attitude:
     Vector3d eiR = eiR_last + del_t * eR;// (c2*eR + eW);
-
     // Calculate 3 DOFs of F (controlled force in body-fixed frame)
     // MATLAB: F = R'*(-kx*ex-kv*ev-Ki*eiX-m*g*e3+m*xd_2dot);
     Vector3d A = - kx*eX - kv*eV - kiX_now*eiX + m*xd_ddot + Vector3d(0,0,-m*g);
-
-    // A[0] = -kx*eX[0]-kv*eV[0]-kiX_now*eiX[0]+m*xd_ddot[0];
-    // A[1] = -kx*eX[1]-kv*eV[1]-kiX_now*eiX[1]+m*xd_ddot[1];
-    // A[2] = -kx*eX[2]-kv*eV[2]-kiX_now*eiX[2]+m*xd_ddot[2]-m*g;
     Vector3d F = R.transpose() * A;
     // Calculate 3 DOFs of M (controlled moment in body-fixed frame)
     // MATLAB: M = -kR*eR-kW*eW-kRi*eiR+cross(W,J*W)+J*(R'*Rd*Wddot-hat(W)*R'*Rd*Wd);
@@ -260,9 +249,6 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     eigen_skew(W, What);
     Vector3d M = -kR * eR - kW * eW-kiR_now * eiR + What * J * W + J * (R.transpose() * Rd * Wddot - What * R.transpose() * Rd * Wd);
     // M[0] = -kR*eR[0]-kW*eW[0]-kiR_now*eiR[0]+What_J_W[0]+J_Jmult[0];
-    // M[1] = -kR*eR[1]-kW*eW[1]-kiR_now*eiR[1]+What_J_W[1]+J_Jmult[1];
-    // M[2] = -kR*eR[2]-kW*eW[2]-kiR_now*eiR[2]+What_J_W[2]+J_Jmult[2];
-
    //  // Convert forces & moments to f_i for i = 1:6 (forces of i-th prop)
     Matrix<double, 6, 1> FM;
     FM[0] = F[0];
@@ -271,11 +257,7 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     FM[3] = M[0];
     FM[4] = M[1];
     FM[5] = M[2];
-    //
-    //
-   //  // printf("Forces:  %e, %e, %e.\n",F[0],F[1],F[2]);
-   //  //  printf("Moments: %e, %e, %e.\n",M[0],M[1],M[2]);
-    //
+
     double kxeX[3], kveV[3], kiXeiX[3], kReR[3], kWeW[3], kiReiR[3];
     for(int i = 0; i < 3; i++){
       kxeX[i] = kx*eX[i];
@@ -285,9 +267,6 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
       kWeW[i] = kW*eW[i];
       kiReiR[i] = kiR_now*eiR[i];
     }
-   //  //    printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n m = %e kg.\nMoment: %e, %e, %e\nkx = %e: kxeX[0] = %e, kxeX[1] = %e, kxeX[2] = %e\nkv = %e: kveV[0] = %e, kveV[1] = %e, kveV[2] = %e\nki = %e: kiei[0] = %e, kiei[1] = %e, kiei[2] = %e\nkR = %e: kReR[0] = %e, kReR[1] = %e, kReR[2] = %e\nkW = %e: kWeW[0] = %e, kWeW[1] = %e, kWeW[2] = %e\nkI = %e: kIeI[0] = %e, kIeI[1] = %e, kIeI[2] = %e\n",
-   //  //           m, M[0], M[1], M[2], kx, kxeX[0], kxeX[1], kxeX[2], kv, kveV[0], kveV[1], kveV[2], kiR_now, kiXeiX[0], kiXeiX[1], kiXeiX[2],
-   //  //           kR, kReR[0], kReR[1], kReR[2], kW, kWeW[0], kWeW[1], kWeW[2], kiR_now, kiReiR[0], kiReiR[1], kiReiR[2]);
     f = invFMmat * FM;
  }
 

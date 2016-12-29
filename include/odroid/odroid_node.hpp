@@ -17,6 +17,7 @@
 // #include "PCA9685.h"
 #include "ForcesTorques_i2c.h"
 #include <linux/i2c-dev.h>
+#include <sys/ioctl.h>
 #include <fcntl.h>    /* For O_RDWR */
 #include <unistd.h>   /* For open(), creat() */
 

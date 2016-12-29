@@ -1,5 +1,5 @@
-//#ifndef AUX_FUNCTIONS_H
-//#define AUX_FUNCTIONS_H
+#ifndef AUX_FUNCTIONS_H
+#define AUX_FUNCTIONS_H
 #include "math.h"
 #include <eigen3/Eigen/Dense>
 // using namespace Eigen;
@@ -114,19 +114,6 @@ void reshape_9by1_to_3by3(double Vec9by1[9], double Mat3by3[3][3])
     Mat3by3[2][2] = Vec9by1[8];
 }
 
-void Matrix_multipication (double A[3][3], double B[3][3], double C[3][3])
-{// Multiplies (3x3)*(3x3) = (3x3)
-    C[0][0] = A[0][0]*B[0][0]+A[0][1]*B[1][0]+A[0][2]*B[2][0];
-    C[0][1] = A[0][0]*B[0][1]+A[0][1]*B[1][1]+A[0][2]*B[2][1];
-    C[0][2] = A[0][0]*B[0][2]+A[0][1]*B[1][2]+A[0][2]*B[2][2];
-    C[1][0] = A[1][0]*B[0][0]+A[1][1]*B[1][0]+A[1][2]*B[2][0];
-    C[1][1] = A[1][0]*B[0][1]+A[1][1]*B[1][1]+A[1][2]*B[2][1];
-    C[1][2] = A[1][0]*B[0][2]+A[1][1]*B[1][2]+A[1][2]*B[2][2];
-    C[2][0] = A[2][0]*B[0][0]+A[2][1]*B[1][0]+A[2][2]*B[2][0];
-    C[2][1] = A[2][0]*B[0][1]+A[2][1]*B[1][1]+A[2][2]*B[2][1];
-    C[2][2] = A[2][0]*B[0][2]+A[2][1]*B[1][2]+A[2][2]*B[2][2];
-}
-
 void norm_vec3(double a[3], double *norm_a)
 {
     *norm_a = sqrt(a[0]*a[0]+a[1]*a[1]+a[2]*a[2]);
@@ -197,6 +184,21 @@ void eigen_invskew (Eigen::Matrix3d skewM, Eigen::Vector3d x)
     x(0) = skewM(2,1);
     x(1) = skewM(0,2);
     x(2) = skewM(1,0);
+}
+
+void euler_Rvm(Eigen::Matrix3d& R_vm, Eigen::Vector3d angle){
+    double psi = angle(0);
+    double theta = angle(1);
+    double phi = angle(2);
+    R_vm(0,0) = cos(theta)*cos(psi);
+    R_vm(0,1) = cos(theta)*sin(psi);
+    R_vm(0,2) = -sin(theta);
+    R_vm(1,0) = sin(phi)*sin(theta)*cos(psi)-cos(phi)*sin(psi);
+    R_vm(1,1) = sin(phi)*sin(theta)*sin(psi)+cos(phi)*cos(psi);
+    R_vm(1,2) = sin(phi)*cos(theta);
+    R_vm(2,0) = cos(phi)*sin(theta)*cos(psi)+sin(phi)*sin(psi);
+    R_vm(2,1) = cos(phi)*sin(theta)*sin(psi)-sin(phi)*cos(psi);
+    R_vm(2,2) = cos(phi)*cos(theta);
 }
 
 //double expmso3 (double r[3], double R[3][3])
@@ -306,321 +308,321 @@ void SmoothSinusoidalCurveBtwnStationaryPts(
 
 //  Euler Angles to SO(3) (a variety of conventions)
 
-void EAngles123_to_R(double angles[3], double R[3][3]){
-    double phi, theta, psi;
-    phi = angles[0];
-    theta = angles[1];
-    psi = angles[2];
+// void EAngles123_to_R(double angles[3], double R[3][3]){
+//     double phi, theta, psi;
+//     phi = angles[0];
+//     theta = angles[1];
+//     psi = angles[2];
+//
+//     double R1[3][3], R2[3][3], R3[3][3];
+//
+//     R1[0][0] = 1.0;
+//     R1[0][1] = 0.0;
+//     R1[0][2] = 0.0;
+//     R1[1][0] = 0.0;
+//     R1[1][1] = cos(phi);
+//     R1[1][2] = -sin(phi);
+//     R1[2][0] = 0.0;
+//     R1[2][1] = sin(phi);
+//     R1[2][2] = cos(phi);
+//
+//     R2[0][0] = cos(theta);
+//     R2[0][1] = 0.0;
+//     R2[0][2] = sin(theta);
+//     R2[1][0] = 0.0;
+//     R2[1][1] = 1.0;
+//     R2[1][2] = 0.0;
+//     R2[2][0] = -sin(theta);
+//     R2[2][1] = 0.0;
+//     R2[2][2] = cos(theta);
+//
+//     R3[0][0] = cos(psi);
+//     R3[0][1] = -sin(psi);
+//     R3[0][2] = 0.0;
+//     R3[1][0] = sin(psi);
+//     R3[1][1] = cos(psi);
+//     R3[1][2] = 0.0;
+//     R3[2][0] = 0.0;
+//     R3[2][1] = 0.0;
+//     R3[2][2] = 1.0;
+//
+//     double R_intermediate[3][3];
+//     Matrix_multipication(R1, R2, R_intermediate);
+//     Matrix_multipication(R_intermediate, R3, R);
+//
+//     return;
+// }
+//
+// void EAngles132_to_R(double angles[3], double R[3][3]){
+//     double phi, theta, psi;
+//     phi = angles[0];
+//     theta = angles[1];
+//     psi = angles[2];
+//
+//     double R1[3][3], R2[3][3], R3[3][3];
+//
+//     R1[0][0] = 1.0;
+//     R1[0][1] = 0.0;
+//     R1[0][2] = 0.0;
+//     R1[1][0] = 0.0;
+//     R1[1][1] = cos(phi);
+//     R1[1][2] = -sin(phi);
+//     R1[2][0] = 0.0;
+//     R1[2][1] = sin(phi);
+//     R1[2][2] = cos(phi);
+//
+//     R2[0][0] = cos(theta);
+//     R2[0][1] = 0.0;
+//     R2[0][2] = sin(theta);
+//     R2[1][0] = 0.0;
+//     R2[1][1] = 1.0;
+//     R2[1][2] = 0.0;
+//     R2[2][0] = -sin(theta);
+//     R2[2][1] = 0.0;
+//     R2[2][2] = cos(theta);
+//
+//     R3[0][0] = cos(psi);
+//     R3[0][1] = -sin(psi);
+//     R3[0][2] = 0.0;
+//     R3[1][0] = sin(psi);
+//     R3[1][1] = cos(psi);
+//     R3[1][2] = 0.0;
+//     R3[2][0] = 0.0;
+//     R3[2][1] = 0.0;
+//     R3[2][2] = 1.0;
+//
+//     double R_intermediate[3][3];
+//     Matrix_multipication(R1, R3, R_intermediate);
+//     Matrix_multipication(R_intermediate, R2, R);
+//
+//     return;
+// }
+//
+// void EAngles213_to_R(double angles[3], double R[3][3]){
+//     double phi, theta, psi;
+//     phi = angles[0];
+//     theta = angles[1];
+//     psi = angles[2];
+//
+//     double R1[3][3], R2[3][3], R3[3][3];
+//
+//     R1[0][0] = 1.0;
+//     R1[0][1] = 0.0;
+//     R1[0][2] = 0.0;
+//     R1[1][0] = 0.0;
+//     R1[1][1] = cos(phi);
+//     R1[1][2] = -sin(phi);
+//     R1[2][0] = 0.0;
+//     R1[2][1] = sin(phi);
+//     R1[2][2] = cos(phi);
+//
+//     R2[0][0] = cos(theta);
+//     R2[0][1] = 0.0;
+//     R2[0][2] = sin(theta);
+//     R2[1][0] = 0.0;
+//     R2[1][1] = 1.0;
+//     R2[1][2] = 0.0;
+//     R2[2][0] = -sin(theta);
+//     R2[2][1] = 0.0;
+//     R2[2][2] = cos(theta);
+//
+//     R3[0][0] = cos(psi);
+//     R3[0][1] = -sin(psi);
+//     R3[0][2] = 0.0;
+//     R3[1][0] = sin(psi);
+//     R3[1][1] = cos(psi);
+//     R3[1][2] = 0.0;
+//     R3[2][0] = 0.0;
+//     R3[2][1] = 0.0;
+//     R3[2][2] = 1.0;
+//
+//     double R_intermediate[3][3];
+//     Matrix_multipication(R2, R1, R_intermediate);
+//     Matrix_multipication(R_intermediate, R3, R);
+//
+//     return;
+// }
+//
+// void EAngles231_to_R(double angles[3], double R[3][3]){
+//     double phi, theta, psi;
+//     phi = angles[0];
+//     theta = angles[1];
+//     psi = angles[2];
+//
+//     double R1[3][3], R2[3][3], R3[3][3];
+//
+//     R1[0][0] = 1.0;
+//     R1[0][1] = 0.0;
+//     R1[0][2] = 0.0;
+//     R1[1][0] = 0.0;
+//     R1[1][1] = cos(phi);
+//     R1[1][2] = -sin(phi);
+//     R1[2][0] = 0.0;
+//     R1[2][1] = sin(phi);
+//     R1[2][2] = cos(phi);
+//
+//     R2[0][0] = cos(theta);
+//     R2[0][1] = 0.0;
+//     R2[0][2] = sin(theta);
+//     R2[1][0] = 0.0;
+//     R2[1][1] = 1.0;
+//     R2[1][2] = 0.0;
+//     R2[2][0] = -sin(theta);
+//     R2[2][1] = 0.0;
+//     R2[2][2] = cos(theta);
+//
+//     R3[0][0] = cos(psi);
+//     R3[0][1] = -sin(psi);
+//     R3[0][2] = 0.0;
+//     R3[1][0] = sin(psi);
+//     R3[1][1] = cos(psi);
+//     R3[1][2] = 0.0;
+//     R3[2][0] = 0.0;
+//     R3[2][1] = 0.0;
+//     R3[2][2] = 1.0;
+//
+//     double R_intermediate[3][3];
+//     Matrix_multipication(R2, R3, R_intermediate);
+//     Matrix_multipication(R_intermediate, R1, R);
+//
+//     return;
+// }
+//
+// void EAngles312_to_R(double angles[3], double R[3][3]){
+//     double phi, theta, psi;
+//     phi = angles[0];
+//     theta = angles[1];
+//     psi = angles[2];
+//
+//     double R1[3][3], R2[3][3], R3[3][3];
+//
+//     R1[0][0] = 1.0;
+//     R1[0][1] = 0.0;
+//     R1[0][2] = 0.0;
+//     R1[1][0] = 0.0;
+//     R1[1][1] = cos(phi);
+//     R1[1][2] = -sin(phi);
+//     R1[2][0] = 0.0;
+//     R1[2][1] = sin(phi);
+//     R1[2][2] = cos(phi);
+//
+//     R2[0][0] = cos(theta);
+//     R2[0][1] = 0.0;
+//     R2[0][2] = sin(theta);
+//     R2[1][0] = 0.0;
+//     R2[1][1] = 1.0;
+//     R2[1][2] = 0.0;
+//     R2[2][0] = -sin(theta);
+//     R2[2][1] = 0.0;
+//     R2[2][2] = cos(theta);
+//
+//     R3[0][0] = cos(psi);
+//     R3[0][1] = -sin(psi);
+//     R3[0][2] = 0.0;
+//     R3[1][0] = sin(psi);
+//     R3[1][1] = cos(psi);
+//     R3[1][2] = 0.0;
+//     R3[2][0] = 0.0;
+//     R3[2][1] = 0.0;
+//     R3[2][2] = 1.0;
+//
+//     double R_intermediate[3][3];
+//     Matrix_multipication(R3, R1, R_intermediate);
+//     Matrix_multipication(R_intermediate, R2, R);
+//
+//     return;
+// }
+//
+// void EAngles321_to_R(double angles[3], double R[3][3]){
+//     double phi, theta, psi;
+//     phi = angles[0];
+//     theta = angles[1];
+//     psi = angles[2];
+//
+//     double R1[3][3], R2[3][3], R3[3][3];
+//
+//     R1[0][0] = 1.0;
+//     R1[0][1] = 0.0;
+//     R1[0][2] = 0.0;
+//     R1[1][0] = 0.0;
+//     R1[1][1] = cos(phi);
+//     R1[1][2] = sin(phi);
+//     R1[2][0] = 0.0;
+//     R1[2][1] = -sin(phi);
+//     R1[2][2] = cos(phi);
+//
+//     R2[0][0] = cos(theta);
+//     R2[0][1] = 0.0;
+//     R2[0][2] = -sin(theta);
+//     R2[1][0] = 0.0;
+//     R2[1][1] = 1.0;
+//     R2[1][2] = 0.0;
+//     R2[2][0] = sin(theta);
+//     R2[2][1] = 0.0;
+//     R2[2][2] = cos(theta);
+//
+//     R3[0][0] = cos(psi);
+//     R3[0][1] = sin(psi);
+//     R3[0][2] = 0.0;
+//     R3[1][0] = -sin(psi);
+//     R3[1][1] = cos(psi);
+//     R3[1][2] = 0.0;
+//     R3[2][0] = 0.0;
+//     R3[2][1] = 0.0;
+//     R3[2][2] = 1.0;
+//
+//     double R_intermediate[3][3];
+//     Matrix_multipication(R3, R2, R_intermediate);
+//     Matrix_multipication(R_intermediate, R1, R);
+//
+//     return;
+// }
+//
+// void EAngles313_to_R(double angles[3], double R[3][3]){
+//     double phi, theta, psi;
+//     phi = angles[0];
+//     theta = angles[1];
+//     psi = angles[2];
+//
+//     double R1[3][3], R2[3][3], R3[3][3];
+//
+//     R1[0][0] = 1.0;
+//     R1[0][1] = 0.0;
+//     R1[0][2] = 0.0;
+//     R1[1][0] = 0.0;
+//     R1[1][1] = cos(phi);
+//     R1[1][2] = -sin(phi);
+//     R1[2][0] = 0.0;
+//     R1[2][1] = sin(phi);
+//     R1[2][2] = cos(phi);
+//
+//     R2[0][0] = cos(theta);
+//     R2[0][1] = 0.0;
+//     R2[0][2] = sin(theta);
+//     R2[1][0] = 0.0;
+//     R2[1][1] = 1.0;
+//     R2[1][2] = 0.0;
+//     R2[2][0] = -sin(theta);
+//     R2[2][1] = 0.0;
+//     R2[2][2] = cos(theta);
+//
+//     R3[0][0] = cos(psi);
+//     R3[0][1] = -sin(psi);
+//     R3[0][2] = 0.0;
+//     R3[1][0] = sin(psi);
+//     R3[1][1] = cos(psi);
+//     R3[1][2] = 0.0;
+//     R3[2][0] = 0.0;
+//     R3[2][1] = 0.0;
+//     R3[2][2] = 1.0;
+//
+//     double R_intermediate[3][3];
+//     Matrix_multipication(R3, R1, R_intermediate);
+//     Matrix_multipication(R_intermediate, R3, R);
+//
+//     return;
+// }
 
-    double R1[3][3], R2[3][3], R3[3][3];
-
-    R1[0][0] = 1.0;
-    R1[0][1] = 0.0;
-    R1[0][2] = 0.0;
-    R1[1][0] = 0.0;
-    R1[1][1] = cos(phi);
-    R1[1][2] = -sin(phi);
-    R1[2][0] = 0.0;
-    R1[2][1] = sin(phi);
-    R1[2][2] = cos(phi);
-
-    R2[0][0] = cos(theta);
-    R2[0][1] = 0.0;
-    R2[0][2] = sin(theta);
-    R2[1][0] = 0.0;
-    R2[1][1] = 1.0;
-    R2[1][2] = 0.0;
-    R2[2][0] = -sin(theta);
-    R2[2][1] = 0.0;
-    R2[2][2] = cos(theta);
-
-    R3[0][0] = cos(psi);
-    R3[0][1] = -sin(psi);
-    R3[0][2] = 0.0;
-    R3[1][0] = sin(psi);
-    R3[1][1] = cos(psi);
-    R3[1][2] = 0.0;
-    R3[2][0] = 0.0;
-    R3[2][1] = 0.0;
-    R3[2][2] = 1.0;
-
-    double R_intermediate[3][3];
-    Matrix_multipication(R1, R2, R_intermediate);
-    Matrix_multipication(R_intermediate, R3, R);
-
-    return;
-}
-
-void EAngles132_to_R(double angles[3], double R[3][3]){
-    double phi, theta, psi;
-    phi = angles[0];
-    theta = angles[1];
-    psi = angles[2];
-
-    double R1[3][3], R2[3][3], R3[3][3];
-
-    R1[0][0] = 1.0;
-    R1[0][1] = 0.0;
-    R1[0][2] = 0.0;
-    R1[1][0] = 0.0;
-    R1[1][1] = cos(phi);
-    R1[1][2] = -sin(phi);
-    R1[2][0] = 0.0;
-    R1[2][1] = sin(phi);
-    R1[2][2] = cos(phi);
-
-    R2[0][0] = cos(theta);
-    R2[0][1] = 0.0;
-    R2[0][2] = sin(theta);
-    R2[1][0] = 0.0;
-    R2[1][1] = 1.0;
-    R2[1][2] = 0.0;
-    R2[2][0] = -sin(theta);
-    R2[2][1] = 0.0;
-    R2[2][2] = cos(theta);
-
-    R3[0][0] = cos(psi);
-    R3[0][1] = -sin(psi);
-    R3[0][2] = 0.0;
-    R3[1][0] = sin(psi);
-    R3[1][1] = cos(psi);
-    R3[1][2] = 0.0;
-    R3[2][0] = 0.0;
-    R3[2][1] = 0.0;
-    R3[2][2] = 1.0;
-
-    double R_intermediate[3][3];
-    Matrix_multipication(R1, R3, R_intermediate);
-    Matrix_multipication(R_intermediate, R2, R);
-
-    return;
-}
-
-void EAngles213_to_R(double angles[3], double R[3][3]){
-    double phi, theta, psi;
-    phi = angles[0];
-    theta = angles[1];
-    psi = angles[2];
-
-    double R1[3][3], R2[3][3], R3[3][3];
-
-    R1[0][0] = 1.0;
-    R1[0][1] = 0.0;
-    R1[0][2] = 0.0;
-    R1[1][0] = 0.0;
-    R1[1][1] = cos(phi);
-    R1[1][2] = -sin(phi);
-    R1[2][0] = 0.0;
-    R1[2][1] = sin(phi);
-    R1[2][2] = cos(phi);
-
-    R2[0][0] = cos(theta);
-    R2[0][1] = 0.0;
-    R2[0][2] = sin(theta);
-    R2[1][0] = 0.0;
-    R2[1][1] = 1.0;
-    R2[1][2] = 0.0;
-    R2[2][0] = -sin(theta);
-    R2[2][1] = 0.0;
-    R2[2][2] = cos(theta);
-
-    R3[0][0] = cos(psi);
-    R3[0][1] = -sin(psi);
-    R3[0][2] = 0.0;
-    R3[1][0] = sin(psi);
-    R3[1][1] = cos(psi);
-    R3[1][2] = 0.0;
-    R3[2][0] = 0.0;
-    R3[2][1] = 0.0;
-    R3[2][2] = 1.0;
-
-    double R_intermediate[3][3];
-    Matrix_multipication(R2, R1, R_intermediate);
-    Matrix_multipication(R_intermediate, R3, R);
-
-    return;
-}
-
-void EAngles231_to_R(double angles[3], double R[3][3]){
-    double phi, theta, psi;
-    phi = angles[0];
-    theta = angles[1];
-    psi = angles[2];
-
-    double R1[3][3], R2[3][3], R3[3][3];
-
-    R1[0][0] = 1.0;
-    R1[0][1] = 0.0;
-    R1[0][2] = 0.0;
-    R1[1][0] = 0.0;
-    R1[1][1] = cos(phi);
-    R1[1][2] = -sin(phi);
-    R1[2][0] = 0.0;
-    R1[2][1] = sin(phi);
-    R1[2][2] = cos(phi);
-
-    R2[0][0] = cos(theta);
-    R2[0][1] = 0.0;
-    R2[0][2] = sin(theta);
-    R2[1][0] = 0.0;
-    R2[1][1] = 1.0;
-    R2[1][2] = 0.0;
-    R2[2][0] = -sin(theta);
-    R2[2][1] = 0.0;
-    R2[2][2] = cos(theta);
-
-    R3[0][0] = cos(psi);
-    R3[0][1] = -sin(psi);
-    R3[0][2] = 0.0;
-    R3[1][0] = sin(psi);
-    R3[1][1] = cos(psi);
-    R3[1][2] = 0.0;
-    R3[2][0] = 0.0;
-    R3[2][1] = 0.0;
-    R3[2][2] = 1.0;
-
-    double R_intermediate[3][3];
-    Matrix_multipication(R2, R3, R_intermediate);
-    Matrix_multipication(R_intermediate, R1, R);
-
-    return;
-}
-
-void EAngles312_to_R(double angles[3], double R[3][3]){
-    double phi, theta, psi;
-    phi = angles[0];
-    theta = angles[1];
-    psi = angles[2];
-
-    double R1[3][3], R2[3][3], R3[3][3];
-
-    R1[0][0] = 1.0;
-    R1[0][1] = 0.0;
-    R1[0][2] = 0.0;
-    R1[1][0] = 0.0;
-    R1[1][1] = cos(phi);
-    R1[1][2] = -sin(phi);
-    R1[2][0] = 0.0;
-    R1[2][1] = sin(phi);
-    R1[2][2] = cos(phi);
-
-    R2[0][0] = cos(theta);
-    R2[0][1] = 0.0;
-    R2[0][2] = sin(theta);
-    R2[1][0] = 0.0;
-    R2[1][1] = 1.0;
-    R2[1][2] = 0.0;
-    R2[2][0] = -sin(theta);
-    R2[2][1] = 0.0;
-    R2[2][2] = cos(theta);
-
-    R3[0][0] = cos(psi);
-    R3[0][1] = -sin(psi);
-    R3[0][2] = 0.0;
-    R3[1][0] = sin(psi);
-    R3[1][1] = cos(psi);
-    R3[1][2] = 0.0;
-    R3[2][0] = 0.0;
-    R3[2][1] = 0.0;
-    R3[2][2] = 1.0;
-
-    double R_intermediate[3][3];
-    Matrix_multipication(R3, R1, R_intermediate);
-    Matrix_multipication(R_intermediate, R2, R);
-
-    return;
-}
-
-void EAngles321_to_R(double angles[3], double R[3][3]){
-    double phi, theta, psi;
-    phi = angles[0];
-    theta = angles[1];
-    psi = angles[2];
-
-    double R1[3][3], R2[3][3], R3[3][3];
-
-    R1[0][0] = 1.0;
-    R1[0][1] = 0.0;
-    R1[0][2] = 0.0;
-    R1[1][0] = 0.0;
-    R1[1][1] = cos(phi);
-    R1[1][2] = sin(phi);
-    R1[2][0] = 0.0;
-    R1[2][1] = -sin(phi);
-    R1[2][2] = cos(phi);
-
-    R2[0][0] = cos(theta);
-    R2[0][1] = 0.0;
-    R2[0][2] = -sin(theta);
-    R2[1][0] = 0.0;
-    R2[1][1] = 1.0;
-    R2[1][2] = 0.0;
-    R2[2][0] = sin(theta);
-    R2[2][1] = 0.0;
-    R2[2][2] = cos(theta);
-
-    R3[0][0] = cos(psi);
-    R3[0][1] = sin(psi);
-    R3[0][2] = 0.0;
-    R3[1][0] = -sin(psi);
-    R3[1][1] = cos(psi);
-    R3[1][2] = 0.0;
-    R3[2][0] = 0.0;
-    R3[2][1] = 0.0;
-    R3[2][2] = 1.0;
-
-    double R_intermediate[3][3];
-    Matrix_multipication(R3, R2, R_intermediate);
-    Matrix_multipication(R_intermediate, R1, R);
-
-    return;
-}
-
-void EAngles313_to_R(double angles[3], double R[3][3]){
-    double phi, theta, psi;
-    phi = angles[0];
-    theta = angles[1];
-    psi = angles[2];
-
-    double R1[3][3], R2[3][3], R3[3][3];
-
-    R1[0][0] = 1.0;
-    R1[0][1] = 0.0;
-    R1[0][2] = 0.0;
-    R1[1][0] = 0.0;
-    R1[1][1] = cos(phi);
-    R1[1][2] = -sin(phi);
-    R1[2][0] = 0.0;
-    R1[2][1] = sin(phi);
-    R1[2][2] = cos(phi);
-
-    R2[0][0] = cos(theta);
-    R2[0][1] = 0.0;
-    R2[0][2] = sin(theta);
-    R2[1][0] = 0.0;
-    R2[1][1] = 1.0;
-    R2[1][2] = 0.0;
-    R2[2][0] = -sin(theta);
-    R2[2][1] = 0.0;
-    R2[2][2] = cos(theta);
-
-    R3[0][0] = cos(psi);
-    R3[0][1] = -sin(psi);
-    R3[0][2] = 0.0;
-    R3[1][0] = sin(psi);
-    R3[1][1] = cos(psi);
-    R3[1][2] = 0.0;
-    R3[2][0] = 0.0;
-    R3[2][1] = 0.0;
-    R3[2][2] = 1.0;
-
-    double R_intermediate[3][3];
-    Matrix_multipication(R3, R1, R_intermediate);
-    Matrix_multipication(R_intermediate, R3, R);
-
-    return;
-}
 
 
-
-//#endif // AUX_H
+#endif // AUX_H

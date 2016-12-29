@@ -288,7 +288,7 @@ int main(int argc, char **argv){
    ros::NodeHandle nh;
    odroid_node odnode;
    // IMU and keyboard input callback
-   ros::Subscriber sub2 = nh.subscribe("raw_imu",100,&odroid_node::imu_callback,&odnode);
+   ros::Subscriber sub2 = nh.subscribe("imu/imu",100,&odroid_node::imu_callback,&odnode);
    ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
 
    // dynamic reconfiguration server for gains and print outs
@@ -300,7 +300,7 @@ int main(int argc, char **argv){
    // open communication through I2C
    odnode.open_I2C();
 
-   ros::Rate loop_rate(5); // rate for the node loop
+   ros::Rate loop_rate(100); // rate for the node loop
    int count = 0;
    while (ros::ok()){
       ros::spinOnce();

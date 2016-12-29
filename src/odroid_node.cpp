@@ -6,7 +6,7 @@ using namespace Eigen;
 odroid_node::odroid_node(){
    m = 1.25; g = 9.81;
    J <<  55710.50413e-7, 617.6577e-7, -250.2846e-7,
-            617.6577e-7,  55757.4605e-7, 100.6760e-7,
+         617.6577e-7,  55757.4605e-7, 100.6760e-7,
          -250.2846e-7, 100.6760e-7, 105053.7595e-7;// kg*m^2
    IMU_flag = false;
    // f = VectorXd::Zero(6);
@@ -25,7 +25,6 @@ odroid_node::odroid_node(){
             -0.0000,   -1.2879,    0.1725,         0,    1.1132,    0.3071,
             1.1154,   -0.6440,   -0.1725,    0.9641,   -0.3420,    0.7579,
             1.1154,    0.6440,    0.1725,   -0.9641,   -0.7712,    1.7092;
-   GetControllerGain(&kx, &kv, &kiX, &c1, &kR, &kW, &kiR, &c2);
    ROS_INFO("Odroid node initialized");
 }
 odroid_node::~odroid_node(){};
@@ -59,6 +58,10 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
    // ROS_INFO("Imu Orientation x: [%f], y: [%f], z: [%f], w: [%f]", msg->orientation.x,msg->orientation.y,msg->orientation.z,msg->orientation.w);
    if(!IMU_flag){ ROS_INFO("IMU ready");}
    IMU_flag = true;
+
+   if(print_imu){
+      printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", psi, theta, phi);
+   }
 }
 // callback for key Inputs
 void odroid_node::key_callback(const std_msgs::String::ConstPtr&  msg){
@@ -70,10 +73,10 @@ void odroid_node::ctl_callback(){
    VectorXd Wd, Wd_dot;
    Wd = VectorXd::Zero(3); Wd_dot = VectorXd::Zero(3);
    double kiR_now = 0.0;
-   W_b << 0,0.0,0.5;
-   psi = 30/180*M_PI; //msg->orientation.x;
-   theta = 30/180*M_PI;//msg->orientation.y;
-   phi = 30/180*M_PI; //msg->orientation.z;
+   // W_b << 0,0.0,0.5;
+   // psi = 30/180*M_PI; //msg->orientation.x;
+   // theta = 30/180*M_PI;//msg->orientation.y;
+   // phi = 30/180*M_PI; //msg->orientation.z;
    // cout<<"psi: "<<psi<<" theta: "<<theta<<" phi: "<<phi<<endl;
    euler_Rvm(R_vm,Eigen::Vector3d(psi,theta,phi));
    R_eb = R_vm.transpose();
@@ -270,6 +273,8 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
    kx = config.kx;
    kv = config.kv;
    kiX = config.kiX;
+   MOTOR_ON = config.Motor;
+   MotorWarmup = config.MotorWarmup;
   // ROS_INFO("Reconfigure Request: %d %f %s %s %d",
   //           config.int_param, config.double_param,
   //           config.str_param.c_str(),
@@ -282,25 +287,25 @@ int main(int argc, char **argv){
    ros::init(argc,argv,"hexacopter");
    ros::NodeHandle nh;
    odroid_node odnode;
+   // IMU and keyboard input callback
    ros::Subscriber sub2 = nh.subscribe("raw_imu",100,&odroid_node::imu_callback,&odnode);
    ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
 
+   // dynamic reconfiguration server for gains and print outs
    dynamic_reconfigure::Server<odroid::GainsConfig> server;
-   dynamic_reconfigure::Server<odroid::GainsConfig>::CallbackType f;
-   f = boost::bind(&odroid_node::callback, &odnode, _1, _2);
-   server.setCallback(f);
+   dynamic_reconfigure::Server<odroid::GainsConfig>::CallbackType dyn_serv;
+   dyn_serv = boost::bind(&odroid_node::callback, &odnode, _1, _2);
+   server.setCallback(dyn_serv);
 
+   // open communication through I2C
    odnode.open_I2C();
 
-   ros::Rate loop_rate(5);
+   ros::Rate loop_rate(5); // rate for the node loop
    int count = 0;
    while (ros::ok()){
       ros::spinOnce();
-      // if(odnode.getIMU()){
-         odnode.ctl_callback();
-      // }
+      odnode.ctl_callback();
       loop_rate.sleep();
-      // std::cout<<count<<std::endl;
       ++count;
    }
    return 0;

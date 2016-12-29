@@ -1,10 +1,33 @@
 #ifndef AUX_FUNCTIONS_H
 #define AUX_FUNCTIONS_H
-#include "math.h"
+#include <math.h>
+#include "math.hpp"
 #include <eigen3/Eigen/Dense>
-// using namespace Eigen;
-// Operational Functions
 
+void OutputMotor(Eigen::VectorXd f, int thr[6]){
+    int i;
+    double a =  6.0252E-5;
+    double b =  8.4086E-3;
+    double c = -2.5194E-2;
+    f[1] = -f[1];
+    f[3] = -f[3];
+    f[5] = -f[5];
+    // Use a scale factor to correct for offset in motor calibration
+    // 12.5 V / 11.1 V = 1.1261
+    double scale_factor = 1.1261;
+    for(i = 0; i < 6; i++)
+    {
+        if(f[i] < 0.0)
+            f[i] = 0.0;
+        thr[i]=ceil((-b+sqrt(b*b-4.*a*(c-f[i])))/2./a/scale_factor);
+        if(thr[i] > 240.0)
+            thr[i]=240.0;
+        if(thr[i] < 0.0)
+            thr[i]=0.0;
+    }
+}
+
+// Operational Functions
 // Function to read keypad commands on the Gumstix
 int getch(void)
 {
@@ -20,74 +43,6 @@ int getch(void)
 }
 
 // Matrix Operations
-
-double transpose (double xx[3][3], double transposex[3][3])
-{// Transpose (3x3) to (3x3)'
-    transposex[0][0] = xx[0][0];
-    transposex[0][1] = xx[1][0];
-    transposex[0][2] = xx[2][0];
-    transposex[1][0] = xx[0][1];
-    transposex[1][1] = xx[1][1];
-    transposex[1][2] = xx[2][1];
-    transposex[2][0] = xx[0][2];
-    transposex[2][1] = xx[1][2];
-    transposex[2][2] = xx[2][2];
-    return 0;
-}
-
-double dot_product (double A[3], double B[3], double C)
-{// C = A'*B
-    C = A[0]*B[0]+A[1]*B[1]+A[2]*B[2];
-    return 0;
-}
-
-double cross_product (double A[3], double B[3], double C[3])
-{// C = AxB
-    C[0] = A[1]*B[2]-A[2]*B[1];
-    C[1] = A[2]*B[0]-A[0]*B[2];
-    C[2] = A[0]*B[1]-A[1]*B[0];
-    return 0;
-}
-
-double matrix_vector (double xx[3][3],double yy[3], double Mvector[3])
-{// Multiplies (3x3)*(3x1) = (3x1)
-    Mvector[0] = xx[0][0]*yy[0]+xx[0][1]*yy[1]+xx[0][2]*yy[2];
-    Mvector[1] = xx[1][0]*yy[0]+xx[1][1]*yy[1]+xx[1][2]*yy[2];
-    Mvector[2] = xx[2][0]*yy[0]+xx[2][1]*yy[1]+xx[2][2]*yy[2];
-    return 0;
-}
-
-double vector_vector (double xx[3],double yy[3], double Mvector[3][3])
-{// Multiplies (3x1)*(1x3) = (3x3)
-    Mvector[0][0] = xx[0]*yy[0];
-    Mvector[0][1] = xx[0]*yy[1];
-    Mvector[0][2] = xx[0]*yy[2];
-
-    Mvector[1][0] = xx[1]*yy[0];
-    Mvector[1][1] = xx[1]*yy[1];
-    Mvector[1][2] = xx[1]*yy[2];
-
-    Mvector[2][0] = xx[2]*yy[0];
-    Mvector[2][1] = xx[2]*yy[1];
-    Mvector[2][2] = xx[2]*yy[2];
-    return 0;
-}
-
-
-void matrix_vector6 (double A[6][6],double B[6], double C[6])
-{// Multiplies (6x6)*(6x1) = (6x1)
-    int i,k;
-    for (i = 0; i < 6; i++) {
-        C[i] = 0.0;
-    }
-    for (i = 0; i < 6; i++) {
-        for (k = 0; k < 6; k++) {
-            C[i] += A[i][k] * B[k];
-        }
-    }
-    return;
-}
-
 void reshape_3by3_to_9by1(double Mat3by3[3][3], double Vec9by1[9])
 {
     Vec9by1[0] = Mat3by3[0][0];

@@ -71,58 +71,7 @@ void ExecuteKeypadCommand(){
     {
         stay = true;
     }
-
-    // Change Gains:
-    else if(c == 't' || c == 'T')
-    {
-        kx = kx + 0.01;
-        printf("kx = %E.\n", kx);
-    }
-    else if(c == 'g' || c == 'G')
-    {
-        kx = kx - 0.01;
-        printf("kx = %E.\n", kx);
-    }
-    else if(c == 'y' || c == 'Y')
-    {
-        kv = kv + 0.01;
-        printf("kv = %E.\n", kv);
-    }
-    else if(c == 'h' || c == 'H')
-    {
-        kv = kv - 0.01;
-        printf("kv = %E.\n", kv);
-    }
-    else if(c == 'b' || c == 'B')
-    {
-        kR = kR + 0.01;
-        printf("kR = %E.\n", kR);
-    }
-    else if(c == 'v' || c == 'V')
-    {
-        kR = kR - 0.01;
-        printf("kR = %E.\n", kR);
-    }
-    else if(c == 'm' || c == 'M')
-    {
-        kW = kW + 0.01;
-        printf("kW = %E.\n", kW);
-    }
-    else if(c == 'n' || c == 'N')
-    {
-        kW = kW - 0.01;
-        printf("kW = %E.\n", kW);
-    }
-    else if(c == '.' || c == '>')
-    {
-        m = m + 0.04;
-        printf("m = %E.\n", m);
-    }
-    else if(c == ',' || c == '<')
-    {
-        m = m - 0.04;
-        printf("m = %E.\n", m);
-    }
+    
     //////////////////////////////////////////////////////////
 
     // Change Position

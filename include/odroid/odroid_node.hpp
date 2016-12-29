@@ -10,12 +10,10 @@
 
 #include "AUX_Functions.h"
 #include "Controllers.h"
-#include "Gains.h"
 // #include "serial1.h"
 // #include "serial2.h"
 // #include "Xbee.h"
 // #include "PCA9685.h"
-#include "ForcesTorques_i2c.h"
 #include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>    /* For O_RDWR */
@@ -27,6 +25,7 @@
 // ROS includes.
 #include "ros/ros.h"
 #include "ros/time.h"
+#include "math.hpp"
 
 using namespace Eigen;
 // Adafruit PCA9685 Servo Informatio
@@ -83,7 +82,7 @@ class odroid_node
     //  kR = proportional attitude control gain
     //  kW = derivative attitude control gain
     //  kiR = integral attitude control gain
-    double kx, kv, kiX, c1, kR, kW, kiR, c2;
+    double kx, kv, kiX = 0.1, c1 = 0, kR, kW, kiR = 0.1, c2 = 0;
     float phi, theta, psi;
     Matrix2d e; //inertial frame,
     // Measured Values in Vicon Frame

@@ -1,10 +1,7 @@
-#include "math.h"
-
 #ifndef CONTROLLERS_H
 #define CONTROLLERS_H
-#include <eigen3/Eigen/Dense>
+
 #include "odroid_node.hpp"
-using namespace Eigen;
 
 // void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R, double del_t,  Vector3d eiX_last, Vector3d eiR_last, Vector3d eX, Vector3d eV, Vector3d eR, Vector3d eW, Vector3d eiX, Vector3d eiR, double kx, double kv, double kiX_now, double kR, double kW, double kiR_now)
 //   {

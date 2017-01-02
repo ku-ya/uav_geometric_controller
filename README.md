@@ -8,6 +8,7 @@ Odroid node class implementation for ROS
 - Vicon subscriber
 - Fake imu sensor data using python code
 - VN100 IMU driver for ROS has been tested with kinetic [link](https://github.com/KumarRobotics/imu_vn_100)
+  - If you get /imu: VN: Permission denied, On line 217 in src/imu_vn_100.cpp, try changing `BINARY_ASYNC_MODE_SERIAL_2` to `BINARY_ASYNC_MODE_SERIAL_1`
 - Hector quadrotor repository for simulation testing
 - Dynamic reconfiguration for gains and value prints on console
 - I2C command function for motor control

@@ -49,12 +49,12 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
    // roll = 30/180*M_PI;
    // pitch = 0;
    // yaw = 0;
-   psi = roll; //msg->orientation.x;
+   psi = yaw; //msg->orientation.x;
    theta = pitch;//msg->orientation.y;
-   phi = yaw; //msg->orientation.z;
+   phi = roll; //msg->orientation.z;
    // cout<<"psi: "<<psi<<" theta: "<<theta<<" phi: "<<phi<<endl;
-   euler_Rvm(R_vm,Eigen::Vector3d(psi,theta,phi));
-   R_eb = R_vm.transpose();
+   // euler_Rvm(R_vm,Eigen::Vector3d(psi,theta,phi));
+   // R_eb = R_vm.transpose();
    // ROS_INFO("Imu Orientation x: [%f], y: [%f], z: [%f], w: [%f]", msg->orientation.x,msg->orientation.y,msg->orientation.z,msg->orientation.w);
    if(!IMU_flag){ ROS_INFO("IMU ready");}
    IMU_flag = true;
@@ -78,7 +78,8 @@ void odroid_node::ctl_callback(){
    // theta = 30/180*M_PI;//msg->orientation.y;
    // phi = 30/180*M_PI; //msg->orientation.z;
    // cout<<"psi: "<<psi<<" theta: "<<theta<<" phi: "<<phi<<endl;
-   euler_Rvm(R_vm,Eigen::Vector3d(psi,theta,phi));
+   Eigen::Vector3d angle(psi,theta,phi);
+   euler_Rvm(R_vm, angle);
    R_eb = R_vm.transpose();
    del_t_CADS = 0.01;
    GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR, kiR_now);

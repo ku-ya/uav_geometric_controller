@@ -121,7 +121,7 @@ double invskew (double skewx[3][3], double xx[3])
 }
 
 
-void eigen_skew (Eigen::Vector3d  x, Eigen::Matrix3d skewM)
+void eigen_skew (Eigen::Vector3d&  x, Eigen::Matrix3d& skewM)
 {// Obtains 3x3 skew-symmetric matrix from 3x1 vector
     skewM(0,0) = 0;
     skewM(0,1) = -x(2);
@@ -134,14 +134,14 @@ void eigen_skew (Eigen::Vector3d  x, Eigen::Matrix3d skewM)
     skewM(2,2) = 0;
 }
 
-void eigen_invskew (Eigen::Matrix3d skewM, Eigen::Vector3d x)
+void eigen_invskew (Eigen::Matrix3d& skewM, Eigen::Vector3d& x)
 {// Obtains 3x1 vector from its skew-symmetric 3x3 matrix
     x(0) = skewM(2,1);
     x(1) = skewM(0,2);
     x(2) = skewM(1,0);
 }
 
-void euler_Rvm(Eigen::Matrix3d& R_vm, Eigen::Vector3d angle){
+void euler_Rvm(Eigen::Matrix3d& R_vm, Eigen::Vector3d& angle){
     double psi = angle(0);
     double theta = angle(1);
     double phi = angle(2);

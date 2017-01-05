@@ -181,8 +181,7 @@ void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector
    double F_req = -m*g;// N
    // Convert forces & moments to f_i for i = 1:6 (forces of i-th prop)
    VectorXd FM(6);
-   FM(0) = 0.0; FM(1) = 0.0; FM(2) = F_req;
-   FM(3) = M(0); FM(4) = M(1); FM(5) = M(2);
+   FM << 0.0, 0.0, F_req, M(0), M(1), M(2);
    f = invFMmat * FM;
 
    if(print_f){print_force();}
@@ -302,12 +301,12 @@ int main(int argc, char **argv){
    odnode.open_I2C();
 
    ros::Rate loop_rate(100); // rate for the node loop
-   int count = 0;
+   // int count = 0;
    while (ros::ok()){
       ros::spinOnce();
       odnode.ctl_callback();
       loop_rate.sleep();
-      ++count;
+      // ++count;
    }
    return 0;
 }

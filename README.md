@@ -18,3 +18,4 @@ TODO:
 - Hardware test
 - Check gazebo IMU sensor plugin (https://github.com/alessandrosettimi/test_imu_sensor)
 - Clear unnecessary header files and functions
+- publisher in subscriber callback function and make a node handle within class

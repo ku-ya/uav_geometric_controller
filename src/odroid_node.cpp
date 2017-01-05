@@ -83,6 +83,7 @@ void odroid_node::ctl_callback(){
    R_eb = R_vm.transpose();
    del_t_CADS = 0.01;
    GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR, kiR_now);
+   motor_command();
 }
 
 // vicon information callback

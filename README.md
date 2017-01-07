@@ -14,6 +14,13 @@ Odroid node class implementation for ROS
 - I2C command function for motor control
   - install i2c-dev for linux
 
+
+To get master rosnode communicate with slaves
+  - `hostname -I`, to check host name for roscore
+  - `export ROS_MASTER_URI=http://10.0.1.xxx:11311/`, master IP setting
+  - `export ROS_IP=10.0.1.xxx`, set ROS_IP for the remote
+  - `rosrun urg_node urg_node _ip_address:="192.168.0.10"`
+
 TODO:
 - Hardware test
 - Check gazebo IMU sensor plugin (https://github.com/alessandrosettimi/test_imu_sensor)

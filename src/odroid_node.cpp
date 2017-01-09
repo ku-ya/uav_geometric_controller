@@ -25,6 +25,8 @@ odroid_node::odroid_node(){
             -0.0000,   -1.2879,    0.1725,         0,    1.1132,    0.3071,
             1.1154,   -0.6440,   -0.1725,    0.9641,   -0.3420,    0.7579,
             1.1154,    0.6440,    0.1725,   -0.9641,   -0.7712,    1.7092;
+
+   pub_ = n_.advertise<std_msgs::String>("/motor_command",1);
    ROS_INFO("Odroid node initialized");
 }
 odroid_node::~odroid_node(){};
@@ -104,6 +106,9 @@ void odroid_node::motor_command(){
     while(write(fhi2c, &thr[i], 1)!=1)
       printf("ERROR: Motor %i I2C write command of %i to address %i (%e N) not sent.\n", i, thr[i], mtr_addr[i], f[i]);
    }
+
+   std_msgs::String out;
+   pub_.publish(out);
 }
 void odroid_node::open_I2C(){
    // Open i2c:
@@ -286,8 +291,9 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
 int main(int argc, char **argv){
    // ros::init(argc, argv, "imu_listener");
    ros::init(argc,argv,"hexacopter");
-   ros::NodeHandle nh;
+  //  ros::NodeHandle nh;
    odroid_node odnode;
+   ros::NodeHandle nh = odnode.getNH();
    // IMU and keyboard input callback
    ros::Subscriber sub2 = nh.subscribe("imu/imu",100,&odroid_node::imu_callback,&odnode);
    ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);

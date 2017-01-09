@@ -57,6 +57,8 @@ using namespace Eigen;
 class odroid_node
 {
   private:
+    ros::NodeHandle n_;
+    ros::Publisher pub_;
     //  m = body mass
     //  g = acceleration due to gravity
     //  J = moment of inertial matrix
@@ -193,6 +195,9 @@ class odroid_node
     void GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last, double kiR_now);
 
     void GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R, double del_t,  Vector3d eiX_last, Vector3d eiR_last, double kiX_now, double kiR_now);
+
+
+    ros::NodeHandle getNH(){return n_;};
 
     void motor_command();
     void open_I2C();

@@ -84,7 +84,7 @@ void odroid_node::ctl_callback(){
   //for attitude testing of position controller
   VectorXd xd, xd_dot, xd_ddot, x_e, v_e, eiX_last;
   Matrix3d Rd;
-  double eiR_last = 0, kiX_now = 0, kiR_now = 0;
+  double eiR_last = 0, kiX_now = 0;
 
   xd = VectorXd::Zero(3); xd_dot = VectorXd::Zero(3); xd_ddot = VectorXd::Zero(3);
   Rd = MatrixXd::Identity(3,3);
@@ -102,7 +102,7 @@ void odroid_node::ctl_callback(){
   R_eb = R_vm.transpose();
   del_t_CADS = 0.01;
   //GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR, kiR_now);
-  GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W, R_eb, del_t_CADS, eiX, eiR, kiX, kiR)
+  GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_eb, del_t_CADS, eiX, eiR, kiX, kiR);
   motor_command();
 }
 

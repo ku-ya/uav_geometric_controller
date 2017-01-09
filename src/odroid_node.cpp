@@ -34,11 +34,14 @@ odroid_node::~odroid_node(){};
 void odroid_node::print_J(){
     std::cout<<"J: \n"<<J<<std::endl;
 }
+
 void odroid_node::print_force(){
     std::cout<<"force: "<<this->f.transpose()<<std::endl;
 }
+
 // callback for IMU sensor det
 bool odroid_node::getIMU(){return IMU_flag;}
+
 void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
    W_raw(0) = msg->angular_velocity.x;
    W_raw(1) = msg->angular_velocity.y;
@@ -65,6 +68,7 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
       printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", psi, theta, phi);
    }
 }
+
 // callback for key Inputs
 void odroid_node::key_callback(const std_msgs::String::ConstPtr&  msg){
    std::cout<<*msg<<std::endl;
@@ -74,7 +78,7 @@ void odroid_node::key_callback(const std_msgs::String::ConstPtr&  msg){
 void odroid_node::ctl_callback(){
    VectorXd Wd, Wd_dot;
    Wd = VectorXd::Zero(3); Wd_dot = VectorXd::Zero(3);
-   double kiR_now = 0.0;
+   double kiR_now = 0.1;
    // W_b << 0,0.0,0.5;
    // psi = 30/180*M_PI; //msg->orientation.x;
    // theta = 30/180*M_PI;//msg->orientation.y;
@@ -94,7 +98,7 @@ void odroid_node::vicon_callback(){}
 void odroid_node::motor_command(){
    // Execute motor output commands
    for(int i = 0; i < 6; i++){
-    printf("Motor %i I2C write command of %i to address %i (%e N).\n", i, thr[i], mtr_addr[i], f[i]);
+    //printf("Motor %i I2C write command of %i to address %i (%e N).\n", i, thr[i], mtr_addr[i], f[i]);
     tcflush(fhi2c, TCIOFLUSH);
     usleep(500);
     if(ioctl(fhi2c, I2C_SLAVE, mtr_addr[i])<0)
@@ -110,6 +114,7 @@ void odroid_node::motor_command(){
    std_msgs::String out;
    pub_.publish(out);
 }
+
 void odroid_node::open_I2C(){
    // Open i2c:
    fhi2c = open("/dev/i2c-1", O_RDWR);// Chris
@@ -158,6 +163,7 @@ void odroid_node::open_I2C(){
    }
    printf("All motors are working.\n");
 }
+
 void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last, double kiR_now){
    Matrix3d Rd = MatrixXd::Identity(3,3);
    Vector3d e3(0,0,1), b3(0,0,1), vee_3by1;
@@ -194,27 +200,18 @@ void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector
 
    OutputMotor(f,thr);
    if(print_thr){
-      cout<<"Thruttle motor out: ";
+      cout<<"Throttle motor out: ";
       for(int i = 0;i<6;i++){
       cout<<thr[i]<<", ";} cout<<endl;
    }
+
+   if(print_test_variable){
+      printf("eR: %f | %f | %f \n", eR(0), eR(1), eR(2));
+   }
 }
+
 void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R, double del_t,  Vector3d eiX_last, Vector3d eiR_last, double kiX_now, double kiR_now)
   {
-    //    // Given the UAV arm length of 0.13 m,
-    //    double invFMmat[6][6] = {{ 0,       0.6667, -0.1925,  0,       2.9608, 2.5641},
-    //                             {-0.5774,  0.3333,  0.1925,  2.5641, -1.4804, 2.5641},
-    //                             {-0.5774, -0.3333, -0.1925, -2.5641, -1.4804, 2.5641},
-    //                             { 0,      -0.6667,  0.1925,  0,       2.9608, 2.5641},
-    //                             { 0.5774, -0.3333, -0.1925,  2.5641, -1.4804, 2.5641},
-    //                             { 0.5774,  0.3333,  0.1925, -2.5641, -1.4804, 2.5641}};
-    // Given the UAV arm length of 0.31 m,
-    // double invFMmat[6][6] = {  {-0.0000,0.6667,   -0.1925,    0.0000,    1.2416,   1.0753},
-    //                            {-0.5774,0.3333,    0.1925,    1.0753,   -0.6208,    1.0753},
-    //                            {-0.5774,-0.3333,   -0.1925,   -1.0753,   -0.6208,    1.0753},
-    //                            {-0.0000,-0.6667,    0.1925,    0.0000,    1.2416,    1.0753},
-    //                             {0.5774,-0.3333,   -0.1925,    1.0753,   -0.6208,    1.0753},
-    //                             {0.5774,0.3333,    0.1925,   -1.0753,   -0.6208,    1.0753}};
     // Calculate eX (position error in inertial frame)
     Vector3d eX = x_e - xd;
     // Calculate eV (velocity error in inertial frame)

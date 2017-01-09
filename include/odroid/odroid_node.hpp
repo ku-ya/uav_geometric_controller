@@ -91,7 +91,7 @@ class odroid_node
     Vector3d x_v;// position in the Vicon frame
     double quat_vm[4];// attitude of markers measured by Vicon system
 
-    bool IMU_flag, print_imu, print_f, print_thr;
+    bool IMU_flag, print_imu, print_f, print_thr, print_test_variable;
     Matrix<double, 6, 1> f;
     Matrix3d R_bm;
 

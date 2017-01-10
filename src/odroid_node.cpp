@@ -100,11 +100,20 @@ void odroid_node::ctl_callback(){
   Matrix3d Rd;
   double eiR_last = 0, kiX_now = 0;
 
-  xd = VectorXd::Zero(3); xd_dot = VectorXd::Zero(3); xd_ddot = VectorXd::Zero(3);
+  // xd = VectorXd::Zero(3); 
+  xd_dot = VectorXd::Zero(3); xd_ddot = VectorXd::Zero(3);
   Rd = MatrixXd::Identity(3,3);
   x_e = VectorXd::Zero(3);
   v_e = VectorXd::Zero(3);
   eiX_last = VectorXd::Zero(3);
+
+  Matrix3d R_ev, R_bm;
+  R_ev << 1.0  ,  0.0  ,  0.0,
+          0.0  , -1.0  ,  0.0,
+          0.0  ,  0.0  , -1.0;
+  R_bm << 1.0  ,  0.0  ,  0.0,
+          0.0  , -1.0  ,  0.0,
+          0.0  ,  0.0  , -1.0;
 
   // W_b << 0,0.0,0.5;
   // psi = 30/180*M_PI; //msg->orientation.x;
@@ -113,7 +122,9 @@ void odroid_node::ctl_callback(){
   // cout<<"psi: "<<psi<<" theta: "<<theta<<" phi: "<<phi<<endl;
   Eigen::Vector3d angle(psi,theta,phi);
   euler_Rvm(R_vm, angle);
-  R_eb = R_vm.transpose();
+
+  R_eb = R_ev * R_vm * R_bm;
+  // R_eb = R_vm.transpose();
   del_t_CADS = 0.01;
   //GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR, kiR_now);
   GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_eb, del_t_CADS, eiX, eiR, kiX, kiR);
@@ -308,6 +319,9 @@ void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector
     kiX = config.kiX;
     MOTOR_ON = config.Motor;
     MotorWarmup = config.MotorWarmup;
+    xd(0) = config.x;
+    xd(1) = config.y;
+    xd(2) = config.z;
     // ROS_INFO("Reconfigure Request: %d %f %s %s %d",
     //           config.int_param, config.double_param,
     //           config.str_param.c_str(),

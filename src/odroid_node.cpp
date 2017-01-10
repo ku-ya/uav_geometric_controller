@@ -18,6 +18,7 @@ odroid_node::odroid_node(){
   0.0, 0.0, -1.0;// Vicon frame (v) to inertial frame (e) (fixed)
   eiX = VectorXd::Zero(3);
   eiR = VectorXd::Zero(3);
+  // quat_vm = new VectorXd::Zeros(4);
   // Given the UAV arm length of 0.31 m and a prop. angle of 15 deg.
   invFMmat <<  0.0000,    1.2879,   -0.1725,   -0.0000,    1.1132,    0.3071,
   -1.1154,    0.6440,    0.1725,    0.9641,   -0.3420,    0.7579,
@@ -69,6 +70,19 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   }
 }
 
+// vicon information callback
+void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg){
+
+  x_v(0) = msg->transform.translation.x;
+  x_v(1) = msg->transform.translation.y;
+  x_v(2) = msg->transform.translation.z;
+  quat_vm[0] = msg->transform.rotation.x;
+  quat_vm[1] = msg->transform.rotation.y;
+  quat_vm[2] = msg->transform.rotation.z;
+  quat_vm[3] = msg->transform.rotation.w;
+
+}
+
 // callback for key Inputs
 void odroid_node::key_callback(const std_msgs::String::ConstPtr&  msg){
   std::cout<<*msg<<std::endl;
@@ -106,8 +120,7 @@ void odroid_node::ctl_callback(){
   motor_command();
 }
 
-// vicon information callback
-void odroid_node::vicon_callback(){}
+
 
 void odroid_node::motor_command(){
   // Execute motor output commands
@@ -310,6 +323,7 @@ void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector
     ros::NodeHandle nh = odnode.getNH();
     // IMU and keyboard input callback
     ros::Subscriber sub2 = nh.subscribe("imu/imu",100,&odroid_node::imu_callback,&odnode);
+    ros::Subscriber sub_vicon = nh.subscribe("vicon/hexa/body",100,&odroid_node::vicon_callback,&odnode);
     ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
 
     // dynamic reconfiguration server for gains and print outs

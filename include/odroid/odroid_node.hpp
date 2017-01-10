@@ -46,6 +46,7 @@ using namespace Eigen;
 
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/String.h>
+#include <geometry_msgs/TransformStamped.h>
 // #include <iomanip>
 // #include <iostream>
 
@@ -89,6 +90,7 @@ class odroid_node
     Matrix2d e; //inertial frame,
     // Measured Values in Vicon Frame
     Vector3d x_v;// position in the Vicon frame
+    // VectorXd quat_vm(4);
     double quat_vm[4];// attitude of markers measured by Vicon system
 
     bool IMU_flag, print_imu, print_f, print_thr, print_test_variable;
@@ -188,7 +190,7 @@ class odroid_node
     //! Controller
     void ctl_callback();
     //! Vicon sensor message subscriber
-    void vicon_callback();
+    void vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg);
     //! dynamic reconfigure callback
     void callback(odroid::GainsConfig &config, uint32_t level);
     //! Controller function

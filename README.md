@@ -26,6 +26,7 @@ TODO:
 - Check gazebo IMU sensor plugin (https://github.com/alessandrosettimi/test_imu_sensor)
 - Clear unnecessary header files and functions
 - publisher in subscriber callback function and make a node handle within class
+- Run vicon_bridge [ROS wiki](http://wiki.ros.org/vicon_bridge) [github](https://github.com/ethz-asl/vicon_bridge)
 
 Check:
 - If the compiling error appear on Odroid, check rospkg, catkin_pkg installation. Python distribution change to conda caused the issue. 01/07/2017

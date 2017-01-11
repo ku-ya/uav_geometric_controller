@@ -297,6 +297,18 @@ void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector
       kiReiR[i] = kiR_now*eiR[i];
     }
     f = invFMmat * FM;
+
+    OutputMotor(f,thr);
+    if(print_thr){
+      cout<<"Throttle motor out: ";
+      for(int i = 0;i<6;i++){
+        cout<<thr[i]<<", ";} cout<<endl;
+      }
+
+      if(print_test_variable){
+        printf("eR: %f | %f | %f \n", eR(0), eR(1), eR(2));
+      }
+
   }
 
   void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
@@ -338,7 +350,7 @@ void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector
     ros::NodeHandle nh = odnode.getNH();
     // IMU and keyboard input callback
     ros::Subscriber sub2 = nh.subscribe("imu/imu",100,&odroid_node::imu_callback,&odnode);
-    ros::Subscriber sub_vicon = nh.subscribe("vicon/hexa/body",100,&odroid_node::vicon_callback,&odnode);
+    ros::Subscriber sub_vicon = nh.subscribe("vicon/Maya/Maya",100,&odroid_node::vicon_callback,&odnode);
     ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
 
     // dynamic reconfiguration server for gains and print outs

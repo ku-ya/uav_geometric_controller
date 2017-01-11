@@ -100,20 +100,13 @@ void odroid_node::ctl_callback(){
   Matrix3d Rd;
   double eiR_last = 0, kiX_now = 0;
 
-  // xd = VectorXd::Zero(3); 
+  // xd = VectorXd::Zero(3);
   xd_dot = VectorXd::Zero(3); xd_ddot = VectorXd::Zero(3);
   Rd = MatrixXd::Identity(3,3);
-  x_e = VectorXd::Zero(3);
-  v_e = VectorXd::Zero(3);
+  Vector3d prev_x_e = x_e;
+  x_e = R_ev * x_v;
+  v_e = (x_e - prev_x_e)*100;
   eiX_last = VectorXd::Zero(3);
-
-  Matrix3d R_ev, R_bm;
-  R_ev << 1.0  ,  0.0  ,  0.0,
-          0.0  , -1.0  ,  0.0,
-          0.0  ,  0.0  , -1.0;
-  R_bm << 1.0  ,  0.0  ,  0.0,
-          0.0  , -1.0  ,  0.0,
-          0.0  ,  0.0  , -1.0;
 
   // W_b << 0,0.0,0.5;
   // psi = 30/180*M_PI; //msg->orientation.x;
@@ -251,8 +244,6 @@ void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector
   void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R, double del_t,  Vector3d eiX_last, Vector3d eiR_last, double kiX_now, double kiR_now)
   {
     // Calculate eX (position error in inertial frame)
-    xd = x_e;
-    xd_dot = v_e;
     Vector3d eX = x_e - xd;
     // Calculate eV (velocity error in inertial frame)
     Vector3d eV = v_e - xd_dot;
@@ -322,6 +313,8 @@ void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector
     xd(0) = config.x;
     xd(1) = config.y;
     xd(2) = config.z;
+    print_xd = config.print_xd;
+    print_x_v = config.print_x_v;
     // ROS_INFO("Reconfigure Request: %d %f %s %s %d",
     //           config.int_param, config.double_param,
     //           config.str_param.c_str(),

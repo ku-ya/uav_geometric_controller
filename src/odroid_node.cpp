@@ -81,6 +81,10 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   quat_vm[2] = msg->transform.rotation.z;
   quat_vm[3] = msg->transform.rotation.w;
 
+  if(print_x_v){
+    cout<<"x_v: "<<x_v<<endl;
+  }
+
 }
 
 // callback for key Inputs
@@ -96,7 +100,7 @@ void odroid_node::ctl_callback(){
   double kiR_now = 0.1;
 
   //for attitude testing of position controller
-  VectorXd xd, xd_dot, xd_ddot, x_e, v_e, eiX_last;
+  Vector3d xd_dot, xd_ddot, x_e, v_e, eiX_last;
   Matrix3d Rd;
   double eiR_last = 0, kiX_now = 0;
 
@@ -119,6 +123,10 @@ void odroid_node::ctl_callback(){
   R_eb = R_ev * R_vm * R_bm;
   // R_eb = R_vm.transpose();
   del_t_CADS = 0.01;
+
+  if(print_xd){
+    cout<<"xd: "<<xd<<endl;
+  }
   //GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR, kiR_now);
   GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_eb, del_t_CADS, eiX, eiR, kiX, kiR);
   motor_command();

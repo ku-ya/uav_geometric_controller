@@ -88,26 +88,13 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   quat_vm(3) = msg->transform.rotation.w;
   tf::Quaternion q(quat_vm(0),quat_vm(1),quat_vm(2),quat_vm(3));
   tf::Matrix3x3 m(q);
-
   m.getRPY(roll, pitch, yaw);
-
-  R_vm(0,0) = 1-(2*(quat_vm[1])*(quat_vm[1]))-(2*(quat_vm[2])*(quat_vm[2]));
-  R_vm(0,1) = (2*quat_vm[0]*quat_vm[1])-(2*quat_vm[3]*quat_vm[2]);
-  R_vm(0,2) = (2*quat_vm[0]*quat_vm[2])+(2*quat_vm[3]*quat_vm[1]);
-  R_vm(1,0) = (2*quat_vm[0]*quat_vm[1])+(2*quat_vm[3]*quat_vm[2]);
-  R_vm(1,1) = 1-(2*(quat_vm[0])*(quat_vm[0]))-(2*(quat_vm[2])*(quat_vm[2]));
-  R_vm(1,2) = (2*(quat_vm[1])*(quat_vm[2]))-(2*(quat_vm[3])*(quat_vm[0]));
-  R_vm(2,0) = (2*quat_vm[0]*quat_vm[2])-(2*quat_vm[3]*quat_vm[1]);
-  R_vm(2,1) = (2*quat_vm[0]*quat_vm[3])+(2*quat_vm[2]*quat_vm[1]);
-  R_vm(2,2) = 1-(2*(quat_vm[0])*(quat_vm[0]))-(2*(quat_vm[1])*(quat_vm[1]));
-
 
 	if(print_vicon){
     printf("Vicon: roll:[%f], pitch:[%f], yaw:[%f] \n", roll/M_PI*180, pitch/M_PI*180, yaw/M_PI*180);
   }
-
   if(print_x_v){
-    cout<<"x_v: "<<x_v<<endl;
+    cout<<"x_v: "<<x_v.transpose()<<endl;
   }
 
 }
@@ -137,16 +124,31 @@ void odroid_node::ctl_callback(){
   x_e = R_ev * x_v;
   v_e = (x_e - prev_x_e)*100;
 
+
+
+
+  cout<<"quat\n"<<quat_vm.transpose()<<endl;
+  R_vm(0,0) = 1-(2*(quat_vm[1])*(quat_vm[1]))-(2*(quat_vm[2])*(quat_vm[2]));
+  R_vm(0,1) = (2*quat_vm[0]*quat_vm[1])-(2*quat_vm[3]*quat_vm[2]);
+  R_vm(0,2) = (2*quat_vm[0]*quat_vm[2])+(2*quat_vm[3]*quat_vm[1]);
+  R_vm(1,0) = (2*quat_vm[0]*quat_vm[1])+(2*quat_vm[3]*quat_vm[2]);
+  R_vm(1,1) = 1-(2*(quat_vm[0])*(quat_vm[0]))-(2*(quat_vm[2])*(quat_vm[2]));
+  R_vm(1,2) = (2*(quat_vm[1])*(quat_vm[2]))-(2*(quat_vm[3])*(quat_vm[0]));
+  R_vm(2,0) = (2*quat_vm[0]*quat_vm[2])-(2*quat_vm[3]*quat_vm[1]);
+  R_vm(2,1) = (2*quat_vm[0]*quat_vm[3])+(2*quat_vm[2]*quat_vm[1]);
+  R_vm(2,2) = 1-(2*(quat_vm[0])*(quat_vm[0]))-(2*(quat_vm[1])*(quat_vm[1]));
+  cout<<"R_vm\n"<<R_vm<<endl;
   // W_b << 0,0.0,0.5;
   // psi = 30/180*M_PI; //msg->orientation.x;
   // theta = 30/180*M_PI;//msg->orientation.y;
   // phi = 30/180*M_PI; //msg->orientation.z;
   // cout<<"psi: "<<psi<<" theta: "<<theta<<" phi: "<<phi<<endl;
-  Eigen::Vector3d angle(roll,pitch,yaw);
+  // Eigen::Vector3d angle(roll,pitch,yaw);
   //euler_Rvm(R_vm, angle);
 
   R_eb = R_ev * R_vm * R_bm;
 
+  cout<<"R_eb\n"<<R_eb<<endl;
 //cout<<"yaw"<<atan2(-R_eb(2,0),R_eb(0,0))<<endl;
 //cout<<"roll"<<atan2(-R_eb(1,2),R_eb(1,1))<<endl;
 //cout<<"pitch"<<asin(R_eb(1,0))<<endl;
@@ -155,7 +157,7 @@ void odroid_node::ctl_callback(){
   del_t_CADS = 0.01;
 
   if(print_xd){
-    cout<<"xd: "<<xd<<endl;
+    cout<<"xd: "<<xd.transpose()<<endl;
   }
 
   //GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR);
@@ -171,7 +173,7 @@ void odroid_node::ctl_callback(){
     }
 
 
-  motor_command();
+  // motor_command();
 }
 
 void odroid_node::motor_command(){
@@ -247,37 +249,49 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
   {
     // Calculate eX (position error in inertial frame)
     Vector3d eX = x_e - xd;
-    if(print_eX){cout<<"eX: "<<eX<<endl;}
+    cout<<"eX\n"<<eX.transpose()<<endl;
+    if(print_eX){cout<<"eX: "<<eX.transpose()<<endl;}
     // Calculate eV (velocity error in inertial frame)
     Vector3d eV = v_e - xd_dot;
-    if(print_eV){cout<<"eV: "<<eV<<endl;}
+    cout<<"eV\n"<<eV.transpose()<<endl;
+    if(print_eV){cout<<"eV: "<<eV.transpose()<<endl;}
     // Calculate eR (rotation matrix error)
     // Take 9 elements of difference
     Matrix3d inside_vee_3by3 = Rd.transpose() * R - R.transpose() * Rd;
+    cout<<"inside_vee_3x3\n"<<inside_vee_3by3<<endl;
     Vector3d vee_3by1;
     eigen_invskew(inside_vee_3by3, vee_3by1);// 3x1
+    cout<<"vee_3by1\n"<<vee_3by1.transpose()<<endl;
     Vector3d eR = 0.5 * vee_3by1;
+    cout<<"eR\n"<<eR.transpose()<<endl;
 	if(print_test_variable){
       printf("eR: %f | %f | %f \n", eR(0), eR(1), eR(2));
     }
     // Calculate eW (angular velocity error in body-fixed frame)
     Vector3d eW =  W -  R.transpose() * Rd * Wd;
+    cout<<"eW\n"<<eW.transpose()<<endl;
     // Update integral term of control
     // Position:
     eiX = eiX_last + del_t * eX;
+    cout<<"eiX\n"<<eiX<<endl;
     eiX_last = eiX;
     // Attitude:
     eiR = eiR_last + del_t * eR;// (c2*eR + eW);
+    cout<<"eiR\n"<<eiR<<endl;
     eiR_last = eiR;
     // Calculate 3 DOFs of F (controlled force in body-fixed frame)
     // MATLAB: F = R'*(-kx*ex-kv*ev-Ki*eiX-m*g*e3+m*xd_2dot);
     Vector3d A = - kx*eX - kv*eV - kiX*eiX + m*xd_ddot + Vector3d(0,0,-m*g);
+    cout<<"A\n"<<A.transpose()<<endl;
     Vector3d F = R.transpose() * A;
+    cout<<"F\n"<<F.transpose()<<endl;
     // Calculate 3 DOFs of M (controlled moment in body-fixed frame)
     // MATLAB: M = -kR*eR-kW*eW-kRi*eiR+cross(W,J*W)+J*(R'*Rd*Wddot-hat(W)*R'*Rd*Wd);
     Matrix3d What;
     eigen_skew(W, What);
+    cout<<"What\n"<<What<<endl;
     Vector3d M = -kR * eR - kW * eW-kiR * eiR + What * J * W + J * (R.transpose() * Rd * Wddot - What * R.transpose() * Rd * Wd);
+    cout<<"M\n"<<M.transpose()<<endl;
     // M[0] = -kR*eR[0]-kW*eW[0]-kiR_now*eiR[0]+What_J_W[0]+J_Jmult[0];
     //  // Convert forces & moments to f_i for i = 1:6 (forces of i-th prop)
     Matrix<double, 6, 1> FM;
@@ -287,6 +301,7 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     FM[3] = M[0];
     FM[4] = M[1];
     FM[5] = M[2];
+    cout<<"FM\n"<<FM.transpose()<<endl;
 
     double kxeX[3], kveV[3], kiXeiX[3], kReR[3], kWeW[3], kiReiR[3];
     for(int i = 0; i < 3; i++){
@@ -298,6 +313,8 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
       kiReiR[i] = kiR*eiR[i];
     }
     f = invFMmat * FM;
+    cout<<"f\n"<<f.transpose()<<endl;
+
   }
 
   void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last){

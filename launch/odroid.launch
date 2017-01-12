@@ -5,10 +5,9 @@
     <arg name="gui" default="true"/>
     <arg name="debug" default="false"/>
     <arg name="verbose" default="true"/>
-
+    <node pkg="tf" type="static_transform_publisher" name="body_imu" args="0 0 0 0 0 0 world imu 100" />
     <!-- start odroid node-->
-    <node name="odroid_node" type="odroid_node" pkg="odroid" respawn="false" output="screen" >
-      <!-- <remap from="imu/imu" to=""/> -->
-    </node>
+    <node name="odroid_node" type="odroid_node" pkg="odroid" respawn="false" output="screen" />
+    <!-- <node name="rviz" pkg="rviz" type="rviz" output="screen" /> -->
 
 </launch>

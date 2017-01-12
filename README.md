@@ -33,9 +33,6 @@ TODO:
 - publisher in subscriber callback function and make a node handle within class
 
 20170111 Testing  
-0. fix blades
-1. Check attitude is passed correctly from vicon, and w from imu
-2. test throttle values for given xd
 3. test position controller
 
 Check:

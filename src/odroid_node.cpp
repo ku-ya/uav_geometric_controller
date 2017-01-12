@@ -108,13 +108,10 @@ void odroid_node::ctl_callback(){
   //for attitude testing of position controller
   Vector3d xd_dot, xd_ddot, x_e, v_e;
   Matrix3d Rd;
-  double kiR_now, kiX_now;
-  if(MOTOR_ON && !MotorWarmup){
-    kiR_now = kiR;
-    kiX_now = kiX;
-  }else{
-    kiR_now = 0;
-    kiX_now = 0;
+
+  if(!(MOTOR_ON && !MotorWarmup)){
+    kiR = 0;
+    kiX = 0;
   }
 
   // xd = VectorXd::Zero(3);
@@ -139,9 +136,9 @@ void odroid_node::ctl_callback(){
     cout<<"xd: "<<xd<<endl;
   }
 
-  //GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR, kiR_now);
+  //GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR);
 
-  GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_eb, del_t_CADS,  kiX_now, kiR_now);
+  GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_eb, del_t_CADS);
 
   if(print_f){print_force();}
   OutputMotor(f,thr);
@@ -226,7 +223,7 @@ void odroid_node::open_I2C(){
   printf("All motors are working.\n");
 }
 
-void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R, double del_t, double kiX_now, double kiR_now)
+void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R, double del_t)
   {
     // Calculate eX (position error in inertial frame)
     Vector3d eX = x_e - xd;
@@ -244,7 +241,6 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     Vector3d eW =  W -  R.transpose() * Rd * Wd;
     // Update integral term of control
     // Position:
-
     eiX = eiX_last + del_t * eX;
     eiX_last = eiX;
     // Attitude:
@@ -252,13 +248,13 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     eiR_last = eiR;
     // Calculate 3 DOFs of F (controlled force in body-fixed frame)
     // MATLAB: F = R'*(-kx*ex-kv*ev-Ki*eiX-m*g*e3+m*xd_2dot);
-    Vector3d A = - kx*eX - kv*eV - kiX_now*eiX + m*xd_ddot + Vector3d(0,0,-m*g);
+    Vector3d A = - kx*eX - kv*eV - kiX*eiX + m*xd_ddot + Vector3d(0,0,-m*g);
     Vector3d F = R.transpose() * A;
     // Calculate 3 DOFs of M (controlled moment in body-fixed frame)
     // MATLAB: M = -kR*eR-kW*eW-kRi*eiR+cross(W,J*W)+J*(R'*Rd*Wddot-hat(W)*R'*Rd*Wd);
     Matrix3d What;
     eigen_skew(W, What);
-    Vector3d M = -kR * eR - kW * eW-kiR_now * eiR + What * J * W + J * (R.transpose() * Rd * Wddot - What * R.transpose() * Rd * Wd);
+    Vector3d M = -kR * eR - kW * eW-kiR * eiR + What * J * W + J * (R.transpose() * Rd * Wddot - What * R.transpose() * Rd * Wd);
     // M[0] = -kR*eR[0]-kW*eW[0]-kiR_now*eiR[0]+What_J_W[0]+J_Jmult[0];
     //  // Convert forces & moments to f_i for i = 1:6 (forces of i-th prop)
     Matrix<double, 6, 1> FM;
@@ -273,15 +269,15 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     for(int i = 0; i < 3; i++){
       kxeX[i] = kx*eX[i];
       kveV[i] = kv*eV[i];
-      kiXeiX[i] = kiX_now*eiX[i];
+      kiXeiX[i] = kiX*eiX[i];
       kReR[i] = kR*eR[i];
       kWeW[i] = kW*eW[i];
-      kiReiR[i] = kiR_now*eiR[i];
+      kiReiR[i] = kiR*eiR[i];
     }
     f = invFMmat * FM;
   }
 
-  void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last, double kiR_now){
+  void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last){
   Matrix3d Rd = MatrixXd::Identity(3,3);
   Vector3d e3(0,0,1), b3(0,0,1), vee_3by1;
   double l = 0;//.05;// length of rod connecting to the spherical joint
@@ -305,7 +301,7 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
   Vector3d What_J_W = What * J * W;
   Vector3d Jmult = R.transpose() * Rd * Wddot - What * R.transpose() * Rd * Wd;
   Vector3d J_Jmult = J * Jmult;
-  Vector3d M = -kR * eR - kW * eW - kiR_now * eiR + What_J_W + J_Jmult - M_g;
+  Vector3d M = -kR * eR - kW * eW - kiR * eiR + What_J_W + J_Jmult - M_g;
   // To try different motor speeds, choose a force in the radial direction
   double F_req = -m*g;// N
   // Convert forces & moments to f_i for i = 1:6 (forces of i-th prop)
@@ -326,11 +322,14 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     // Attitude controller gains
     kR = config.kR;
     kW = config.kW;
-    kiR = config.kiR;
+
+    if(MOTOR_ON && !MotorWarmup){
+      kiR = config.kiR;
+      kiX = config.kiX;
+    }
     // Position controller gains
     kx = config.kx;
     kv = config.kv;
-    kiX = config.kiX;
     MOTOR_ON = config.Motor;
     MotorWarmup = config.MotorWarmup;
     xd(0) = config.x;

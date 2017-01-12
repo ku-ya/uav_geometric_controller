@@ -71,9 +71,9 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   IMU_flag = true;
   if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
 
-  //if(print_imu){
-   // printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", psi, theta, phi);
-  //}
+  if(print_imu){
+   printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", psi, theta, phi);
+  }
 }
 
 // vicon information callback
@@ -91,21 +91,21 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
 
   m.getRPY(roll, pitch, yaw);
 
-    R_vm(0,0) = 1-(2*(quat_vm[1])*(quat_vm[1]))-(2*(quat_vm[2])*(quat_vm[2]));
-     R_vm(0,1) = (2*quat_vm[0]*quat_vm[1])-(2*quat_vm[3]*quat_vm[2]);
-     R_vm(0,2) = (2*quat_vm[0]*quat_vm[2])+(2*quat_vm[3]*quat_vm[1]);
-     R_vm(1,0) = (2*quat_vm[0]*quat_vm[1])+(2*quat_vm[3]*quat_vm[2]);
-    R_vm(1,1) = 1-(2*(quat_vm[0])*(quat_vm[0]))-(2*(quat_vm[2])*(quat_vm[2]));
-    R_vm(1,2) = (2*(quat_vm[1])*(quat_vm[2]))-(2*(quat_vm[3])*(quat_vm[0]));
-     R_vm(2,0) = (2*quat_vm[0]*quat_vm[2])-(2*quat_vm[3]*quat_vm[1]);
-     R_vm(2,1) = (2*quat_vm[0]*quat_vm[3])+(2*quat_vm[2]*quat_vm[1]);
-     R_vm(2,2) = 1-(2*(quat_vm[0])*(quat_vm[0]))-(2*(quat_vm[1])*(quat_vm[1]));
+  R_vm(0,0) = 1-(2*(quat_vm[1])*(quat_vm[1]))-(2*(quat_vm[2])*(quat_vm[2]));
+  R_vm(0,1) = (2*quat_vm[0]*quat_vm[1])-(2*quat_vm[3]*quat_vm[2]);
+  R_vm(0,2) = (2*quat_vm[0]*quat_vm[2])+(2*quat_vm[3]*quat_vm[1]);
+  R_vm(1,0) = (2*quat_vm[0]*quat_vm[1])+(2*quat_vm[3]*quat_vm[2]);
+  R_vm(1,1) = 1-(2*(quat_vm[0])*(quat_vm[0]))-(2*(quat_vm[2])*(quat_vm[2]));
+  R_vm(1,2) = (2*(quat_vm[1])*(quat_vm[2]))-(2*(quat_vm[3])*(quat_vm[0]));
+  R_vm(2,0) = (2*quat_vm[0]*quat_vm[2])-(2*quat_vm[3]*quat_vm[1]);
+  R_vm(2,1) = (2*quat_vm[0]*quat_vm[3])+(2*quat_vm[2]*quat_vm[1]);
+  R_vm(2,2) = 1-(2*(quat_vm[0])*(quat_vm[0]))-(2*(quat_vm[1])*(quat_vm[1]));
 
 
-	if(print_imu){
+	if(print_vicon){
     printf("Vicon: roll:[%f], pitch:[%f], yaw:[%f] \n", roll/M_PI*180, pitch/M_PI*180, yaw/M_PI*180);
   }
-	
+
   if(print_x_v){
     cout<<"x_v: "<<x_v<<endl;
   }
@@ -136,7 +136,7 @@ void odroid_node::ctl_callback(){
   Vector3d prev_x_e = x_e;
   x_e = R_ev * x_v;
   v_e = (x_e - prev_x_e)*100;
-	
+
   // W_b << 0,0.0,0.5;
   // psi = 30/180*M_PI; //msg->orientation.x;
   // theta = 30/180*M_PI;//msg->orientation.y;
@@ -362,6 +362,7 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     print_x_v = config.print_x_v;
     print_eX = config.print_eX;
     print_eV = config.print_eV;
+    print_vicon = config.print_vicon;
     // ROS_INFO("Reconfigure Request: %d %f %s %s %d",
     //           config.int_param, config.double_param,
     //           config.str_param.c_str(),

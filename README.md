@@ -24,6 +24,13 @@ To get master rosnode communicate with slaves
   - Use nmap command to debug some of the network communication issues
 
 TODO:
+- set time between odroid and ground station
+  - ```
+    sudo apt-get install chrony
+    sudo apt-get install ntpdate
+    sudo ntpdate ntp.ubuntu.com
+    ```
+  - [link to roswiki](http://wiki.ros.org/turtlebot/Tutorials/indigo/Network%20Configuration)
 - Hardware test
  - Record the experiment with camera rosbag
  - test vicon_bridge with position controller

@@ -140,9 +140,10 @@ void odroid_node::ctl_callback(){
   }
 
   //GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR, kiR_now);
-  GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_eb, del_t_CADS,  kiX_now, kiR_now);
-  if(print_f){print_force();}
 
+  GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_eb, del_t_CADS,  kiX_now, kiR_now);
+
+  if(print_f){print_force();}
   OutputMotor(f,thr);
   if(print_thr){
     cout<<"Throttle motor out: ";

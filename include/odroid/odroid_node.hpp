@@ -9,11 +9,6 @@
 #include <termios.h>
 
 #include "AUX_Functions.h"
-#include "Controllers.h"
-// #include "serial1.h"
-// #include "serial2.h"
-// #include "Xbee.h"
-// #include "PCA9685.h"
 #include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>    /* For O_RDWR */
@@ -29,26 +24,12 @@
 
 using namespace Eigen;
 // Adafruit PCA9685 Servo Informatio
-#define PCA9685_SUBADR1 0x2
-#define PCA9685_SUBADR2 0x3
-#define PCA9685_SUBADR3 0x4
-#define PCA9685_MODE1 0x0
-#define PCA9685_PRESCALE 0xFE
-#define LED0_ON_L 0x6
-#define LED0_ON_H 0x7
-#define LED0_OFF_L 0x8
-#define LED0_OFF_H 0x9
-#define ALLLED_ON_L 0xFA
-#define ALLLED_ON_H 0xFB
-#define ALLLED_OFF_L 0xFC
-#define ALLLED_OFF_H 0xFD
 #define i2c_addr 0x40
 
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/String.h>
 #include <geometry_msgs/TransformStamped.h>
 // #include <iomanip>
-// #include <iostream>
 
 // Dynamic reconfigure includes.
 #include <dynamic_reconfigure/server.h>
@@ -196,9 +177,9 @@ class odroid_node
     void callback(odroid::GainsConfig &config, uint32_t level);
     //! Controller function
     void GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last, double kiR_now);
-
+    // Position controller function
     void GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R, double del_t, double kiX_now, double kiR_now);
-
+    // node handle getter
     ros::NodeHandle getNH(){return n_;};
 
     void motor_command();

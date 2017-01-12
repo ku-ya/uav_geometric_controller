@@ -43,7 +43,7 @@ def readfile(line):
     # W = [data{48}, data{49}, data{50}];
 
 def talker():
-    pub = rospy.Publisher('imu', Imu, queue_size=10)
+    pub = rospy.Publisher('imu/imu', Imu, queue_size=10)
     imuMsg = Imu()
     # imuRawMsg = RazorImu()
     imuMsg.orientation_covariance = [999999 , 0 , 0,
@@ -83,9 +83,9 @@ def talker():
         rate.sleep()
 
 if __name__ == '__main__':
-    data = openfile()
-    readfile(1)
-    # try:
-    #     talker()
-    # except rospy.ROSInterruptException:
-    #     pass
+    # data = openfile()
+    # readfile(1)
+    try:
+        talker()
+    except rospy.ROSInterruptException:
+        pass

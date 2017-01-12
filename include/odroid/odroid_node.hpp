@@ -91,14 +91,15 @@ class odroid_node
     // Measured Values in Vicon Frame
     Vector3d x_v;// position in the Vicon frame
     // VectorXd quat_vm(4);
-    double quat_vm[4];// attitude of markers measured by Vicon system
+    Matrix<double, 4, 1> quat_vm;// attitude of markers measured by Vicon system
 
-    bool IMU_flag, print_imu, print_f, print_thr, print_test_variable, print_xd, print_x_v;
+    bool IMU_flag, print_imu, print_f, print_thr, print_test_variable, print_xd, print_x_v,
+      print_eX, print_eV;
     Matrix<double, 6, 1> f;
     Matrix3d R_bm;
 
     // Integral errors begin at zero
-    Vector3d eiX, eiR;
+    Vector3d eiX, eiR, eiX_last, eiR_last;
     Eigen::Matrix<double, 6, 6> invFMmat;
     // Eigen::Matrix<int, 6, 1> thr;
     // Calibrating and Temporary Saving IMU Data
@@ -196,8 +197,7 @@ class odroid_node
     //! Controller function
     void GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last, double kiR_now);
 
-    void GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R, double del_t,  Vector3d eiX_last, Vector3d eiR_last, double kiX_now, double kiR_now);
-
+    void GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R, double del_t, double kiX_now, double kiR_now);
 
     ros::NodeHandle getNH(){return n_;};
 

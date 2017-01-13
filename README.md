@@ -39,7 +39,10 @@ TODO:
 - Clear unnecessary header files and functions
 - publisher in subscriber callback function and make a node handle within class
 
-20170111 Testing  
+20170111 Testing
+
+1. test attitude controller with vicon
+2. 
 3. test position controller
 
 *Make sure to ROSBAG all the test data!!!*

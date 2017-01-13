@@ -13,6 +13,7 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>    /* For O_RDWR */
 #include <unistd.h>   /* For open(), creat() */
+#include "controller.h"
 
 #include <iostream>
 #include <vector>
@@ -30,7 +31,9 @@ using namespace Eigen;
 #include <std_msgs/String.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <visualization_msgs/Marker.h>
-// #include <iomanip>
+#include <tf/transform_broadcaster.h>
+#include <tf/transform_datatypes.h>
+// #include <tf/Quaternion.h>
 
 // Dynamic reconfigure includes.
 #include <dynamic_reconfigure/server.h>
@@ -42,7 +45,9 @@ class odroid_node
   private:
     ros::NodeHandle n_;
     ros::Publisher pub_;
-    ros::Publisher vis_pub_;
+    ros::Publisher vis_pub_, vis_pub_y, vis_pub_z;
+
+    ros::Time vicon_time;
     //  m = body mass
     //  g = acceleration due to gravity
     //  J = moment of inertial matrix
@@ -131,7 +136,7 @@ class odroid_node
     Vector3d E_angles_save;
 
     // Error Functions
-    Vector3d eX, eV, eR, eW;
+    Vector3d eX, eV, eR, eW, F, M;
     // Control_Nonlinear Outputs:
     //  eX = position error in inertial frame
     //  eV = velocity error in inertial frame

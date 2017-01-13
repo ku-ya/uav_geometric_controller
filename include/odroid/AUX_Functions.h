@@ -22,7 +22,7 @@ void OutputMotor(Eigen::VectorXd f, int thr[6]){
     // Use a scale factor to correct for offset in motor calibration
     // 12.5 V / 11.1 V = 1.1261
     double scale_factor = 1;
-    
+
     for(i = 0; i < 6; i++)
     {
       a = a_values[i];
@@ -38,100 +38,6 @@ void OutputMotor(Eigen::VectorXd f, int thr[6]){
             thr[i]=0.0;
     }
 }
-
-// Operational Functions
-// Function to read keypad commands on the Gumstix
-int getch(void)
-{
-    struct termios oldattr, newattr;
-    int ch;
-    tcgetattr( STDIN_FILENO, &oldattr );
-    newattr = oldattr;
-    newattr.c_lflag &= ~( ICANON | ECHO );
-    tcsetattr( STDIN_FILENO, TCSANOW, &newattr );
-    ch = getchar();
-    tcsetattr( STDIN_FILENO, TCSANOW, &oldattr );
-    return ch;
-}
-
-// Matrix Operations
-void reshape_3by3_to_9by1(double Mat3by3[3][3], double Vec9by1[9])
-{
-    Vec9by1[0] = Mat3by3[0][0];
-    Vec9by1[1] = Mat3by3[1][0];
-    Vec9by1[2] = Mat3by3[2][0];
-    Vec9by1[3] = Mat3by3[0][1];
-    Vec9by1[4] = Mat3by3[1][1];
-    Vec9by1[5] = Mat3by3[2][1];
-    Vec9by1[6] = Mat3by3[0][2];
-    Vec9by1[7] = Mat3by3[1][2];
-    Vec9by1[8] = Mat3by3[2][2];
-}
-
-void reshape_9by1_to_3by3(double Vec9by1[9], double Mat3by3[3][3])
-{
-    Mat3by3[0][0] = Vec9by1[0];
-    Mat3by3[1][0] = Vec9by1[1];
-    Mat3by3[2][0] = Vec9by1[2];
-    Mat3by3[0][1] = Vec9by1[3];
-    Mat3by3[1][1] = Vec9by1[4];
-    Mat3by3[2][1] = Vec9by1[5];
-    Mat3by3[0][2] = Vec9by1[6];
-    Mat3by3[1][2] = Vec9by1[7];
-    Mat3by3[2][2] = Vec9by1[8];
-}
-
-void norm_vec3(double a[3], double *norm_a)
-{
-    *norm_a = sqrt(a[0]*a[0]+a[1]*a[1]+a[2]*a[2]);
-}
-
-
-// Hat map
-void hat(double x[3], double xhat[3][3])
-{// Obtains 3x3 skew-symmetric matrix from 3x1 vector
-    xhat[0][0] = 0;
-    xhat[0][1] = -x[2];
-    xhat[0][2] = x[1];
-    xhat[1][0] = x[2];
-    xhat[1][1] = 0;
-    xhat[1][2] = -x[0];
-    xhat[2][0] = -x[1];
-    xhat[2][1] = x[0];
-    xhat[2][2] = 0;
-}
-
-// Vee map
-void vee(double xhat[3][3], double x[3])
-{// Obtains 3x1 vector from its skew-symmetric 3x3 matrix
-    x[0] = xhat[2][1];
-    x[1] = xhat[0][2];
-    x[2] = xhat[1][0];
-}
-
-
-double skew (double xx[3], double skewx[3][3])
-{// Obtains 3x3 skew-symmetric matrix from 3x1 vector
-    skewx[0][0] = 0;
-    skewx[0][1] = -xx[2];
-    skewx[0][2] = xx[1];
-    skewx[1][0] = xx[2];
-    skewx[1][1] = 0;
-    skewx[1][2] = -xx[0];
-    skewx[2][0] = -xx[1];
-    skewx[2][1] = xx[0];
-    skewx[2][2] = 0;
-    return 0;
-}
-
-double invskew (double skewx[3][3], double xx[3])
-{// Obtains 3x1 vector from its skew-symmetric 3x3 matrix
-    xx[0] = skewx[2][1];
-    xx[1] = skewx[0][2];
-    xx[2] = skewx[1][0];
-    return 0;
-}
-
 
 void eigen_skew (Eigen::Vector3d&  x, Eigen::Matrix3d& skewM)
 {// Obtains 3x3 skew-symmetric matrix from 3x1 vector
@@ -168,54 +74,6 @@ void euler_Rvm(Eigen::Matrix3d& R_vm, Eigen::Vector3d& angle){
     R_vm(2,2) = cos(phi)*cos(theta);
 }
 
-//double expmso3 (double r[3], double R[3][3])
-//{// Matrix exponential to obtain rotation matrix transition
-//    double nr = 0.0,Sr[3][3],Sr2[3][3],ff1=0.0,ff2=0.0;
-//    nr = sqrt((r[0]*r[0])+(r[1]*r[1])+(r[2]*r[2]));
-
-//    if (nr == 0)
-//    {
-//        R[0][0] = 1;
-//        R[0][1] = 0;
-//        R[0][2] = 0;
-//        R[1][0] = 0;
-//        R[1][1] = 1;
-//        R[1][2] = 0;
-//        R[2][0] = 0;
-//        R[2][1] = 0;
-//        R[2][2] = 1;
-//    }
-//    else
-//    {
-//        Sr[0][0] = 0.0;
-//        Sr[0][1] = -r[2];
-//        Sr[0][2] = r[1];
-//        Sr[1][0] = r[2];
-//        Sr[1][1] = 0.0;
-//        Sr[1][2] = -r[0];
-//        Sr[2][0] = -r[1];
-//        Sr[2][1] = r[0];
-//        Sr[2][2] = 0.0;
-
-//        Matrix_multipication(Sr, Sr, Sr2);
-
-//        ff1 = sin(nr)/nr;
-//        ff2 = (2*sin(0.5*nr)*sin(0.5*nr))/(nr*nr);
-
-//        R[0][0] = 1+ff1*Sr[0][0]+ff2*Sr2[0][0];
-//        R[0][1] = ff1*Sr[0][1]+ff2*Sr2[0][1];
-//        R[0][2] = ff1*Sr[0][2]+ff2*Sr2[0][2];
-//        R[1][0] = ff1*Sr[1][0]+ff2*Sr2[1][0];
-//        R[1][1] = 1+ff1*Sr[1][1]+ff2*Sr2[1][1];
-//        R[1][2] = ff1*Sr[1][2]+ff2*Sr2[1][2];
-//        R[2][0] = ff1*Sr[2][0]+ff2*Sr2[2][0];
-//        R[2][1] = ff1*Sr[2][1]+ff2*Sr2[2][1];
-//        R[2][2] = 1+ff1*Sr[2][2]+ff2*Sr2[2][2];
-//    }
-//    return 0;
-//}
-
-// Filters
 
 void LowPassRCFilter(
         double x_noisy[3], double x_last[3], double dt, double RC,// Input
@@ -261,20 +119,7 @@ void SmoothSinusoidalCurveBtwnStationaryPts(
     // return;
 }
 
-//void matexp_to_RdWdWddot(double a, double theta, double thetadot, double thetaddot,
-//                         double Rd[3][3], double Wd[3], Wddot[3])
-//{// Attitude trajectory given axis and angle
-//    Rd = expm(hat(a)*theta);
-//    Rddot = hat(a)*expm(hat(a)*theta)*thetadot;
-//    transpose(Rd, trpRd);
-//    Wd = vee(trpRd*Rddot);
-//    Rdddot = hat(a)^2*expm(hat(a)*theta)*thetadot^2+hat(a)*expm(hat(a)*theta)*thetaddot;
-//    Wddot = Rd*vee(Rdddot-Rddot*hat(Wd));
-//}
-
-
 //  Euler Angles to SO(3) (a variety of conventions)
-
 // void EAngles123_to_R(double angles[3], double R[3][3]){
 //     double phi, theta, psi;
 //     phi = angles[0];

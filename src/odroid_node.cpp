@@ -1,8 +1,6 @@
 #include <odroid/odroid_node.hpp>
-#include <tf/transform_datatypes.h>
 // User header files
 
-#include <math.h>
 using namespace std;
 using namespace Eigen;
 odroid_node::odroid_node(){
@@ -34,6 +32,8 @@ odroid_node::odroid_node(){
 
   pub_ = n_.advertise<std_msgs::String>("/motor_command",1);
   vis_pub_ = n_.advertise<visualization_msgs::Marker>("/force",1);
+  vis_pub_y = n_.advertise<visualization_msgs::Marker>("/force_y",1);
+  vis_pub_z = n_.advertise<visualization_msgs::Marker>("/force_z",1);
   ROS_INFO("Odroid node initialized");
 }
 odroid_node::~odroid_node(){};
@@ -79,7 +79,7 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
 
 // vicon information callback
 void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg){
-
+  vicon_time = msg->header.stamp;
   x_v(0) = msg->transform.translation.x;
   x_v(1) = msg->transform.translation.y;
   x_v(2) = msg->transform.translation.z;
@@ -97,6 +97,19 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   if(print_x_v){
     cout<<"x_v: "<<x_v.transpose()<<endl;
   }
+  static tf::TransformBroadcaster br;
+  tf::Transform transform;
+  transform.setOrigin( tf::Vector3(x_v(0),x_v(1), x_v(2)));
+  transform.setRotation(q);
+  br.sendTransform(tf::StampedTransform(transform, vicon_time, "vicon", "base_link"));
+  br.sendTransform(tf::StampedTransform(transform, vicon_time, "vicon", "imu"));
+
+  Vector3d temp = M;
+  temp = temp.normalized();
+  tf::Quaternion q1;
+  q1.setEuler(temp(0),temp(1),temp(2));
+  transform.setRotation(q1);
+  br.sendTransform(tf::StampedTransform(transform, vicon_time, "vicon", "moment"));
 
 }
 
@@ -174,29 +187,52 @@ void odroid_node::ctl_callback(){
     }
 
   visualization_msgs::Marker marker;
-  marker.header.frame_id = "world";
-  marker.header.stamp = ros::Time();
+  marker.header.frame_id = "base_link";
+  marker.header.stamp = vicon_time;
   marker.ns = "odroid";
   marker.id = 0;
   marker.type = visualization_msgs::Marker::ARROW;
   marker.action = visualization_msgs::Marker::ADD;
-  marker.pose.position.x = 1;
-  marker.pose.position.y = 1;
-  marker.pose.position.z = 1;
-  marker.pose.orientation.x = 0.0;
-  marker.pose.orientation.y = 0.0;
-  marker.pose.orientation.z = 0.0;
-  marker.pose.orientation.w = 1.0;
-  marker.scale.x = 1;
-  marker.scale.y = 0.1;
-  marker.scale.z = 0.1;
+  marker.pose.position.x = 0;
+  marker.pose.position.y = 0;
+  marker.pose.position.z = 0;
+  marker.pose.orientation.x = 0;
+  marker.pose.orientation.y = 0;
+  marker.pose.orientation.z = 0;
+  marker.pose.orientation.w = 1;
+  marker.scale.x = 0.5 * F(0);
+  marker.scale.y = 0.05;
+  marker.scale.z = 0.05;
   marker.color.a = 1.0; // Don't forget to set the alpha!
-  marker.color.r = 0.0;
-  marker.color.g = 1.0;
+  marker.color.r = 1.0;
+  marker.color.g = 0.0;
   marker.color.b = 0.0;
   //only if using a MESH_RESOURCE marker type:
   // marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
-  vis_pub_.publish( marker );
+  vis_pub_.publish( marker);
+
+  marker.pose.orientation.x = 0;
+  marker.pose.orientation.y = 0;
+  marker.pose.orientation.z = 0.707;
+  marker.pose.orientation.w = 0.707;
+  marker.scale.x = - 0.5 * F(1);
+  marker.color.r = 0.0;
+  marker.color.g = 1.0;
+  marker.color.b = 0.0;
+
+  vis_pub_y.publish( marker);
+
+  marker.pose.orientation.x = 0;
+  marker.pose.orientation.y = 0.707;
+  marker.pose.orientation.z = 0.0;
+  marker.pose.orientation.w = 0.707;
+  marker.scale.x = - 0.5 * (F(2) + m*g);
+  marker.color.r = 0.0;
+  marker.color.g = 0.0;
+  marker.color.b = 1.0;
+
+  vis_pub_z.publish( marker);
+
 
 
   // motor_command();
@@ -309,7 +345,7 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     // MATLAB: F = R'*(-kx*ex-kv*ev-Ki*eiX-m*g*e3+m*xd_2dot);
     Vector3d A = - kx*eX - kv*eV - kiX*eiX + m*xd_ddot + Vector3d(0,0,-m*g);
     //cout<<"A\n"<<A.transpose()<<endl;
-    Vector3d F = R.transpose() * A;
+    F = R.transpose() * A;
 
     if(print_F){cout<<"F: "<<F.transpose()<<endl;}
     //cout<<"F\n"<<F.transpose()<<endl;
@@ -318,7 +354,7 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     Matrix3d What;
     eigen_skew(W, What);
     //cout<<"What\n"<<What<<endl;
-    Vector3d M = -kR * eR - kW * eW-kiR * eiR + What * J * W + J * (R.transpose() * Rd * Wddot - What * R.transpose() * Rd * Wd);
+    M = -kR * eR - kW * eW-kiR * eiR + What * J * W + J * (R.transpose() * Rd * Wddot - What * R.transpose() * Rd * Wd);
     if(print_M){cout<<"M: "<<M.transpose()<<endl;}
     //cout<<"M\n"<<M.transpose()<<endl;
     // M[0] = -kR*eR[0]-kW*eW[0]-kiR_now*eiR[0]+What_J_W[0]+J_Jmult[0];
@@ -403,7 +439,7 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     MotorWarmup = config.MotorWarmup;
     xd(0) = config.x;
     xd(1) = config.y;
-    xd(2) = config.z;
+    xd(2) = - config.z;
     print_xd = config.print_xd;
     print_x_v = config.print_x_v;
     print_eX = config.print_eX;

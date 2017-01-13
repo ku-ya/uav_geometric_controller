@@ -33,6 +33,7 @@ odroid_node::odroid_node(){
 
 
   pub_ = n_.advertise<std_msgs::String>("/motor_command",1);
+  vis_pub_ = n_.advertise<visualization_msgs::Marker>("/force",1);
   ROS_INFO("Odroid node initialized");
 }
 odroid_node::~odroid_node(){};
@@ -171,6 +172,31 @@ void odroid_node::ctl_callback(){
     for(int i = 0;i<6;i++){
       cout<<thr[i]<<", ";} cout<<endl;
     }
+
+  visualization_msgs::Marker marker;
+  marker.header.frame_id = "world";
+  marker.header.stamp = ros::Time();
+  marker.ns = "odroid";
+  marker.id = 0;
+  marker.type = visualization_msgs::Marker::ARROW;
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.pose.position.x = 1;
+  marker.pose.position.y = 1;
+  marker.pose.position.z = 1;
+  marker.pose.orientation.x = 0.0;
+  marker.pose.orientation.y = 0.0;
+  marker.pose.orientation.z = 0.0;
+  marker.pose.orientation.w = 1.0;
+  marker.scale.x = 1;
+  marker.scale.y = 0.1;
+  marker.scale.z = 0.1;
+  marker.color.a = 1.0; // Don't forget to set the alpha!
+  marker.color.r = 0.0;
+  marker.color.g = 1.0;
+  marker.color.b = 0.0;
+  //only if using a MESH_RESOURCE marker type:
+  // marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
+  vis_pub_.publish( marker );
 
 
   // motor_command();
@@ -405,7 +431,7 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     server.setCallback(dyn_serv);
 
     // open communication through I2C
-    odnode.open_I2C();
+    // odnode.open_I2C();
 
     ros::Rate loop_rate(100); // rate for the node loop
     // int count = 0;

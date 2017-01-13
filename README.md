@@ -42,6 +42,8 @@ TODO:
 20170111 Testing  
 3. test position controller
 
+*Make sure to ROSBAG all the test data!!!*
+
 Check:
 - If the compiling error appear on Odroid, check rospkg, catkin_pkg installation. Python distribution change to conda caused the issue. 01/07/2017
 - compiling with anaconda python https://gist.github.com/mitmul/538315c68c2069f16f11

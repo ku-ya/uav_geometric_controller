@@ -29,6 +29,7 @@ using namespace Eigen;
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/String.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <visualization_msgs/Marker.h>
 // #include <iomanip>
 
 // Dynamic reconfigure includes.
@@ -41,6 +42,7 @@ class odroid_node
   private:
     ros::NodeHandle n_;
     ros::Publisher pub_;
+    ros::Publisher vis_pub_;
     //  m = body mass
     //  g = acceleration due to gravity
     //  J = moment of inertial matrix
@@ -182,6 +184,7 @@ class odroid_node
     void GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R, double del_t);
     // node handle getter
     ros::NodeHandle getNH(){return n_;};
+
 
     void motor_command();
     void open_I2C();

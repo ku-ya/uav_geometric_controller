@@ -73,7 +73,7 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
 
   if(print_imu){
-   printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", psi, theta, phi);
+   printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", W_raw(0), W_raw(1), W_raw(2));
   }
 }
 
@@ -128,7 +128,7 @@ void odroid_node::ctl_callback(){
 
 
 
-  cout<<"quat\n"<<quat_vm.transpose()<<endl;
+  // cout<<"quat\n"<<quat_vm.transpose()<<endl;
   R_vm(0,0) = 1-(2*(quat_vm[1])*(quat_vm[1]))-(2*(quat_vm[2])*(quat_vm[2]));
   R_vm(0,1) = (2*quat_vm[0]*quat_vm[1])-(2*quat_vm[3]*quat_vm[2]);
   R_vm(0,2) = (2*quat_vm[0]*quat_vm[2])+(2*quat_vm[3]*quat_vm[1]);
@@ -138,18 +138,18 @@ void odroid_node::ctl_callback(){
   R_vm(2,0) = (2*quat_vm[0]*quat_vm[2])-(2*quat_vm[3]*quat_vm[1]);
   R_vm(2,1) = (2*quat_vm[0]*quat_vm[3])+(2*quat_vm[2]*quat_vm[1]);
   R_vm(2,2) = 1-(2*(quat_vm[0])*(quat_vm[0]))-(2*(quat_vm[1])*(quat_vm[1]));
-  cout<<"R_vm\n"<<R_vm<<endl;
+  // cout<<"R_vm\n"<<R_vm<<endl;
   // W_b << 0,0.0,0.5;
   // psi = 30/180*M_PI; //msg->orientation.x;
   // theta = 30/180*M_PI;//msg->orientation.y;
   // phi = 30/180*M_PI; //msg->orientation.z;
-  // cout<<"psi: "<<psi<<" theta: "<<theta<<" phi: "<<phi<<endl;
+  // //cout<<"psi: "<<psi<<" theta: "<<theta<<" phi: "<<phi<<endl;
   // Eigen::Vector3d angle(roll,pitch,yaw);
   //euler_Rvm(R_vm, angle);
 
   R_eb = R_ev * R_vm * R_bm;
-
-  cout<<"R_eb\n"<<R_eb<<endl;
+  if(print_R_eb){cout<<"R_eb: "<<R_eb<<endl;}
+  //cout<<"R_eb\n"<<R_eb<<endl;
 //cout<<"yaw"<<atan2(-R_eb(2,0),R_eb(0,0))<<endl;
 //cout<<"roll"<<atan2(-R_eb(1,2),R_eb(1,1))<<endl;
 //cout<<"pitch"<<asin(R_eb(1,0))<<endl;
@@ -275,49 +275,52 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
   {
     // Calculate eX (position error in inertial frame)
     Vector3d eX = x_e - xd;
-    cout<<"eX\n"<<eX.transpose()<<endl;
+    //cout<<"eX\n"<<eX.transpose()<<endl;
     if(print_eX){cout<<"eX: "<<eX.transpose()<<endl;}
     // Calculate eV (velocity error in inertial frame)
     Vector3d eV = v_e - xd_dot;
-    cout<<"eV\n"<<eV.transpose()<<endl;
+    //cout<<"eV\n"<<eV.transpose()<<endl;
     if(print_eV){cout<<"eV: "<<eV.transpose()<<endl;}
     // Calculate eR (rotation matrix error)
     // Take 9 elements of difference
     Matrix3d inside_vee_3by3 = Rd.transpose() * R - R.transpose() * Rd;
-    cout<<"inside_vee_3x3\n"<<inside_vee_3by3<<endl;
+    //cout<<"inside_vee_3x3\n"<<inside_vee_3by3<<endl;
     Vector3d vee_3by1;
     eigen_invskew(inside_vee_3by3, vee_3by1);// 3x1
-    cout<<"vee_3by1\n"<<vee_3by1.transpose()<<endl;
+    //cout<<"vee_3by1\n"<<vee_3by1.transpose()<<endl;
     Vector3d eR = 0.5 * vee_3by1;
-    cout<<"eR\n"<<eR.transpose()<<endl;
+    //cout<<"eR\n"<<eR.transpose()<<endl;
 	if(print_test_variable){
       printf("eR: %f | %f | %f \n", eR(0), eR(1), eR(2));
     }
     // Calculate eW (angular velocity error in body-fixed frame)
     Vector3d eW =  W -  R.transpose() * Rd * Wd;
-    cout<<"eW\n"<<eW.transpose()<<endl;
+    //cout<<"eW\n"<<eW.transpose()<<endl;
     // Update integral term of control
     // Position:
     eiX = eiX_last + del_t * eX;
-    cout<<"eiX\n"<<eiX<<endl;
+    //cout<<"eiX\n"<<eiX<<endl;
     eiX_last = eiX;
     // Attitude:
     eiR = eiR_last + del_t * eR;// (c2*eR + eW);
-    cout<<"eiR\n"<<eiR<<endl;
+    //cout<<"eiR\n"<<eiR<<endl;
     eiR_last = eiR;
     // Calculate 3 DOFs of F (controlled force in body-fixed frame)
     // MATLAB: F = R'*(-kx*ex-kv*ev-Ki*eiX-m*g*e3+m*xd_2dot);
     Vector3d A = - kx*eX - kv*eV - kiX*eiX + m*xd_ddot + Vector3d(0,0,-m*g);
-    cout<<"A\n"<<A.transpose()<<endl;
+    //cout<<"A\n"<<A.transpose()<<endl;
     Vector3d F = R.transpose() * A;
-    cout<<"F\n"<<F.transpose()<<endl;
+
+    if(print_F){cout<<"F: "<<F.transpose()<<endl;}
+    //cout<<"F\n"<<F.transpose()<<endl;
     // Calculate 3 DOFs of M (controlled moment in body-fixed frame)
     // MATLAB: M = -kR*eR-kW*eW-kRi*eiR+cross(W,J*W)+J*(R'*Rd*Wddot-hat(W)*R'*Rd*Wd);
     Matrix3d What;
     eigen_skew(W, What);
-    cout<<"What\n"<<What<<endl;
+    //cout<<"What\n"<<What<<endl;
     Vector3d M = -kR * eR - kW * eW-kiR * eiR + What * J * W + J * (R.transpose() * Rd * Wddot - What * R.transpose() * Rd * Wd);
-    cout<<"M\n"<<M.transpose()<<endl;
+    if(print_M){cout<<"M: "<<M.transpose()<<endl;}
+    //cout<<"M\n"<<M.transpose()<<endl;
     // M[0] = -kR*eR[0]-kW*eW[0]-kiR_now*eiR[0]+What_J_W[0]+J_Jmult[0];
     //  // Convert forces & moments to f_i for i = 1:6 (forces of i-th prop)
     Matrix<double, 6, 1> FM;
@@ -327,7 +330,7 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     FM[3] = M[0];
     FM[4] = M[1];
     FM[5] = M[2];
-    cout<<"FM\n"<<FM.transpose()<<endl;
+    //cout<<"FM\n"<<FM.transpose()<<endl;
 
     double kxeX[3], kveV[3], kiXeiX[3], kReR[3], kWeW[3], kiReiR[3];
     for(int i = 0; i < 3; i++){
@@ -339,7 +342,7 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
       kiReiR[i] = kiR*eiR[i];
     }
     f = invFMmat * FM;
-    cout<<"f\n"<<f.transpose()<<endl;
+    //cout<<"f\n"<<f.transpose()<<endl;
 
   }
 
@@ -406,6 +409,9 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     print_eX = config.print_eX;
     print_eV = config.print_eV;
     print_vicon = config.print_vicon;
+    print_M = config.print_M;
+    print_F = config.print_F;
+    print_R_eb = config.print_R_eb;
     // ROS_INFO("Reconfigure Request: %d %f %s %s %d",
     //           config.int_param, config.double_param,
     //           config.str_param.c_str(),

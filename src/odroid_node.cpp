@@ -72,7 +72,7 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
 
   if(print_imu){
-   printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", psi, theta, phi);
+   printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", W_raw(0), W_raw(1), W_raw(2));
   }
 }
 
@@ -147,7 +147,7 @@ void odroid_node::ctl_callback(){
   //euler_Rvm(R_vm, angle);
 
   R_eb = R_ev * R_vm * R_bm;
-
+  if(print_R_eb){cout<<"R_eb: "<<R_eb<<endl;}
   //cout<<"R_eb\n"<<R_eb<<endl;
 //cout<<"yaw"<<atan2(-R_eb(2,0),R_eb(0,0))<<endl;
 //cout<<"roll"<<atan2(-R_eb(1,2),R_eb(1,1))<<endl;
@@ -284,6 +284,8 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     Vector3d A = - kx*eX - kv*eV - kiX*eiX + m*xd_ddot + Vector3d(0,0,-m*g);
     //cout<<"A\n"<<A.transpose()<<endl;
     Vector3d F = R.transpose() * A;
+
+    if(print_F){cout<<"F: "<<F.transpose()<<endl;}
     //cout<<"F\n"<<F.transpose()<<endl;
     // Calculate 3 DOFs of M (controlled moment in body-fixed frame)
     // MATLAB: M = -kR*eR-kW*eW-kRi*eiR+cross(W,J*W)+J*(R'*Rd*Wddot-hat(W)*R'*Rd*Wd);
@@ -291,6 +293,7 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     eigen_skew(W, What);
     //cout<<"What\n"<<What<<endl;
     Vector3d M = -kR * eR - kW * eW-kiR * eiR + What * J * W + J * (R.transpose() * Rd * Wddot - What * R.transpose() * Rd * Wd);
+    if(print_M){cout<<"M: "<<M.transpose()<<endl;}
     //cout<<"M\n"<<M.transpose()<<endl;
     // M[0] = -kR*eR[0]-kW*eW[0]-kiR_now*eiR[0]+What_J_W[0]+J_Jmult[0];
     //  // Convert forces & moments to f_i for i = 1:6 (forces of i-th prop)
@@ -380,6 +383,9 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     print_eX = config.print_eX;
     print_eV = config.print_eV;
     print_vicon = config.print_vicon;
+    print_M = config.print_M;
+    print_F = config.print_F;
+    print_R_eb = config.print_R_eb;
     // ROS_INFO("Reconfigure Request: %d %f %s %s %d",
     //           config.int_param, config.double_param,
     //           config.str_param.c_str(),

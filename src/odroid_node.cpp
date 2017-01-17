@@ -31,7 +31,6 @@ odroid_node::odroid_node(){
   1.1154,   -0.6440,   -0.1725,    0.9641,   -0.3420,    0.7579,
   1.1154,    0.6440,    0.1725,   -0.9641,   -0.7712,    1.7092;
 
-
   pub_ = n_.advertise<std_msgs::String>("/motor_command",1);
   vis_pub_ = n_.advertise<visualization_msgs::Marker>("/force",1);
   vis_pub_y = n_.advertise<visualization_msgs::Marker>("/force_y",1);
@@ -56,20 +55,7 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   W_raw(1) = msg->angular_velocity.y;
   W_raw(2) = msg->angular_velocity.z;
   W_b = W_raw;
-  // tf::Quaternion q(msg->orientation.x, msg->orientation.y, msg->orientation.z, msg->orientation.w);
-  // tf::Matrix3x3 m(q);
-  // double roll, pitch, yaw;
-  // m.getRPY(roll, pitch, yaw);
-  // roll = 30/180*M_PI;
-  // pitch = 0;
-  // yaw = 0;
-  // psi = yaw; //msg->orientation.x;
-  // theta = pitch;//msg->orientation.y;
-  // phi = roll; //msg->orientation.z;
-  // cout<<"psi: "<<psi<<" theta: "<<theta<<" phi: "<<phi<<endl;
-  // euler_Rvm(R_vm,Eigen::Vector3d(psi,theta,phi));
-  // R_eb = R_vm.transpose();
-  // ROS_INFO("Imu Orientation x: [%f], y: [%f], z: [%f], w: [%f]", msg->orientation.x,msg->orientation.y,msg->orientation.z,msg->orientation.w);
+
   if(!IMU_flag){ ROS_INFO("IMU ready");}
   IMU_flag = true;
   if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
@@ -91,7 +77,6 @@ void odroid_node::imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu, c
   if(print_imu){
    printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", W_raw(0), W_raw(1), W_raw(2));
   }
-
 
   x_v(0) = msgVicon->transform.translation.x;
   x_v(1) = msgVicon->transform.translation.y;

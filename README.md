@@ -16,6 +16,9 @@ Odroid node class implementation for ROS
   - install i2c-dev for linux
 
 
+tag V0.2
+- Synchronized message from IMU and Vicon for sensor callback
+
 To get master rosnode communicate with slaves
   - `hostname -I`, to check host name for roscore
   - `export ROS_MASTER_URI=http://hostname:11311/`, master IP setting
@@ -42,7 +45,7 @@ TODO:
 20170111 Testing
 
 1. test attitude controller with vicon
-2. 
+2.
 3. test position controller
 
 *Make sure to ROSBAG all the test data!!!*

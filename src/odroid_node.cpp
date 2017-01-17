@@ -6,6 +6,7 @@ using namespace Eigen;
 using namespace message_filters;
 
 odroid_node::odroid_node(){
+  del_t = 0.01;
   m = 1.25; g = 9.81;
   J <<  55710.50413e-7, 617.6577e-7, -250.2846e-7,
   617.6577e-7,  55757.4605e-7, 100.6760e-7,
@@ -212,7 +213,7 @@ void odroid_node::ctl_callback(){
 
   //GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR);
 
-  GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_eb, del_t_CADS);
+GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_eb);
 
   if(print_f){print_force();}
   OutputMotor(f,thr);
@@ -343,7 +344,7 @@ void odroid_node::open_I2C(){
   printf("All motors are working.\n");
 }
 
-void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R, double del_t)
+void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R)
   {
     // Calculate eX (position error in inertial frame)
     Vector3d eX = x_e - xd;
@@ -364,61 +365,61 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     //cout<<"eR\n"<<eR.transpose()<<endl;
 	if(print_test_variable){
       printf("eR: %f | %f | %f \n", eR(0), eR(1), eR(2));
-    }
-    // Calculate eW (angular velocity error in body-fixed frame)
-    Vector3d eW =  W -  R.transpose() * Rd * Wd;
-    //cout<<"eW\n"<<eW.transpose()<<endl;
-    // Update integral term of control
-    // Position:
-    eiX = eiX_last + del_t * eX;
-    //cout<<"eiX\n"<<eiX<<endl;
-    eiX_last = eiX;
-    // Attitude:
-    eiR = eiR_last + del_t * eR;// (c2*eR + eW);
-    //cout<<"eiR\n"<<eiR<<endl;
-    eiR_last = eiR;
-    // Calculate 3 DOFs of F (controlled force in body-fixed frame)
-    // MATLAB: F = R'*(-kx*ex-kv*ev-Ki*eiX-m*g*e3+m*xd_2dot);
-    Vector3d A = - kx*eX - kv*eV - kiX*eiX + m*xd_ddot + Vector3d(0,0,-m*g);
-    //cout<<"A\n"<<A.transpose()<<endl;
-    F = R.transpose() * A;
+  }
+  // Calculate eW (angular velocity error in body-fixed frame)
+  Vector3d eW =  W -  R.transpose() * Rd * Wd;
+  //cout<<"eW\n"<<eW.transpose()<<endl;
+  // Update integral term of control
+  // Position:
+  eiX = eiX_last + del_t * eX;
+  //cout<<"eiX\n"<<eiX<<endl;
+  eiX_last = eiX;
+  // Attitude:
+  eiR = eiR_last + del_t * eR;// (c2*eR + eW);
+  //cout<<"eiR\n"<<eiR<<endl;
+  eiR_last = eiR;
+  // Calculate 3 DOFs of F (controlled force in body-fixed frame)
+  // MATLAB: F = R'*(-kx*ex-kv*ev-Ki*eiX-m*g*e3+m*xd_2dot);
+  Vector3d A = - kx*eX - kv*eV - kiX*eiX + m*xd_ddot + Vector3d(0,0,-m*g);
+  //cout<<"A\n"<<A.transpose()<<endl;
+  F = R.transpose() * A;
 
-    if(print_F){cout<<"F: "<<F.transpose()<<endl;}
-    //cout<<"F\n"<<F.transpose()<<endl;
-    // Calculate 3 DOFs of M (controlled moment in body-fixed frame)
-    // MATLAB: M = -kR*eR-kW*eW-kRi*eiR+cross(W,J*W)+J*(R'*Rd*Wddot-hat(W)*R'*Rd*Wd);
-    Matrix3d What;
-    eigen_skew(W, What);
-    //cout<<"What\n"<<What<<endl;
-    M = -kR * eR - kW * eW-kiR * eiR + What * J * W + J * (R.transpose() * Rd * Wddot - What * R.transpose() * Rd * Wd);
-    if(print_M){cout<<"M: "<<M.transpose()<<endl;}
-    //cout<<"M\n"<<M.transpose()<<endl;
-    // M[0] = -kR*eR[0]-kW*eW[0]-kiR_now*eiR[0]+What_J_W[0]+J_Jmult[0];
-    //  // Convert forces & moments to f_i for i = 1:6 (forces of i-th prop)
-    Matrix<double, 6, 1> FM;
-    FM[0] = F[0];
-    FM[1] = F[1];
-    FM[2] = F[2];
-    FM[3] = M[0];
-    FM[4] = M[1];
-    FM[5] = M[2];
+  if(print_F){cout<<"F: "<<F.transpose()<<endl;}
+  //cout<<"F\n"<<F.transpose()<<endl;
+  // Calculate 3 DOFs of M (controlled moment in body-fixed frame)
+  // MATLAB: M = -kR*eR-kW*eW-kRi*eiR+cross(W,J*W)+J*(R'*Rd*Wddot-hat(W)*R'*Rd*Wd);
+  Matrix3d What;
+  eigen_skew(W, What);
+  //cout<<"What\n"<<What<<endl;
+  M = -kR * eR - kW * eW-kiR * eiR + What * J * W + J * (R.transpose() * Rd * Wddot - What * R.transpose() * Rd * Wd);
+  if(print_M){cout<<"M: "<<M.transpose()<<endl;}
+  //cout<<"M\n"<<M.transpose()<<endl;
+  // M[0] = -kR*eR[0]-kW*eW[0]-kiR_now*eiR[0]+What_J_W[0]+J_Jmult[0];
+ // Convert forces & moments to f_i for i = 1:6 (forces of i-th prop)
+  Matrix<double, 6, 1> FM;
+  FM[0] = F[0];
+  FM[1] = F[1];
+  FM[2] = F[2];
+  FM[3] = M[0];
+  FM[4] = M[1];
+  FM[5] = M[2];
     //cout<<"FM\n"<<FM.transpose()<<endl;
 
-    double kxeX[3], kveV[3], kiXeiX[3], kReR[3], kWeW[3], kiReiR[3];
-    for(int i = 0; i < 3; i++){
-      kxeX[i] = kx*eX[i];
-      kveV[i] = kv*eV[i];
-      kiXeiX[i] = kiX*eiX[i];
-      kReR[i] = kR*eR[i];
-      kWeW[i] = kW*eW[i];
-      kiReiR[i] = kiR*eiR[i];
-    }
-    f = invFMmat * FM;
-    //cout<<"f\n"<<f.transpose()<<endl;
+  double kxeX[3], kveV[3], kiXeiX[3], kReR[3], kWeW[3], kiReiR[3];
+  for(int i = 0; i < 3; i++){
+    kxeX[i] = kx*eX[i];
+    kveV[i] = kv*eV[i];
+    kiXeiX[i] = kiX*eiX[i];
+    kReR[i] = kR*eR[i];
+    kWeW[i] = kW*eW[i];
+    kiReiR[i] = kiR*eiR[i];
+  }
+  f = invFMmat * FM;
+  //cout<<"f\n"<<f.transpose()<<endl;
 
   }
 
-  void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last){
+void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, VectorXd eiR_last){
   Matrix3d Rd = MatrixXd::Identity(3,3);
   Vector3d e3(0,0,1), b3(0,0,1), vee_3by1;
   double l = 0;//.05;// length of rod connecting to the spherical joint
@@ -449,81 +450,73 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
   VectorXd FM(6);
   FM << 0.0, 0.0, F_req, M(0), M(1), M(2);
   f = invFMmat * FM;
+}
+
+void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
+  ROS_INFO("Reconfigure Request: Update");
+  print_f = config.print_f;
+  print_imu = config.print_imu;
+  print_thr = config.print_thr;
+  print_test_variable = config.print_test_variable;
+  // Attitude controller gains
+  kR = config.kR;
+  kW = config.kW;
+
+  if(MOTOR_ON && !MotorWarmup){
+    kiR = config.kiR;
+    kiX = config.kiX;
   }
+  // Position controller gains
+  kx = config.kx;
+  kv = config.kv;
+  MOTOR_ON = config.Motor;
+  MotorWarmup = config.MotorWarmup;
+  xd(0) = config.x;
+  xd(1) = config.y;
+  xd(2) = - config.z;
+  print_xd = config.print_xd;
+  print_x_v = config.print_x_v;
+  print_eX = config.print_eX;
+  print_eV = config.print_eV;
+  print_vicon = config.print_vicon;
+  print_M = config.print_M;
+  print_F = config.print_F;
+  print_R_eb = config.print_R_eb;
+}
 
-  void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
-    ROS_INFO("Reconfigure Request: %f %s %s",
-    config.kR,
-    config.print_imu?"True":"False",
-    config.Motor?"True":"False");
-    print_f = config.print_f;
-    print_imu = config.print_imu;
-    print_thr = config.print_thr;
-    print_test_variable = config.print_test_variable;
-    // Attitude controller gains
-    kR = config.kR;
-    kW = config.kW;
+int main(int argc, char **argv){
+  // ros::init(argc, argv, "imu_listener");
+  ros::init(argc,argv,"hexacopter");
+  //  ros::NodeHandle nh;
+  odroid_node odnode;
+  ros::NodeHandle nh = odnode.getNH();
+  // IMU and keyboard input callback
+  // ros::Subscriber sub2 = nh.subscribe("imu/imu",100,&odroid_node::imu_callback,&odnode);
+  // ros::Subscriber sub_vicon = nh.subscribe("vicon/Maya/Maya",100,&odroid_node::vicon_callback,&odnode);
+  ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
 
-    if(MOTOR_ON && !MotorWarmup){
-      kiR = config.kiR;
-      kiX = config.kiX;
+  // dynamic reconfiguration server for gains and print outs
+  dynamic_reconfigure::Server<odroid::GainsConfig> server;
+  dynamic_reconfigure::Server<odroid::GainsConfig>::CallbackType dyn_serv;
+  dyn_serv = boost::bind(&odroid_node::callback, &odnode, _1, _2);
+  server.setCallback(dyn_serv);
+
+  message_filters::Subscriber<sensor_msgs::Imu> imu_sub(nh,"imu/imu", 1);
+  message_filters::Subscriber<geometry_msgs::TransformStamped> vicon_sub(nh,"vicon/Maya/Maya", 1);
+  TimeSynchronizer<sensor_msgs::Imu, geometry_msgs::TransformStamped> sync(imu_sub, vicon_sub, 10);
+  sync.registerCallback(boost::bind(&odroid_node::imu_vicon_callback, &odnode, _1, _2));
+  // open communication through I2C
+  // odnode.open_I2C();
+
+  ros::Rate loop_rate(100); // rate for the node loop
+  // int count = 0;
+  while (ros::ok()){
+    ros::spinOnce();
+    if(odnode.getIMU()){
+      odnode.ctl_callback();
     }
-    // Position controller gains
-    kx = config.kx;
-    kv = config.kv;
-    MOTOR_ON = config.Motor;
-    MotorWarmup = config.MotorWarmup;
-    xd(0) = config.x;
-    xd(1) = config.y;
-    xd(2) = - config.z;
-    print_xd = config.print_xd;
-    print_x_v = config.print_x_v;
-    print_eX = config.print_eX;
-    print_eV = config.print_eV;
-    print_vicon = config.print_vicon;
-    print_M = config.print_M;
-    print_F = config.print_F;
-    print_R_eb = config.print_R_eb;
-    // ROS_INFO("Reconfigure Request: %d %f %s %s %d",
-    //           config.int_param, config.double_param,
-    //           config.str_param.c_str(),
-    //           config.bool_param?"True":"False",
-    //           config.size);
+    loop_rate.sleep();
+    // ++count;
   }
-
-  int main(int argc, char **argv){
-    // ros::init(argc, argv, "imu_listener");
-    ros::init(argc,argv,"hexacopter");
-    //  ros::NodeHandle nh;
-    odroid_node odnode;
-    ros::NodeHandle nh = odnode.getNH();
-    // IMU and keyboard input callback
-    // ros::Subscriber sub2 = nh.subscribe("imu/imu",100,&odroid_node::imu_callback,&odnode);
-    // ros::Subscriber sub_vicon = nh.subscribe("vicon/Maya/Maya",100,&odroid_node::vicon_callback,&odnode);
-    ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
-
-    // dynamic reconfiguration server for gains and print outs
-    dynamic_reconfigure::Server<odroid::GainsConfig> server;
-    dynamic_reconfigure::Server<odroid::GainsConfig>::CallbackType dyn_serv;
-    dyn_serv = boost::bind(&odroid_node::callback, &odnode, _1, _2);
-    server.setCallback(dyn_serv);
-
-    message_filters::Subscriber<sensor_msgs::Imu> imu_sub(nh,"imu/imu", 1);
-    message_filters::Subscriber<geometry_msgs::TransformStamped> vicon_sub(nh,"vicon/Maya/Maya", 1);
-    TimeSynchronizer<sensor_msgs::Imu, geometry_msgs::TransformStamped> sync(imu_sub, vicon_sub, 10);
-    sync.registerCallback(boost::bind(&odroid_node::imu_vicon_callback, &odnode, _1, _2));
-    // open communication through I2C
-    // odnode.open_I2C();
-
-    ros::Rate loop_rate(100); // rate for the node loop
-    // int count = 0;
-    while (ros::ok()){
-      ros::spinOnce();
-      if(odnode.getIMU()){
-        odnode.ctl_callback();
-      }
-      loop_rate.sleep();
-      // ++count;
-    }
-    return 0;
-  }
+  return 0;
+}

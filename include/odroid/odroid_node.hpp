@@ -117,7 +117,7 @@ class odroid_node
     int fhi2c;
 
     // Time stamps
-    double t_IMU, del_t_IMU, t_prev_IMU;// I2C thread
+    double del_t, t_IMU, del_t_IMU, t_prev_IMU;// I2C thread
     double t_v, del_t_v, t_prev_v;// Vicon thread
     double t_CADS, del_t_CADS, t_prev_CADS;// Control thread
     double Speed_Vicon_Thread, Speed_IMU_Thread, Speed_CADS_Thread;
@@ -183,14 +183,14 @@ class odroid_node
     void ctl_callback();
     //! Vicon sensor message subscriber
     void vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg);
-
+    // IMU and Vicon synchronization callback
     void imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu, const geometry_msgs::TransformStamped::ConstPtr& msgVicon);
     //! dynamic reconfigure callback
     void callback(odroid::GainsConfig &config, uint32_t level);
     //! Controller function
-    void GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, double del_t, VectorXd eiR_last);
+    void GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, VectorXd eiR_last);
     // Position controller function
-    void GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R, double del_t);
+    void GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R);
     // node handle getter
     ros::NodeHandle getNH(){return n_;};
 

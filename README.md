@@ -21,8 +21,6 @@ tag V0.2
 tag V0.1
 - Initial working node for attitude control on a spherical joint
 
-tag V0.2
-- Synchronized message from IMU and Vicon for sensor callback
 
 To get master rosnode communicate with slaves
   - `hostname -I`, to check host name for roscore

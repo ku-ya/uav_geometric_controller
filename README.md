@@ -1,5 +1,5 @@
 # ROS_odroid_node
-Odroid node class implementation for ROS
+## Odroid node class implementation for ROS
 
 - IMU subscriber moved out of code as callback so that it can accept different IMU drivers.
 - Controller callback
@@ -15,6 +15,11 @@ Odroid node class implementation for ROS
 - I2C command function for motor control
   - install i2c-dev for linux
 
+## Update versions
+tag V0.2
+- Synchronized message from IMU and Vicon for sensor callback
+tag V0.1
+- Initial working node for attitude control on a spherical joint
 
 To get master rosnode communicate with slaves
   - `hostname -I`, to check host name for roscore
@@ -23,7 +28,7 @@ To get master rosnode communicate with slaves
   - `rosrun urg_node urg_node _ip_address:="192.168.0.10"`
   - Use nmap command to debug some of the network communication issues
 
-TODO:
+## TODO:
 - set time between odroid and ground station
   - ```
     sudo apt-get install chrony
@@ -42,7 +47,7 @@ TODO:
 20170111 Testing
 
 1. test attitude controller with vicon
-2. 
+2.
 3. test position controller
 
 *Make sure to ROSBAG all the test data!!!*

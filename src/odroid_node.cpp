@@ -3,6 +3,8 @@
 
 using namespace std;
 using namespace Eigen;
+using namespace message_filters;
+
 odroid_node::odroid_node(){
   m = 1.25; g = 9.81;
   J <<  55710.50413e-7, 617.6577e-7, -250.2846e-7,
@@ -75,6 +77,55 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   if(print_imu){
    printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", W_raw(0), W_raw(1), W_raw(2));
   }
+}
+
+void odroid_node::imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu, const geometry_msgs::TransformStamped::ConstPtr& msgVicon){
+  W_raw(0) = msgImu->angular_velocity.x;
+  W_raw(1) = msgImu->angular_velocity.y;
+  W_raw(2) = msgImu->angular_velocity.z;
+  W_b = W_raw;
+  if(!IMU_flag){ ROS_INFO("IMU ready");}
+  IMU_flag = true;
+  if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
+
+  if(print_imu){
+   printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", W_raw(0), W_raw(1), W_raw(2));
+  }
+
+
+  x_v(0) = msgVicon->transform.translation.x;
+  x_v(1) = msgVicon->transform.translation.y;
+  x_v(2) = msgVicon->transform.translation.z;
+  quat_vm(0) = msgVicon->transform.rotation.x;
+  quat_vm(1) = msgVicon->transform.rotation.y;
+  quat_vm(2) = msgVicon->transform.rotation.z;
+  quat_vm(3) = msgVicon->transform.rotation.w;
+  tf::Quaternion q(quat_vm(0),quat_vm(1),quat_vm(2),quat_vm(3));
+  tf::Matrix3x3 m(q);
+  m.getRPY(roll, pitch, yaw);
+
+	if(print_vicon){
+    printf("Vicon: roll:[%f], pitch:[%f], yaw:[%f] \n", roll/M_PI*180, pitch/M_PI*180, yaw/M_PI*180);
+  }
+  if(print_x_v){
+    cout<<"x_v: "<<x_v.transpose()<<endl;
+  }
+
+  static tf::TransformBroadcaster br;
+  tf::Transform transform;
+  transform.setOrigin( tf::Vector3(x_v(0),x_v(1), x_v(2)));
+  transform.setRotation(q);
+  br.sendTransform(tf::StampedTransform(transform, vicon_time, "vicon", "base_link"));
+  br.sendTransform(tf::StampedTransform(transform, vicon_time, "vicon", "imu"));
+
+  Vector3d temp = M;
+  temp = temp.normalized();
+  tf::Quaternion q1;
+  q1.setEuler(temp(0),temp(1),temp(2));
+  transform.setRotation(q1);
+  br.sendTransform(tf::StampedTransform(transform, vicon_time, "vicon", "moment"));
+
+
 }
 
 // vicon information callback
@@ -462,8 +513,8 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     odroid_node odnode;
     ros::NodeHandle nh = odnode.getNH();
     // IMU and keyboard input callback
-    ros::Subscriber sub2 = nh.subscribe("imu/imu",100,&odroid_node::imu_callback,&odnode);
-    ros::Subscriber sub_vicon = nh.subscribe("vicon/Maya/Maya",100,&odroid_node::vicon_callback,&odnode);
+    // ros::Subscriber sub2 = nh.subscribe("imu/imu",100,&odroid_node::imu_callback,&odnode);
+    // ros::Subscriber sub_vicon = nh.subscribe("vicon/Maya/Maya",100,&odroid_node::vicon_callback,&odnode);
     ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
 
     // dynamic reconfiguration server for gains and print outs
@@ -472,6 +523,10 @@ void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3
     dyn_serv = boost::bind(&odroid_node::callback, &odnode, _1, _2);
     server.setCallback(dyn_serv);
 
+    message_filters::Subscriber<sensor_msgs::Imu> imu_sub(nh,"imu/imu", 1);
+    message_filters::Subscriber<geometry_msgs::TransformStamped> vicon_sub(nh,"vicon/Maya/Maya", 1);
+    TimeSynchronizer<sensor_msgs::Imu, geometry_msgs::TransformStamped> sync(imu_sub, vicon_sub, 10);
+    sync.registerCallback(boost::bind(&odroid_node::imu_vicon_callback, &odnode, _1, _2));
     // open communication through I2C
     // odnode.open_I2C();
 

@@ -33,6 +33,8 @@ using namespace Eigen;
 #include <visualization_msgs/Marker.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
 // #include <tf/Quaternion.h>
 
 // Dynamic reconfigure includes.
@@ -181,6 +183,8 @@ class odroid_node
     void ctl_callback();
     //! Vicon sensor message subscriber
     void vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg);
+
+    void imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu, const geometry_msgs::TransformStamped::ConstPtr& msgVicon);
     //! dynamic reconfigure callback
     void callback(odroid::GainsConfig &config, uint32_t level);
     //! Controller function

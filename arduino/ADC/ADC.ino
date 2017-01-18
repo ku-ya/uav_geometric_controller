@@ -23,7 +23,7 @@ ros::NodeHandle nh;
 
 bool test = false;
 int x= 0;
-int cmd = 0;
+double cmd = 0.0;
 
 void message( const std_msgs::Bool& cmd_val)
 {
@@ -64,18 +64,18 @@ void loop()
 {
 
    if(test && cmd < 200){
-    cmd = cmd + 1;
- 
+    cmd = cmd + 0.01;
+
    }else{
     delay(3000);
     cmd = 0;
    }
   Wire.beginTransmission(0x29);
-  Wire.write(x);
+  Wire.write((int) cmd);
   Wire.endTransmission();
 
   adc_msg.adc0 = averageAnalog(0);
-  adc_msg.adc1 = cmd;
+  adc_msg.adc1 = (int) cmd;
   pub.publish(&adc_msg);
 
   nh.spinOnce();

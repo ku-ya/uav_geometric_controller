@@ -6,7 +6,7 @@
  * an analog value into ROS in a pinch.
  */
 #define USE_USBCON
-// #include "Wire.h"
+#include "Wire.h"
 #if (ARDUINO >= 100)
  #include <Arduino.h>
 #else
@@ -14,20 +14,32 @@
 #endif
 #include <ros.h>
 #include <rosserial_arduino/Adc.h>
-
+#include <std_msgs/Float64.h>
 ros::NodeHandle nh;
+
+int x;
+void message( const std_msgs::Float64& cmd_val)
+{
+  x = cmd_val.data;
+  Wire.beginTransmission(0x29);
+  Wire.write(x);
+  Wire.endTransmission(); 
+}
 
 rosserial_arduino::Adc adc_msg;
 ros::Publisher p("adc", &adc_msg);
+ros::Subscriber<std_msgs::Float64> sub("cmd", &message );
 
 
 void setup()
 {
+  Wire.begin();    
   pinMode(13, OUTPUT);
   nh.initNode();
-
+  nh.subscribe(sub);
   nh.advertise(p);
 }
+
 
 //We average the analog reading to elminate some of the noise
 int averageAnalog(int pin){
@@ -40,13 +52,12 @@ long adc_timer;
 
 void loop()
 {
+  
+//  Wire.beginTransmission(0x29);
+//  Wire.write(20);
+//  Wire.endTransmission();  
+  
   adc_msg.adc0 = averageAnalog(0);
-//  adc_msg.adc1 = averageAnalog(1);
-//  adc_msg.adc2 = averageAnalog(2);
-//  adc_msg.adc3 = averageAnalog(3);
-//  adc_msg.adc4 = averageAnalog(4);
-//  adc_msg.adc5 = averageAnalog(5);
-
   p.publish(&adc_msg);
 
   nh.spinOnce();

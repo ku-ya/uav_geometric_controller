@@ -22,7 +22,7 @@
   ```
   - include #define USE_USBCON in the sketch of arduino (working code in arduino/ADC folder)
   - [Omega manual](https://www.omega.com/manuals/manualpdf/M3598.pdf)
-
+  - [I2C example for arduino ros](http://wiki.ros.org/rosserial_arduino/Tutorials/Measuring%20Temperature)
 
 ## Update versions
 tag V0.2

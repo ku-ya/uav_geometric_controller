@@ -1,12 +1,12 @@
-/* 
+/*
  * rosserial ADC Example
- * 
- * This is a poor man's Oscilloscope.  It does not have the sampling 
+ *
+ * This is a poor man's Oscilloscope.  It does not have the sampling
  * rate or accuracy of a commerical scope, but it is great to get
  * an analog value into ROS in a pinch.
  */
 #define USE_USBCON
-
+// #include "Wire.h"
 #if (ARDUINO >= 100)
  #include <Arduino.h>
 #else
@@ -20,8 +20,9 @@ ros::NodeHandle nh;
 rosserial_arduino::Adc adc_msg;
 ros::Publisher p("adc", &adc_msg);
 
+
 void setup()
-{ 
+{
   pinMode(13, OUTPUT);
   nh.initNode();
 
@@ -45,9 +46,8 @@ void loop()
 //  adc_msg.adc3 = averageAnalog(3);
 //  adc_msg.adc4 = averageAnalog(4);
 //  adc_msg.adc5 = averageAnalog(5);
-    
+
   p.publish(&adc_msg);
 
   nh.spinOnce();
 }
-

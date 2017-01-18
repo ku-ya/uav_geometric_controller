@@ -19,7 +19,7 @@ def vels(speed,turn):
 	return "currently:\tspeed %s\tturn %s " % (speed,turn)
 
 if __name__=="__main__":
-    	settings = termios.tcgetattr(sys.stdin)
+    settings = termios.tcgetattr(sys.stdin)
 
 	pub = rospy.Publisher('cmd_key', String, queue_size = 1)
 	rospy.init_node('keyboard')

@@ -15,6 +15,15 @@
 - I2C command function for motor control
   - install i2c-dev for linux
 
+- Throttle calibration node: arduino_daq.py
+  - Use C implementation not python
+  ```sudo apt-get install ros-kinetic-rosserial-server
+  rosrun rosserial_server serial_node /dev/ttyXXX
+  ```
+  - include #define USE_USBCON in the sketch of arduino (working code in arduino/ADC folder)
+  - [Omega manual](https://www.omega.com/manuals/manualpdf/M3598.pdf)
+
+
 ## Update versions
 tag V0.2
 - Synchronized message from IMU and Vicon for sensor callback

@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   dynamic_reconfigure
+  rosserial_arduino
   tf
 )
 
@@ -92,6 +93,7 @@ include_directories(EIGEN3_INCLUDE_DIR)
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
   cfg/DynConf.cfg
+	cfg/calibration.cfg
 #   cfg/DynReconf2.cfg
 )
 
@@ -132,17 +134,23 @@ include_directories(
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(odroid ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(arduino_daq.py ${PROJECT_NAME}_gencfg)
 
 ## Declare a C++ executable
 add_executable(odroid_node src/odroid_node.cpp)
+add_executable(calibration src/calibration.cpp)
 
+add_dependencies(odroid_node ${PROJECT_NAME}_gencfg)
+add_dependencies(calibration ${PROJECT_NAME}_gencfg)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(odroid_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(odroid_node
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(calibration
   ${catkin_LIBRARIES}
 )
 

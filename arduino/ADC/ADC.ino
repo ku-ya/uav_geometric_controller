@@ -6,6 +6,8 @@
  * an analog value into ROS in a pinch.
  */
 #define USE_USBCON
+#define USB_CON
+
 #include "Wire.h"
 #if (ARDUINO >= 100)
  #include <Arduino.h>
@@ -21,13 +23,17 @@
 
 ros::NodeHandle nh;
 
-bool test = false;
+bool on_off;
+int  mode;
 int x= 0;
 double cmd = 0.0;
 
-void message( const std_msgs::Bool& cmd_val)
+void message( const rosserial_arduino::Adc& cmd_val)
 {
-  test = cmd_val.data;
+  on_off = cmd_val.adc0;
+  cmd = cmd_val.adc1;
+  mode = cmd_val.adc2;
+
 //  Wire.beginTransmission(0x29);
 //  Wire.write(x);
 //  Wire.endTransmission();
@@ -37,7 +43,7 @@ void message( const std_msgs::Bool& cmd_val)
 std_msgs::Time timer;
 rosserial_arduino::Adc adc_msg;
 ros::Publisher pub("adc", &adc_msg);
-ros::Subscriber<std_msgs::Bool> sub("cmd", &message );
+ros::Subscriber<rosserial_arduino::Adc> sub("cmd", &message );
 
 void setup()
 {
@@ -46,8 +52,7 @@ void setup()
   nh.initNode();
   nh.subscribe(sub);
   nh.advertise(pub);
-  timer.data = nh.now();
-  Serial.begin(115200);
+  // Serial.begin(115200);
 }
 
 
@@ -62,22 +67,19 @@ long adc_timer;
 
 void loop()
 {
-
-   if(test && cmd < 200){
+  if(!on_off){
+    if(cmd < 30){
     cmd = cmd + 0.01;
-
-   }else{
-    delay(3000);
-    cmd = 0;
-   }
-  Wire.beginTransmission(0x29);
-  Wire.write((int) cmd);
-  Wire.endTransmission();
-
+    }else{
+      cmd = 0;
+    }
+    Wire.beginTransmission(0x29);
+    Wire.write((int) cmd);
+    Wire.endTransmission();
+  }
   adc_msg.adc0 = averageAnalog(0);
   adc_msg.adc1 = (int) cmd;
   pub.publish(&adc_msg);
-
   nh.spinOnce();
   delay(10);
 }

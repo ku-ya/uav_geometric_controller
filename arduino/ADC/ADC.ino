@@ -13,6 +13,8 @@
  #include <WProgram.h>
 #endif
 #include <ros.h>
+#include <ros/time.h>
+#include <std_msgs/Time.h>
 #include <rosserial_arduino/Adc.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>
@@ -20,31 +22,30 @@
 ros::NodeHandle nh;
 
 bool test = false;
-int x;
+int x= 0;
 
 void message( const std_msgs::Bool& cmd_val)
 {
   test = cmd_val.data;
 //  Wire.beginTransmission(0x29);
 //  Wire.write(x);
-//  Wire.endTransmission(); 
+//  Wire.endTransmission();
 }
 
-rosserial_arduino::Adc adc_msg;
-rosserial_arduino::Adc cmd_msg;
-ros::Publisher p("adc", &adc_msg);
-ros::Publisher pub("cmd_ard", &cmd_msg);
-ros::Subscriber<std_msgs::Bool> sub("cmd", &message );
 
+std_msgs::Time timer;
+rosserial_arduino::Adc adc_msg;
+ros::Publisher pub("adc", &adc_msg);
+ros::Subscriber<std_msgs::Bool> sub("cmd", &message );
 
 void setup()
 {
-  Wire.begin();    
+  Wire.begin();
   pinMode(13, OUTPUT);
   nh.initNode();
   nh.subscribe(sub);
-  nh.advertise(p);
   nh.advertise(pub);
+  timer.data = nh.now();
 }
 
 
@@ -59,19 +60,21 @@ long adc_timer;
 
 void loop()
 {
+
    if(test){
     x = 25;
-   }else{
-    x = 0;
-   }
 
+   }else{
+     x = 0;
+   }
   Wire.beginTransmission(0x29);
   Wire.write(x);
-  Wire.endTransmission(); 
+  Wire.endTransmission();
+
   adc_msg.adc0 = averageAnalog(0);
-  cmd_msg.adc0 = x;
-  p.publish(&adc_msg);
-  pub.publish(&cmd_msg);
+  adc_msg.adc1 = x;
+  pub.publish(&adc_msg);
+
   nh.spinOnce();
   delay(10);
 }

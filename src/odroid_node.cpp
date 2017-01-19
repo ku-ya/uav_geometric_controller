@@ -59,7 +59,7 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
 
   if(!IMU_flag){ ROS_INFO("IMU ready");}
   IMU_flag = true;
-  if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
+  // if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
 
   if(print_imu){
    printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", W_raw(0), W_raw(1), W_raw(2));
@@ -73,7 +73,7 @@ void odroid_node::imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu, c
   W_b = W_raw;
   if(!IMU_flag){ ROS_INFO("IMU ready");}
   IMU_flag = true;
-  if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
+  // if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
 
   if(print_imu){
    printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", W_raw(0), W_raw(1), W_raw(2));

@@ -23,7 +23,7 @@
 
 ros::NodeHandle nh;
 
-bool on_off;
+bool on_off = false;
 int  mode;
 int x= 0;
 double cmd = 0.0;
@@ -50,7 +50,7 @@ void setup()
   Wire.begin();
   pinMode(13, OUTPUT);
   nh.initNode();
-  nh.subscribe(sub);
+//  nh.subscribe(sub);/
   nh.advertise(pub);
   // Serial.begin(115200);
 }
@@ -69,7 +69,7 @@ void loop()
 {
   if(!on_off){
     if(cmd < 30){
-    cmd = cmd + 0.01;
+      cmd = cmd + 0.01;
     }else{
       cmd = 0;
     }

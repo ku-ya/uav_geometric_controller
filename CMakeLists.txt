@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
   rosserial_arduino
   tf
+	message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -24,6 +25,7 @@ include_directories(EIGEN3_INCLUDE_DIR)
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
 # catkin_python_setup()
+
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -50,11 +52,11 @@ include_directories(EIGEN3_INCLUDE_DIR)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  DAQ.msg
+  # Message2.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -71,10 +73,10 @@ include_directories(EIGEN3_INCLUDE_DIR)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -110,6 +112,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES odroid
+ CATKIN_DEPENDS message_runtime
 #  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )

@@ -6,7 +6,7 @@ from scipy import stats
 
 a = [];
 i=0;
-csvReader = csv.reader(open('2017-01-18-21-data.txt', 'rb'), delimiter=',', quotechar='|');
+csvReader = csv.reader(open('data1.txt', 'rb'), delimiter=',', quotechar='|');
 for row in csvReader:
 	a.append(row);
 
@@ -24,6 +24,12 @@ plt.ylabel('voltage')
 plt.xlabel('command')
 plt.grid()
 plt.show()
+
+# plt.plot(range(len(voltage)),voltage, 'rx')
+# plt.ylabel('voltage')
+# plt.xlabel('command')
+# plt.grid()
+# plt.show()
 
 
 

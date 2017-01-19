@@ -5,13 +5,13 @@ import rospy
 from std_msgs.msg import Int16
 from odroid.msg import DAQ
 
-filein = open('data.txt','w')
+filein = open('data1.txt','w')
 
 def run():
     rospy.init_node('DAQ', anonymous=False)
     pub = rospy.Publisher("daq", DAQ, queue_size=10)
     rate = rospy.Rate(10)
-    ser = serial.Serial('/dev/ttyACM0',baudrate=9600) #Tried with and without the last 3 parameters, and also at 1Mbps, same happens.
+    ser = serial.Serial('/dev/ttyACM0',baudrate=115200) #Tried with and without the last 3 parameters, and also at 1Mbps, same happens.
     ser.flushInput()
     ser.flushOutput()
     msg = DAQ()

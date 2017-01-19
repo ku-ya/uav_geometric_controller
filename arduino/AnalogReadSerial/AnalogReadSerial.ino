@@ -11,6 +11,8 @@
 bool on_flag = 0;
 int mode;
 double cmd = 20;
+int inPin = 7;
+int val = 0;
 
 // the setup routine runs once when you press reset:
 void setup() {
@@ -18,6 +20,7 @@ void setup() {
   Serial.begin(9600);
   Wire.begin();
   pinMode(13, OUTPUT);
+  pinMode(inPin, INPUT);
 }
 
 //We average the analog reading to elminate some of the noise
@@ -29,7 +32,7 @@ int averageAnalog(int pin){
 
 // the loop routine runs over and over again forever:
 void loop() {
-//  if(on_flag){
+  if(digitalRead(inPin)>=HIGH){
     if(cmd < 180){
       cmd = cmd + 0.1;
     }else{
@@ -39,7 +42,7 @@ void loop() {
     Wire.beginTransmission(0x29);
     Wire.write((int) cmd);
     Wire.endTransmission();
-//  }
+  }
   int send_cmd = (int)cmd;
   int sensorValue = averageAnalog(0);
   String str_out = "cmd: "+ (String)send_cmd;

@@ -15,12 +15,21 @@ find_package(catkin REQUIRED COMPONENTS
   rosserial_arduino
   tf
 	message_generation
+  cv_bridge
+  image_transport
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen3 REQUIRED)
 include_directories(EIGEN3_INCLUDE_DIR)
+
+
+find_package(OpenCV REQUIRED)
+include_directories(${OpenCV_INCLUDE_DIRS})
+
+# find_package(openCV REQUIRED)
+# include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -142,6 +151,7 @@ include_directories(
 ## Declare a C++ executable
 add_executable(odroid_node src/odroid_node.cpp)
 add_executable(calibration src/calibration.cpp)
+add_executable(odroid_sense src/odroid_sense.cpp)
 
 add_dependencies(odroid_node ${PROJECT_NAME}_gencfg)
 add_dependencies(calibration ${PROJECT_NAME}_gencfg)
@@ -153,6 +163,11 @@ add_dependencies(calibration ${PROJECT_NAME}_gencfg)
 target_link_libraries(odroid_node
   ${catkin_LIBRARIES}
 )
+target_link_libraries(odroid_sense
+  ${catkin_LIBRARIES}${OpenCV_LIBRARIES}
+)
+
+
 target_link_libraries(calibration
   ${catkin_LIBRARIES}
 )

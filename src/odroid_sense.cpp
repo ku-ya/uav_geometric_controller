@@ -2,11 +2,14 @@
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
 #include <boost/thread.hpp>
-#include <opencv2/highgui/highgui.hpp>
+// #include <opencv2/highgui/highgui.hpp>
+// #include <opencv/cv.h>
 #include <cv_bridge/cv_bridge.h>
 // #include "opencv2/core/version.hpp"
-#include <opencv/cv.h>
-// #include <opencv/highgui.h>
+// #include <opencv/cv.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/core.hpp>
 
 static const char WINDOW_NAME[] = "Depth View";
 double min_range_;
@@ -41,7 +44,7 @@ try{
   sensor_msgs::ImagePtr imagePtr=resizeRos.toImageMsg();
   imagePtr->width=320.5;
   imagePtr->height=210.5;
-  // imagePub->publish(imagePtr);
+  imagePub->publish(imagePtr);
 }
 catch(cv_bridge::Exception e){
  ROS_ERROR("cv_bridge exception: %s", e.what());

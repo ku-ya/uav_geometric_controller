@@ -6,6 +6,8 @@ add_definitions(-std=c++11)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+
+
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
@@ -21,13 +23,15 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+
+find_package(Boost REQUIRED COMPONENTS thread)
 find_package(Eigen3 REQUIRED)
 include_directories(EIGEN3_INCLUDE_DIR)
 
 
-find_package(OpenCV REQUIRED)
-include_directories(${OpenCV_INCLUDE_DIRS})
-
+# find_package(OpenCV 3 REQUIRED)
+# include_directories(${OpenCV_INCLUDE_DIRS})
+include_directories(include ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
 # find_package(openCV REQUIRED)
 # include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -121,7 +125,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES odroid
- CATKIN_DEPENDS message_runtime
+ CATKIN_DEPENDS message_runtime cv_bridge roscpp rospy std_msgs image_transport
 #  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )

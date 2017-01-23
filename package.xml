@@ -37,8 +37,9 @@
   <build_depend>tf</build_depend>
 <build_depend>message_generation</build_depend>
 <build_depend>cv_bridge</build_depend>
-
 <build_depend>image_transport</build_depend>
+<build_depend>opencv3</build_depend>
+
 
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
@@ -46,6 +47,8 @@
   <run_depend>dynamic_reconfigure</run_depend>
   <run_depend>tf</run_depend>
  <run_depend>message_runtime</run_depend>
+  <run_depend>cv_bridge</run_depend>
+    <run_depend>image_transport</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

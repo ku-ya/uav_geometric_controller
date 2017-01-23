@@ -1,7 +1,15 @@
 # ROS_odroid_node
 ## Odroid node class implementation for ROS
 
-- IMU subscriber moved out of code as callback so that it can accept different IMU drivers.
+### Hardware procedure
+
+1. `roslaunch openni2_launch openni2.launch`
+- `rosrun odroid sense.py`
+- run IMU driver
+- run controller node
+- Run node on the base station to map
+
+
 - Controller callback
   - member function inputs has been reduced
   - calculates forces and throttle values
@@ -14,15 +22,17 @@
 - Dynamic reconfiguration for gains and value prints on console
 - I2C command function for motor control
   - install i2c-dev for linux
-
 - Throttle calibration node: arduino_daq.py
   - Use C implementation not python
-  ```sudo apt-get install ros-kinetic-rosserial-server
-  rosrun rosserial_server serial_node /dev/ttyXXX
-  ```
   - include #define USE_USBCON in the sketch of arduino (working code in arduino/ADC folder)
   - [Omega manual](https://www.omega.com/manuals/manualpdf/M3598.pdf)
   - [I2C example for arduino ros](http://wiki.ros.org/rosserial_arduino/Tutorials/Measuring%20Temperature)
+
+
+```
+sudo apt-get install ros-kinetic-rosserial-server
+rosrun rosserial_server serial_node _port:=/dev/ttyACM0 _baud:=115200
+```
 
 ## Update versions
 tag V0.2
@@ -31,20 +41,21 @@ tag V0.1
 - Initial working node for attitude control on a spherical joint
 
 
+
 To get master rosnode communicate with slaves
   - `hostname -I`, to check host name for roscore
-  - `export ROS_MASTER_URI=http://hostname:11311/`, master IP setting
+  - `export ROS_MASTER_URI=http://<ip_address>:11311/`, master IP setting
   - `export ROS_IP=localhost`, set ROS_IP for the remote
   - `rosrun urg_node urg_node _ip_address:="192.168.0.10"`
   - Use nmap command to debug some of the network communication issues
 
 ## TODO:
 - set time between odroid and ground station
-  - ```
-    sudo apt-get install chrony
-    sudo apt-get install ntpdate
-    sudo ntpdate ntp.ubuntu.com
-    ```
+```
+sudo apt-get install chrony
+sudo apt-get install ntpdate
+sudo ntpdate ntp.ubuntu.com
+```
   - [link to roswiki](http://wiki.ros.org/turtlebot/Tutorials/indigo/Network%20Configuration)
 - Hardware test
  - Record the experiment with camera rosbag

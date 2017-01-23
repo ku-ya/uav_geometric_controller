@@ -30,11 +30,18 @@ using namespace Eigen;
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/String.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <visualization_msgs/Marker.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+
+#include <gazebo_msgs/ModelState.h>
+#include <gazebo_msgs/SetModelState.h>
+#include <gazebo_msgs/ApplyBodyWrench.h>
 // #include <tf/Quaternion.h>
 
 // Dynamic reconfigure includes.
@@ -184,7 +191,7 @@ class odroid_node
     //! Vicon sensor message subscriber
     void vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg);
     // IMU and Vicon synchronization callback
-    void imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu, const geometry_msgs::TransformStamped::ConstPtr& msgVicon);
+    void imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu, const geometry_msgs::PoseStamped::ConstPtr& msgVicon);
     //! dynamic reconfigure callback
     void callback(odroid::GainsConfig &config, uint32_t level);
     //! Controller function
@@ -193,7 +200,7 @@ class odroid_node
     void GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R);
     // node handle getter
     ros::NodeHandle getNH(){return n_;};
-
+    void gazebo_controll();
 
     void motor_command();
     void open_I2C();

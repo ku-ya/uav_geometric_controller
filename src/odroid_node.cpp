@@ -7,7 +7,8 @@ using namespace message_filters;
 
 odroid_node::odroid_node(){
   del_t = 0.01;
-  m = 1.25; g = 9.81;
+  m = 1.82;//1.25;
+  g = 9.81;
   J <<  55710.50413e-7, 617.6577e-7, -250.2846e-7,
   617.6577e-7,  55757.4605e-7, 100.6760e-7,
   -250.2846e-7, 100.6760e-7, 105053.7595e-7;// kg*m^2
@@ -66,7 +67,7 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   }
 }
 
-void odroid_node::imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu, const geometry_msgs::TransformStamped::ConstPtr& msgVicon){
+void odroid_node::imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu, const geometry_msgs::PoseStamped::ConstPtr& msgVicon){
   W_raw(0) = msgImu->angular_velocity.x;
   W_raw(1) = msgImu->angular_velocity.y;
   W_raw(2) = msgImu->angular_velocity.z;
@@ -78,14 +79,15 @@ void odroid_node::imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu, c
   if(print_imu){
    printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", W_raw(0), W_raw(1), W_raw(2));
   }
+  x_v(0) = msgVicon->pose.position.x;
+  x_v(1) = msgVicon->pose.position.y;
+  x_v(2) = msgVicon->pose.position.z;
+  quat_vm(0) = msgVicon->pose.orientation.x;
+  quat_vm(1) = msgVicon->pose.orientation.y;
+  quat_vm(2) = msgVicon->pose.orientation.z;
+  quat_vm(3) = msgVicon->pose.orientation.w;
 
-  x_v(0) = msgVicon->transform.translation.x;
-  x_v(1) = msgVicon->transform.translation.y;
-  x_v(2) = msgVicon->transform.translation.z;
-  quat_vm(0) = msgVicon->transform.rotation.x;
-  quat_vm(1) = msgVicon->transform.rotation.y;
-  quat_vm(2) = msgVicon->transform.rotation.z;
-  quat_vm(3) = msgVicon->transform.rotation.w;
+
   tf::Quaternion q(quat_vm(0),quat_vm(1),quat_vm(2),quat_vm(3));
   tf::Matrix3x3 m(q);
   m.getRPY(roll, pitch, yaw);
@@ -117,6 +119,7 @@ void odroid_node::imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu, c
 // vicon information callback
 void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg){
   vicon_time = msg->header.stamp;
+
   x_v(0) = msg->transform.translation.x;
   x_v(1) = msg->transform.translation.y;
   x_v(2) = msg->transform.translation.z;
@@ -124,6 +127,7 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   quat_vm(1) = msg->transform.rotation.y;
   quat_vm(2) = msg->transform.rotation.z;
   quat_vm(3) = msg->transform.rotation.w;
+
   tf::Quaternion q(quat_vm(0),quat_vm(1),quat_vm(2),quat_vm(3));
   tf::Matrix3x3 m(q);
   m.getRPY(roll, pitch, yaw);
@@ -471,9 +475,9 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
   kv = config.kv;
   MOTOR_ON = config.Motor;
   MotorWarmup = config.MotorWarmup;
-  xd(0) = config.x;
-  xd(1) = config.y;
-  xd(2) = - config.z;
+  xd(0) =  config.x;
+  xd(1) =  config.y;
+  xd(2) =  - config.z;
   print_xd = config.print_xd;
   print_x_v = config.print_x_v;
   print_eX = config.print_eX;
@@ -482,6 +486,31 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
   print_M = config.print_M;
   print_F = config.print_F;
   print_R_eb = config.print_R_eb;
+}
+
+void odroid_node::gazebo_controll(){
+  ros::ServiceClient client_FM = n_.serviceClient<gazebo_msgs::ApplyBodyWrench>("/gazebo/apply_body_wrench");
+  gazebo_msgs::ApplyBodyWrench FMcmds_srv;
+
+  FMcmds_srv.request.body_name = "quadrotor::my_link";
+  FMcmds_srv.request.reference_frame = "earth";
+  FMcmds_srv.request.reference_point.x = 0.0;
+  FMcmds_srv.request.reference_point.y = 0.0;
+  FMcmds_srv.request.reference_point.z = 0.0;
+  FMcmds_srv.request.start_time = ros::Time(0.0);
+  FMcmds_srv.request.duration = ros::Duration(0.01);// apply continuously until new command
+
+  FMcmds_srv.request.wrench.force.x = F(0);
+  FMcmds_srv.request.wrench.force.y = - F(1);
+  FMcmds_srv.request.wrench.force.z = - F(2);
+
+  FMcmds_srv.request.wrench.torque.x =  0*M(0);
+  FMcmds_srv.request.wrench.torque.y =  0*M(1);
+  FMcmds_srv.request.wrench.torque.z = 0*M(2);
+
+  client_FM.call(FMcmds_srv);
+  if(!FMcmds_srv.response.success)
+      cout << "Fail! Response message:\n" << FMcmds_srv.response.status_message << endl;
 }
 
 int main(int argc, char **argv){
@@ -501,10 +530,15 @@ int main(int argc, char **argv){
   dyn_serv = boost::bind(&odroid_node::callback, &odnode, _1, _2);
   server.setCallback(dyn_serv);
 
-  message_filters::Subscriber<sensor_msgs::Imu> imu_sub(nh,"imu/imu", 1);
-  message_filters::Subscriber<geometry_msgs::TransformStamped> vicon_sub(nh,"vicon/Maya/Maya", 1);
-  TimeSynchronizer<sensor_msgs::Imu, geometry_msgs::TransformStamped> sync(imu_sub, vicon_sub, 10);
+ typedef sync_policies::ApproximateTime<sensor_msgs::Imu, geometry_msgs::PoseStamped> MySyncPolicy;
+
+  message_filters::Subscriber<sensor_msgs::Imu> imu_sub(nh,"raw_imu", 10);
+  message_filters::Subscriber<geometry_msgs::PoseStamped> vicon_sub(nh,"ground_truth_to_tf/pose", 10);
+  Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), imu_sub, vicon_sub);
   sync.registerCallback(boost::bind(&odroid_node::imu_vicon_callback, &odnode, _1, _2));
+
+  // TimeSynchronizer<sensor_msgs::Imu, geometry_msgs::PoseStamped> sync(imu_sub, vicon_sub, 10);
+  // sync.registerCallback(boost::bind(&odroid_node::imu_vicon_callback, &odnode, _1, _2));
   // open communication through I2C
   // odnode.open_I2C();
 
@@ -514,6 +548,7 @@ int main(int argc, char **argv){
     ros::spinOnce();
     if(odnode.getIMU()){
       odnode.ctl_callback();
+      odnode.gazebo_controll();
     }
     loop_rate.sleep();
     // ++count;

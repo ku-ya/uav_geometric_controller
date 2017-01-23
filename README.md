@@ -55,6 +55,8 @@ To get master rosnode communicate with slaves
 sudo apt-get install chrony
 sudo apt-get install ntpdate
 sudo ntpdate ntp.ubuntu.com
+or
+sudo date --set="$(ssh user@host date)"
 ```
   - [link to roswiki](http://wiki.ros.org/turtlebot/Tutorials/indigo/Network%20Configuration)
 - Hardware test

@@ -82,12 +82,12 @@ class odroid_node
     //  kR = proportional attitude control gain
     //  kW = derivative attitude control gain
     //  kiR = integral attitude control gain
-    double kx, kv, kiX = 0.1, c1 = 0, kR, kW, kiR = 0.1, c2 = 0;
+    double kx, kv, kiX, cX, kR, kW, kiR, cR;
     float phi, theta, psi;
 	double roll, pitch, yaw;
     Matrix2d e; //inertial frame,
     // Measured Values in Vicon Frame
-    Vector3d x_v;// position in the Vicon frame
+    Vector3d x_v, v_v;// position in the Vicon frame
     // VectorXd quat_vm(4);
     Matrix<double, 4, 1> quat_vm;// attitude of markers measured by Vicon system
 
@@ -137,9 +137,8 @@ class odroid_node
     Matrix3d R_eb_s;// Body (b) to inertial (e) calculated by IMU
     Matrix3d R_vm;// Markers (m) to Vicon (v)
     Matrix3d R_em;// Markers (m) to inertial (e)
-    Matrix3d R_ev;
-    Matrix3d R;
-    // Measured Values for Controller
+    Matrix3d R_ev; // Measured Values for Controller
+    Matrix3d R_v;
     Vector3d x_e, v_e;// Position and Velocity in inertial (e) frame
     Matrix3d R_eb;// Body (b) to inertial (e) frame
     Vector3d E_angles_save;
@@ -198,9 +197,9 @@ class odroid_node
     //! Controller function
     void GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, VectorXd eiR_last);
     // Position controller function
-    void GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R);
+    void GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W, Matrix3d R_v);
     // Quadrotor position controller
-    void QuadrotorGeometricPositionController(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot);
+    void QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R);
     // node handle getter
     ros::NodeHandle getNH(){return n_;};
     void gazebo_controll();

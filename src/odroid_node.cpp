@@ -1,4 +1,5 @@
 #include <odroid/odroid_node.hpp>
+#include <odroid/controllers.h>// robotic control
 // User header files
 
 using namespace std;
@@ -7,11 +8,19 @@ using namespace message_filters;
 
 odroid_node::odroid_node(){
   del_t = 0.01;
-  m = 1.25;
+  // m = 1.25;
   g = 9.81;
-  J <<  55710.50413e-7, 617.6577e-7, -250.2846e-7,
-  617.6577e-7,  55757.4605e-7, 100.6760e-7,
-  -250.2846e-7, 100.6760e-7, 105053.7595e-7;// kg*m^2
+  // J <<  55710.50413e-7, 617.6577e-7, -250.2846e-7,
+  // 617.6577e-7,  55757.4605e-7, 100.6760e-7,
+  // -250.2846e-7, 100.6760e-7, 105053.7595e-7;// kg*m^2
+
+  m = 0.755;
+  J << 0.005571050413, 0.0           , 0.0          ,
+       0.0           , 0.005571050413, 0.0          ,
+       0.0           , 0.0           , 0.01050537595;
+
+
+
   IMU_flag = false;
   // f = VectorXd::Zero(6);
   R_bm <<  1.0, 0.0, 0.0,
@@ -37,6 +46,31 @@ odroid_node::odroid_node(){
   vis_pub_ = n_.advertise<visualization_msgs::Marker>("/force",1);
   vis_pub_y = n_.advertise<visualization_msgs::Marker>("/force_y",1);
   vis_pub_z = n_.advertise<visualization_msgs::Marker>("/force_z",1);
+
+
+// Gains
+  controller_gains gains;
+
+    // Translational Gains
+    double wnx = 2.81;
+    double zetax = 0.7;
+    gains.properties2gainsX(wnx, zetax, m);// returns kx, kv
+    gains.kiX = 1.0;
+    gains.cX = 0.1;
+
+    // Rotational Gains
+    double wnR = 8.16;
+    double zetaR = 0.7;
+    gains.properties2gainsR(wnR, zetaR, J);// kR, kW
+    gains.kiR = 0.1;//0.01;
+    gains.cR = 0.1;
+
+    // Gains
+  //   cout<<"kx: "<<gains.kx<<" kv:"<<gains.kv<<" kiX:"<<gains.kiX<<" cX:"<<
+  //   gains.cX<<" kR:"<<gains.kR<<" kW:"<<gains.kW<<" kiR:"<<gains.kiR<<" cR:"<<gains.cR<<endl;
+  //
+  // return;
+
   ROS_INFO("Odroid node initialized");
 }
 odroid_node::~odroid_node(){};
@@ -97,15 +131,15 @@ void odroid_node::imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu, c
   double qz = quat_vm(2);
   double qw = quat_vm(3);
 
-  R(0,0) = 1.0-2*qy*qy-2*qz*qz; R(0,1) = 2*qx*qy-2*qz*qw;     R(0,2) = 2*qx*qz+2*qy*qw;
-  R(1,0) = 2*qx*qy+2*qz*qw;     R(1,1) = 1.0-2*qx*qx-2*qz*qz; R(1,2) = 2*qy*qz-2*qx*qw;
-  R(2,0) = 2*qx*qz-2*qy*qw;     R(2,1) = 2*qy*qz+2*qx*qw;     R(2,2) = 1.0-2*qx*qx-2*qy*qy;
+  R_v(0,0) = 1.0-2*qy*qy-2*qz*qz; R_v(0,1) = 2*qx*qy-2*qz*qw;     R_v(0,2) = 2*qx*qz+2*qy*qw;
+  R_v(1,0) = 2*qx*qy+2*qz*qw;     R_v(1,1) = 1.0-2*qx*qx-2*qz*qz; R_v(1,2) = 2*qy*qz-2*qx*qw;
+  R_v(2,0) = 2*qx*qz-2*qy*qw;     R_v(2,1) = 2*qy*qz+2*qx*qw;     R_v(2,2) = 1.0-2*qx*qx-2*qy*qy;
 
 
   m.getRPY(roll, pitch, yaw);
 
 	if(print_vicon){
-    printf("Vicon: roll:[%f], pitch:[%f], yaw:[%f] \n", roll/M_PI*180, pitch/M_PI*180, yaw/M_PI*180);
+    printf("Vicon: xyz:[%f, %f, %f] roll:[%f], pitch:[%f], yaw:[%f] \n", x_v(0),x_v(1),x_v(2), roll/M_PI*180, pitch/M_PI*180, yaw/M_PI*180);
   }
   if(print_x_v){
     cout<<"x_v: "<<x_v.transpose()<<endl;
@@ -188,8 +222,10 @@ void odroid_node::ctl_callback(){
   xd_dot = VectorXd::Zero(3); xd_ddot = VectorXd::Zero(3);
   Rd = MatrixXd::Identity(3,3);
   Vector3d prev_x_e = x_e;
+  Vector3d prev_x_v = x_v;
   x_e = R_ev * x_v;
   v_e = (x_e - prev_x_e)*100;
+  v_v = (x_v - prev_x_v)*100;
 
 
 
@@ -230,10 +266,10 @@ void odroid_node::ctl_callback(){
 
 
   //GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR);
-QuadrotorGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot);
+QuadGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
 // GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_eb);
 
-  if(print_f){print_force();}
+
   // OutputMotor(f_quad,thr);
   // if(print_thr){
   //   cout<<"Throttle motor out: ";
@@ -255,7 +291,7 @@ QuadrotorGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot);
   marker.pose.orientation.y = 0;
   marker.pose.orientation.z = 0;
   marker.pose.orientation.w = 1;
-  marker.scale.x = 0.5 * F(0);
+  marker.scale.x = M(0);
   marker.scale.y = 0.05;
   marker.scale.z = 0.05;
   marker.color.a = 1.0; // Don't forget to set the alpha!
@@ -270,7 +306,7 @@ QuadrotorGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot);
   marker.pose.orientation.y = 0;
   marker.pose.orientation.z = 0.707;
   marker.pose.orientation.w = 0.707;
-  marker.scale.x = - 0.5 * F(1);
+  marker.scale.x = M(1);
   marker.color.r = 0.0;
   marker.color.g = 1.0;
   marker.color.b = 0.0;
@@ -281,7 +317,7 @@ QuadrotorGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot);
   marker.pose.orientation.y = 0.707;
   marker.pose.orientation.z = 0.0;
   marker.pose.orientation.w = 0.707;
-  marker.scale.x = - 0.5 * (F(2) + m*g);
+  marker.scale.x = 0.5 * (f_quad - m*g);
   marker.color.r = 0.0;
   marker.color.g = 0.0;
   marker.color.b = 1.0;
@@ -293,10 +329,11 @@ QuadrotorGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot);
   // motor_command();
 }
 
-void odroid_node::QuadrotorGeometricPositionController(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot){
+void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W, Matrix3d R_v){
 
     // Bring to controller frame (and back) with 180 degree rotation about b1
     Matrix3d D = R_bm;
+    // std::cout<<"R:\n"<<R_v<<std::endl;
 
     Vector3d xd_2dot = Vector3d::Zero();
     Vector3d xd_3dot = Vector3d::Zero();
@@ -309,10 +346,16 @@ void odroid_node::QuadrotorGeometricPositionController(Vector3d xd, Vector3d xd_
 
     Vector3d e3(0.0,0.0,1.0);// commonly-used unit vector
 
-    Vector3d x = D*xd;// LI
-    Vector3d v = D*xd_dot;// LI
-    Matrix3d R = D*R*R_bm;// LI<-LBFF
-    Vector3d W = D*Wd;// LBFF
+    Vector3d x = D*x_v;// LI
+    Vector3d v = D*v_v;// LI
+    Matrix3d R = D*R_v*D;// LI<-LBFF
+    W = D*W;// LBFF
+
+    // std::cout<<"x_v:\n"<<x_v.transpose()<<std::endl;
+    // std::cout<<"x:\n"<<x.transpose()<<std::endl;
+    // std::cout<<"v:\n"<<v.transpose()<<std::endl;
+    // std::cout<<"R:\n"<<R<<std::endl;
+    // std::cout<<"W:\n"<<W<<std::endl;
 
     xd = D*xd;
     xd_dot = D*xd_dot;
@@ -320,27 +363,38 @@ void odroid_node::QuadrotorGeometricPositionController(Vector3d xd, Vector3d xd_
     xd_3dot = D*xd_3dot;
     xd_4dot = D*xd_4dot;
 
+    // std::cout<<"xd:\n"<<xd.transpose()<<std::endl;
+
     b1d = D*b1d;
     b1d_dot = D*b1d_dot;
     b1d_ddot = D*b1d_ddot;
 
     // Saturation Limits
     double eiX_sat = 0.1;
-    double eiR_sat = 0.1;
-    double cX = 0.2, cR = 0.2;
+    double eiR_sat = 0.01;
     // Translational Error Functions
-    Vector3d ex = x-xd;
-    Vector3d ev = v-xd_dot;
+    Vector3d ex = x - xd;
+    Vector3d ev = v - xd_dot;
     Vector3d eiX = eiX+del_t*(ex+cX*ev);
-    eiX = err_sat(-eiX_sat, eiX_sat, eiX);
+    err_sat(-eiX_sat, eiX_sat, eiX);
+
+      if(print_eX){cout<<"eX: "<<ex.transpose()<<endl;}
+      if(print_eV){cout<<"eV: "<<ev.transpose()<<endl;}
+    // std::cout<<"ex:\n"<<ex.transpose()<<std::endl;
+    // std::cout<<"ev:\n"<<ev.transpose()<<std::endl;
+    // std::cout<<"eiX:\n"<<eiX.transpose()<<std::endl;
+
+
 
     // Force 'f' along negative b3-axis
     Vector3d A = -kx*ex-kv*ev-kiX*eiX-m*g*e3+m*xd_2dot;
     Vector3d L = R*e3;
     Vector3d Ldot = R*hat_eigen(W)*e3;
     double f = -A.dot(R*e3);
-    std::cout<<f<<std::endl;
+    // std::cout<<f<<std::endl;
     f_quad = f;
+
+    if(print_f){print_force();}
     // Intermediate Terms for Rotational Errors
     Vector3d ea = g*e3-f/m*L-xd_2dot;
     Vector3d Adot = -kx*ev-kv*ea+m*xd_3dot;// Lee Matlab: -ki*satdot(sigma,ei,ev+c1*ex);
@@ -389,11 +443,12 @@ void odroid_node::QuadrotorGeometricPositionController(Vector3d xd, Vector3d xd_
 
     // Attitude Integral Term
     eiR += del_t*(eR+cR*eW);
-    eiR = err_sat(-eiR_sat, eiR_sat, eiR);
+    err_sat(-eiR_sat, eiR_sat, eiR);
 
     // 3D Moment
     M = -kR*eR-kW*eW-kiR*eiR+hat_eigen(R.transpose()*Rd*Wd)*J*R.transpose()*Rd*Wd+J*R.transpose()*Rd*Wddot;// LBFF
     M = D*M;// LBFF->GBFF
+    if(print_M){cout<<"M: "<<M.transpose()<<endl;}
 }
 
 
@@ -585,19 +640,22 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
   // Attitude controller gains
   kR = config.kR;
   kW = config.kW;
+  cR = config.cR;
 
-  if(MOTOR_ON && !MotorWarmup){
-    kiR = config.kiR;
-    kiX = config.kiX;
-  }
+
+  // if(MOTOR_ON && !MotorWarmup){
+  kiR = config.kiR;
+  kiX = config.kiX;
+  // }
   // Position controller gains
   kx = config.kx;
   kv = config.kv;
+  cX = config.cX;
   MOTOR_ON = config.Motor;
   MotorWarmup = config.MotorWarmup;
   xd(0) =  config.x;
   xd(1) =  config.y;
-  xd(2) =  - config.z;
+  xd(2) =  config.z;
   print_xd = config.print_xd;
   print_x_v = config.print_x_v;
   print_eX = config.print_eX;
@@ -614,8 +672,8 @@ void odroid_node::gazebo_controll(){
 
   Vector3d fvec_GB(0.0, 0.0, f_quad), fvec_GI;
 
-  fvec_GI = R*fvec_GB;
-  M = R*M;
+  fvec_GI = R_v*fvec_GB;
+  M = R_v*M;
 
   FMcmds_srv.request.body_name = "quadrotor::base_link";
   FMcmds_srv.request.reference_frame = "world";
@@ -623,15 +681,15 @@ void odroid_node::gazebo_controll(){
   FMcmds_srv.request.reference_point.y = 0.0;
   FMcmds_srv.request.reference_point.z = 0.0;
   FMcmds_srv.request.start_time = ros::Time(0.0);
-  FMcmds_srv.request.duration = ros::Duration(-1);// apply continuously until new command
+  FMcmds_srv.request.duration = ros::Duration(0.01);// apply continuously until new command
 
   FMcmds_srv.request.wrench.force.x = fvec_GI(0);
   FMcmds_srv.request.wrench.force.y = fvec_GI(1);
   FMcmds_srv.request.wrench.force.z = fvec_GI(2);
 
-  FMcmds_srv.request.wrench.torque.x =  0*M(0);
-  FMcmds_srv.request.wrench.torque.y =  0*M(1);
-  FMcmds_srv.request.wrench.torque.z = 0*M(2);
+  FMcmds_srv.request.wrench.torque.x = M(0);
+  FMcmds_srv.request.wrench.torque.y = M(1);
+  FMcmds_srv.request.wrench.torque.z = M(2);
 
   client_FM.call(FMcmds_srv);
   if(!FMcmds_srv.response.success)
@@ -666,14 +724,13 @@ int main(int argc, char **argv){
   // sync.registerCallback(boost::bind(&odroid_node::imu_vicon_callback, &odnode, _1, _2));
   // open communication through I2C
   // odnode.open_I2C();
-
   ros::Rate loop_rate(100); // rate for the node loop
   // int count = 0;
   while (ros::ok()){
     ros::spinOnce();
     if(odnode.getIMU()){
       odnode.ctl_callback();
-      // odnode.gazebo_controll();
+      odnode.gazebo_controll();
     }
     loop_rate.sleep();
     // ++count;

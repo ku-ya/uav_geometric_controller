@@ -198,6 +198,8 @@ class odroid_node
     void GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, VectorXd eiR_last);
     // Position controller function
     void GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R);
+    // Quadrotor position controller
+    void QuadrotorGeometricPositionController();
     // node handle getter
     ros::NodeHandle getNH(){return n_;};
     void gazebo_controll();

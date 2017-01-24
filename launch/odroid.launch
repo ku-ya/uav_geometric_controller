@@ -1,5 +1,5 @@
 <launch>
-
+<!-- Based on pysical (MOCA) or simulation (Gazebo) testing choose option -->
     <arg name="MOCA" value="false"/>
 
     <group unless="$(arg MOCA)">
@@ -17,5 +17,4 @@
     <!-- start odroid node-->
     <node name="odroid_node" type="odroid_node" pkg="odroid" respawn="false" output="screen" />
     <!-- <node name="rviz" pkg="rviz" type="rviz" output="screen" /> -->
-
 </launch>

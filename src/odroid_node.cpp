@@ -216,6 +216,8 @@ void odroid_node::ctl_callback(){
     cout<<"xd: "<<xd.transpose()<<endl;
   }
 
+
+
   //GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR);
 
 GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_eb);
@@ -279,6 +281,105 @@ GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_e
 
   // motor_command();
 }
+
+void odroid_node::QuadrotorGeometricPositionController(controller_saturations& sat_limits,
+        vec3by1& xd,  vec3by1& xd_dot,  vec3by1& xd_2dot,  vec3by1& xd_3dot, vec3by1& xd_4dot,
+        vec3by1& b1d, vec3by1& b1d_dot, vec3by1& b1d_ddot, PoseSE3& pose,vec3by1& ex, vec3by1& ev, vec3by1& eR, vec3by1& eW, vec3by1& eiX, vec3by1& eiR){
+
+    // Bring to controller frame (and back) with 180 degree rotation about b1
+    mat3by3 D;
+    D = R_bm;
+
+    vec3by1 e3(0.0,0.0,1.0);// commonly-used unit vector
+
+    vec3by1 x = D*pose.X;// LI
+    vec3by1 v = D*pose.V;// LI
+    mat3by3 R = D*pose.R*D;// LI<-LBFF
+    vec3by1 W = D*pose.W;// LBFF
+
+    xd = D*xd;
+    xd_dot = D*xd_dot;
+    xd_2dot = D*xd_2dot;
+    xd_3dot = D*xd_3dot;
+    xd_4dot = D*xd_4dot;
+
+    b1d = D*b1d;
+    b1d_dot = D*b1d_dot;
+    b1d_ddot = D*b1d_ddot;
+
+    // Saturation Limits
+    double eiX_sat = sat_limits.eiX_sat;
+    double eiR_sat = sat_limits.eiR_sat;
+
+    // Translational Error Functions
+    ex = x-xd;
+    ev = v-xd_dot;
+    eiX = eiX+del_t*(ex+cX*ev);
+    eiX = err_sat(-eiX_sat, eiX_sat, eiX);
+
+    // Force 'f' along negative b3-axis
+    vec3by1 A = -kx*ex-kv*ev-kiX*eiX-m*g*e3+m*xd_2dot;
+    vec3by1 L = R*e3;
+    vec3by1 Ldot = R*hat_eigen(W)*e3;
+    f = -A.dot(R*e3);
+
+    // Intermediate Terms for Rotational Errors
+    vec3by1 ea = g*e3-f/m*L-xd_2dot;
+    vec3by1 Adot = -kx*ev-kv*ea+m*xd_3dot;// Lee Matlab: -ki*satdot(sigma,ei,ev+c1*ex);
+
+    double fdot = -Adot.dot(L)-A.dot(Ldot);
+    vec3by1 eb = -fdot/m*L-f/m*Ldot-xd_3dot;
+    vec3by1 Addot = -kx*ea-kv*eb+m*xd_4dot;// Lee Matlab: -ki*satdot(sigma,ei,ea+c1*ev);
+
+    double nA = A.norm();
+    vec3by1 Ld = -A/nA;
+    vec3by1 Lddot = -Adot/nA+A*A.dot(Adot)/pow(nA,3);
+    vec3by1 Ldddot = -Addot/nA+Adot/pow(nA,3)*(2*A.dot(Adot))
+            +A/pow(nA,3)*(Adot.dot(Adot)+A.dot(Addot))
+            -3*A/pow(nA,5)*pow(A.dot(Adot),2);
+
+    vec3by1 Ld2 = -hat_eigen(b1d)*Ld;
+    vec3by1 Ld2dot = -hat_eigen(b1d_dot)*Ld-hat_eigen(b1d)*Lddot;
+    vec3by1 Ld2ddot = -hat_eigen(b1d_ddot)*Ld-2*hat_eigen(b1d_dot)*Lddot-hat_eigen(b1d)*Ldddot;
+
+    double nLd2 = Ld2.norm();
+    vec3by1 Rd2 = Ld2/nLd2;
+    vec3by1 Rd2dot = Ld2dot/nLd2-Ld2.dot(Ld2dot)/pow(nLd2,3)*Ld2;
+    vec3by1 Rd2ddot = Ld2ddot/nLd2-Ld2.dot(Ld2dot)/pow(nLd2,3)*Ld2dot
+            -Ld2dot.dot(Ld2dot)/pow(nLd2,3)*Ld2-Ld2.dot(Ld2ddot)/pow(nLd2,3)*Ld2
+            -Ld2.dot(Ld2dot)/pow(nLd2,3)*Ld2dot
+            +3*pow(Ld2.dot(Ld2dot),2)/pow(nLd2,5)*Ld2;
+
+    vec3by1 Rd1 = hat_eigen(Rd2)*Ld;
+    vec3by1 Rd1dot = hat_eigen(Rd2dot)*Ld+hat_eigen(Rd2)*Lddot;
+    vec3by1 Rd1ddot = hat_eigen(Rd2ddot)*Ld+2*hat_eigen(Rd2dot)*Lddot+hat_eigen(Rd2)*Ldddot;
+
+    mat3by3 Rd, Rddot, Rdddot;
+    Rd << Rd1, Rd2, Ld;
+    Rddot << Rd1dot, Rd2dot, Lddot;
+    Rdddot << Rd1ddot, Rd2ddot, Ldddot;
+
+    vec3by1 Wd, Wddot;
+    vee_eigen(Rd.transpose()*Rddot, Wd);
+    vee_eigen(Rd.transpose()*Rdddot-hat_eigen(Wd)*hat_eigen(Wd), Wddot);
+
+    // Attitude Error 'eR'
+    vee_eigen(.5*(Rd.transpose()*R-R.transpose()*Rd), eR);
+
+    // Angular Velocity Error 'eW'
+    eW = W-R.transpose()*Rd*Wd;
+
+    // Attitude Integral Term
+    eiR += del_t*(eR+cR*eW);
+    eiR = err_sat(-eiR_sat, eiR_sat, eiR);
+
+    // 3D Moment
+    M = -kR*eR-kW*eW-kiR*eiR+hat_eigen(R.transpose()*Rd*Wd)*J*R.transpose()*Rd*Wd+J*R.transpose()*Rd*Wddot;// LBFF
+    M = D*M;// LBFF->GBFF
+}
+
+
+
 
 void odroid_node::motor_command(){
   // Execute motor output commands

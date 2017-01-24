@@ -4,6 +4,37 @@
 #include "math.hpp"
 #include <eigen3/Eigen/Dense>
 
+using namespace Eigen;
+
+void vee_eigen(Matrix3d xhat, Vector3d x){
+    x << xhat(2,1), xhat(0,2), xhat(1,0);
+    return;
+}
+
+Vector3d err_sat(double min_sat, double max_sat, Vector3d err){
+    Vector3d err_checked;
+
+    for(int i = 0; i < 3; i++){
+        if     (err(i) < min_sat)
+            err_checked(i) = min_sat;
+        else if(err(i) > max_sat)
+            err_checked(i) = max_sat;
+        else
+            err_checked(i) = err(i);
+    }
+
+    return err_checked;
+}
+
+Matrix3d hat_eigen(Vector3d x){
+    Matrix3d xhat;
+    xhat(0,0) =   0.0; xhat(0,1) = -x(2); xhat(0,2) =  x(1);
+    xhat(1,0) =  x(2); xhat(1,1) =   0.0; xhat(1,2) = -x(0);
+    xhat(2,0) = -x(1); xhat(2,1) =  x(0); xhat(2,2) =   0.0;
+    return xhat;
+}
+
+
 void OutputMotor(Eigen::VectorXd f, int thr[6]){
     int i;
     // double a =  6.0252E-5;

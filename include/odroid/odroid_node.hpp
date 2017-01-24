@@ -138,7 +138,7 @@ class odroid_node
     Matrix3d R_vm;// Markers (m) to Vicon (v)
     Matrix3d R_em;// Markers (m) to inertial (e)
     Matrix3d R_ev;
-
+    Matrix3d R;
     // Measured Values for Controller
     Vector3d x_e, v_e;// Position and Velocity in inertial (e) frame
     Matrix3d R_eb;// Body (b) to inertial (e) frame
@@ -146,6 +146,7 @@ class odroid_node
 
     // Error Functions
     Vector3d eX, eV, eR, eW, F, M;
+    double f_quad;
     // Control_Nonlinear Outputs:
     //  eX = position error in inertial frame
     //  eV = velocity error in inertial frame
@@ -199,7 +200,7 @@ class odroid_node
     // Position controller function
     void GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R);
     // Quadrotor position controller
-    void QuadrotorGeometricPositionController();
+    void QuadrotorGeometricPositionController(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot);
     // node handle getter
     ros::NodeHandle getNH(){return n_;};
     void gazebo_controll();

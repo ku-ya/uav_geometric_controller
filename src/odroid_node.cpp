@@ -46,7 +46,7 @@ void odroid_node::print_J(){
 }
 
 void odroid_node::print_force(){
-  std::cout<<"force: "<<this->f.transpose()<<std::endl;
+  std::cout<<"force: "<<f_quad<<std::endl;
 }
 
 // callback for IMU sensor det
@@ -91,6 +91,17 @@ void odroid_node::imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu, c
 
   tf::Quaternion q(quat_vm(0),quat_vm(1),quat_vm(2),quat_vm(3));
   tf::Matrix3x3 m(q);
+
+  double qx = quat_vm(0);
+  double qy = quat_vm(1);
+  double qz = quat_vm(2);
+  double qw = quat_vm(3);
+
+  R(0,0) = 1.0-2*qy*qy-2*qz*qz; R(0,1) = 2*qx*qy-2*qz*qw;     R(0,2) = 2*qx*qz+2*qy*qw;
+  R(1,0) = 2*qx*qy+2*qz*qw;     R(1,1) = 1.0-2*qx*qx-2*qz*qz; R(1,2) = 2*qy*qz-2*qx*qw;
+  R(2,0) = 2*qx*qz-2*qy*qw;     R(2,1) = 2*qy*qz+2*qx*qw;     R(2,2) = 1.0-2*qx*qx-2*qy*qy;
+
+
   m.getRPY(roll, pitch, yaw);
 
 	if(print_vicon){
@@ -219,16 +230,16 @@ void odroid_node::ctl_callback(){
 
 
   //GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR);
-
-GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_eb);
+QuadrotorGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot);
+// GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_eb);
 
   if(print_f){print_force();}
-  OutputMotor(f,thr);
-  if(print_thr){
-    cout<<"Throttle motor out: ";
-    for(int i = 0;i<6;i++){
-      cout<<thr[i]<<", ";} cout<<endl;
-    }
+  // OutputMotor(f_quad,thr);
+  // if(print_thr){
+  //   cout<<"Throttle motor out: ";
+  //   for(int i = 0;i<6;i++){
+  //     cout<<thr[i]<<", ";} cout<<endl;
+  //   }
 
   visualization_msgs::Marker marker;
   marker.header.frame_id = "base_link";
@@ -282,20 +293,26 @@ GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_e
   // motor_command();
 }
 
-void odroid_node::QuadrotorGeometricPositionController(controller_saturations& sat_limits,
-        vec3by1& xd,  vec3by1& xd_dot,  vec3by1& xd_2dot,  vec3by1& xd_3dot, vec3by1& xd_4dot,
-        vec3by1& b1d, vec3by1& b1d_dot, vec3by1& b1d_ddot, PoseSE3& pose,vec3by1& ex, vec3by1& ev, vec3by1& eR, vec3by1& eW, vec3by1& eiX, vec3by1& eiR){
+void odroid_node::QuadrotorGeometricPositionController(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot){
 
     // Bring to controller frame (and back) with 180 degree rotation about b1
-    mat3by3 D;
-    D = R_bm;
+    Matrix3d D = R_bm;
 
-    vec3by1 e3(0.0,0.0,1.0);// commonly-used unit vector
+    Vector3d xd_2dot = Vector3d::Zero();
+    Vector3d xd_3dot = Vector3d::Zero();
+    Vector3d xd_4dot = Vector3d::Zero();
+    Vector3d b1d(1,0,0);
+    Vector3d b1d_dot = Vector3d::Zero();
+    Vector3d b1d_ddot = Vector3d::Zero();
 
-    vec3by1 x = D*pose.X;// LI
-    vec3by1 v = D*pose.V;// LI
-    mat3by3 R = D*pose.R*D;// LI<-LBFF
-    vec3by1 W = D*pose.W;// LBFF
+
+
+    Vector3d e3(0.0,0.0,1.0);// commonly-used unit vector
+
+    Vector3d x = D*xd;// LI
+    Vector3d v = D*xd_dot;// LI
+    Matrix3d R = D*R*R_bm;// LI<-LBFF
+    Vector3d W = D*Wd;// LBFF
 
     xd = D*xd;
     xd_dot = D*xd_dot;
@@ -308,58 +325,59 @@ void odroid_node::QuadrotorGeometricPositionController(controller_saturations& s
     b1d_ddot = D*b1d_ddot;
 
     // Saturation Limits
-    double eiX_sat = sat_limits.eiX_sat;
-    double eiR_sat = sat_limits.eiR_sat;
-
+    double eiX_sat = 0.1;
+    double eiR_sat = 0.1;
+    double cX = 0.2, cR = 0.2;
     // Translational Error Functions
-    ex = x-xd;
-    ev = v-xd_dot;
-    eiX = eiX+del_t*(ex+cX*ev);
+    Vector3d ex = x-xd;
+    Vector3d ev = v-xd_dot;
+    Vector3d eiX = eiX+del_t*(ex+cX*ev);
     eiX = err_sat(-eiX_sat, eiX_sat, eiX);
 
     // Force 'f' along negative b3-axis
-    vec3by1 A = -kx*ex-kv*ev-kiX*eiX-m*g*e3+m*xd_2dot;
-    vec3by1 L = R*e3;
-    vec3by1 Ldot = R*hat_eigen(W)*e3;
-    f = -A.dot(R*e3);
-
+    Vector3d A = -kx*ex-kv*ev-kiX*eiX-m*g*e3+m*xd_2dot;
+    Vector3d L = R*e3;
+    Vector3d Ldot = R*hat_eigen(W)*e3;
+    double f = -A.dot(R*e3);
+    std::cout<<f<<std::endl;
+    f_quad = f;
     // Intermediate Terms for Rotational Errors
-    vec3by1 ea = g*e3-f/m*L-xd_2dot;
-    vec3by1 Adot = -kx*ev-kv*ea+m*xd_3dot;// Lee Matlab: -ki*satdot(sigma,ei,ev+c1*ex);
+    Vector3d ea = g*e3-f/m*L-xd_2dot;
+    Vector3d Adot = -kx*ev-kv*ea+m*xd_3dot;// Lee Matlab: -ki*satdot(sigma,ei,ev+c1*ex);
 
     double fdot = -Adot.dot(L)-A.dot(Ldot);
-    vec3by1 eb = -fdot/m*L-f/m*Ldot-xd_3dot;
-    vec3by1 Addot = -kx*ea-kv*eb+m*xd_4dot;// Lee Matlab: -ki*satdot(sigma,ei,ea+c1*ev);
+    Vector3d eb = -fdot/m*L-f/m*Ldot-xd_3dot;
+    Vector3d Addot = -kx*ea-kv*eb+m*xd_4dot;// Lee Matlab: -ki*satdot(sigma,ei,ea+c1*ev);
 
     double nA = A.norm();
-    vec3by1 Ld = -A/nA;
-    vec3by1 Lddot = -Adot/nA+A*A.dot(Adot)/pow(nA,3);
-    vec3by1 Ldddot = -Addot/nA+Adot/pow(nA,3)*(2*A.dot(Adot))
+    Vector3d Ld = -A/nA;
+    Vector3d Lddot = -Adot/nA+A*A.dot(Adot)/pow(nA,3);
+    Vector3d Ldddot = -Addot/nA+Adot/pow(nA,3)*(2*A.dot(Adot))
             +A/pow(nA,3)*(Adot.dot(Adot)+A.dot(Addot))
             -3*A/pow(nA,5)*pow(A.dot(Adot),2);
 
-    vec3by1 Ld2 = -hat_eigen(b1d)*Ld;
-    vec3by1 Ld2dot = -hat_eigen(b1d_dot)*Ld-hat_eigen(b1d)*Lddot;
-    vec3by1 Ld2ddot = -hat_eigen(b1d_ddot)*Ld-2*hat_eigen(b1d_dot)*Lddot-hat_eigen(b1d)*Ldddot;
+    Vector3d Ld2 = -hat_eigen(b1d)*Ld;
+    Vector3d Ld2dot = -hat_eigen(b1d_dot)*Ld-hat_eigen(b1d)*Lddot;
+    Vector3d Ld2ddot = -hat_eigen(b1d_ddot)*Ld-2*hat_eigen(b1d_dot)*Lddot-hat_eigen(b1d)*Ldddot;
 
     double nLd2 = Ld2.norm();
-    vec3by1 Rd2 = Ld2/nLd2;
-    vec3by1 Rd2dot = Ld2dot/nLd2-Ld2.dot(Ld2dot)/pow(nLd2,3)*Ld2;
-    vec3by1 Rd2ddot = Ld2ddot/nLd2-Ld2.dot(Ld2dot)/pow(nLd2,3)*Ld2dot
+    Vector3d Rd2 = Ld2/nLd2;
+    Vector3d Rd2dot = Ld2dot/nLd2-Ld2.dot(Ld2dot)/pow(nLd2,3)*Ld2;
+    Vector3d Rd2ddot = Ld2ddot/nLd2-Ld2.dot(Ld2dot)/pow(nLd2,3)*Ld2dot
             -Ld2dot.dot(Ld2dot)/pow(nLd2,3)*Ld2-Ld2.dot(Ld2ddot)/pow(nLd2,3)*Ld2
             -Ld2.dot(Ld2dot)/pow(nLd2,3)*Ld2dot
             +3*pow(Ld2.dot(Ld2dot),2)/pow(nLd2,5)*Ld2;
 
-    vec3by1 Rd1 = hat_eigen(Rd2)*Ld;
-    vec3by1 Rd1dot = hat_eigen(Rd2dot)*Ld+hat_eigen(Rd2)*Lddot;
-    vec3by1 Rd1ddot = hat_eigen(Rd2ddot)*Ld+2*hat_eigen(Rd2dot)*Lddot+hat_eigen(Rd2)*Ldddot;
+    Vector3d Rd1 = hat_eigen(Rd2)*Ld;
+    Vector3d Rd1dot = hat_eigen(Rd2dot)*Ld+hat_eigen(Rd2)*Lddot;
+    Vector3d Rd1ddot = hat_eigen(Rd2ddot)*Ld+2*hat_eigen(Rd2dot)*Lddot+hat_eigen(Rd2)*Ldddot;
 
-    mat3by3 Rd, Rddot, Rdddot;
+    Matrix3d Rd, Rddot, Rdddot;
     Rd << Rd1, Rd2, Ld;
     Rddot << Rd1dot, Rd2dot, Lddot;
     Rdddot << Rd1ddot, Rd2ddot, Ldddot;
 
-    vec3by1 Wd, Wddot;
+    // Vector3d Wd, Wddot;
     vee_eigen(Rd.transpose()*Rddot, Wd);
     vee_eigen(Rd.transpose()*Rdddot-hat_eigen(Wd)*hat_eigen(Wd), Wddot);
 
@@ -594,17 +612,22 @@ void odroid_node::gazebo_controll(){
   ros::ServiceClient client_FM = n_.serviceClient<gazebo_msgs::ApplyBodyWrench>("/gazebo/apply_body_wrench");
   gazebo_msgs::ApplyBodyWrench FMcmds_srv;
 
-  FMcmds_srv.request.body_name = "quadrotor::my_link";
-  FMcmds_srv.request.reference_frame = "earth";
+  Vector3d fvec_GB(0.0, 0.0, f_quad), fvec_GI;
+
+  fvec_GI = R*fvec_GB;
+  M = R*M;
+
+  FMcmds_srv.request.body_name = "quadrotor::base_link";
+  FMcmds_srv.request.reference_frame = "world";
   FMcmds_srv.request.reference_point.x = 0.0;
   FMcmds_srv.request.reference_point.y = 0.0;
   FMcmds_srv.request.reference_point.z = 0.0;
   FMcmds_srv.request.start_time = ros::Time(0.0);
-  FMcmds_srv.request.duration = ros::Duration(0.01);// apply continuously until new command
+  FMcmds_srv.request.duration = ros::Duration(-1);// apply continuously until new command
 
-  FMcmds_srv.request.wrench.force.x = F(0);
-  FMcmds_srv.request.wrench.force.y = - F(1);
-  FMcmds_srv.request.wrench.force.z = - F(2);
+  FMcmds_srv.request.wrench.force.x = fvec_GI(0);
+  FMcmds_srv.request.wrench.force.y = fvec_GI(1);
+  FMcmds_srv.request.wrench.force.z = fvec_GI(2);
 
   FMcmds_srv.request.wrench.torque.x =  0*M(0);
   FMcmds_srv.request.wrench.torque.y =  0*M(1);

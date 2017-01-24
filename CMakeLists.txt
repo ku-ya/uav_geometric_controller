@@ -155,7 +155,7 @@ include_directories(
 ## Declare a C++ executable
 add_executable(odroid_node src/odroid_node.cpp)
 add_executable(calibration src/calibration.cpp)
-add_executable(odroid_sense src/odroid_sense.cpp)
+add_executable(sim_vicon src/sim_vicon.cpp)
 
 add_dependencies(odroid_node ${PROJECT_NAME}_gencfg)
 add_dependencies(calibration ${PROJECT_NAME}_gencfg)
@@ -167,8 +167,8 @@ add_dependencies(calibration ${PROJECT_NAME}_gencfg)
 target_link_libraries(odroid_node
   ${catkin_LIBRARIES}
 )
-target_link_libraries(odroid_sense
-  ${catkin_LIBRARIES}${OpenCV_LIBRARIES}
+target_link_libraries(sim_vicon
+  ${catkin_LIBRARIES}
 )
 
 

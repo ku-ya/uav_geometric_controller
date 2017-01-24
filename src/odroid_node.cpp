@@ -7,7 +7,7 @@ using namespace message_filters;
 
 odroid_node::odroid_node(){
   del_t = 0.01;
-  m = 1.82;//1.25;
+  m = 1.25;
   g = 9.81;
   J <<  55710.50413e-7, 617.6577e-7, -250.2846e-7,
   617.6577e-7,  55757.4605e-7, 100.6760e-7,
@@ -67,7 +67,7 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   }
 }
 
-void odroid_node::imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu, const geometry_msgs::PoseStamped::ConstPtr& msgVicon){
+void odroid_node::imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu, const geometry_msgs::TransformStamped::ConstPtr& msgVicon){
   W_raw(0) = msgImu->angular_velocity.x;
   W_raw(1) = msgImu->angular_velocity.y;
   W_raw(2) = msgImu->angular_velocity.z;
@@ -79,13 +79,14 @@ void odroid_node::imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu, c
   if(print_imu){
    printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", W_raw(0), W_raw(1), W_raw(2));
   }
-  x_v(0) = msgVicon->pose.position.x;
-  x_v(1) = msgVicon->pose.position.y;
-  x_v(2) = msgVicon->pose.position.z;
-  quat_vm(0) = msgVicon->pose.orientation.x;
-  quat_vm(1) = msgVicon->pose.orientation.y;
-  quat_vm(2) = msgVicon->pose.orientation.z;
-  quat_vm(3) = msgVicon->pose.orientation.w;
+
+  x_v(0) = msgVicon->transform.translation.x;
+  x_v(1) = msgVicon->transform.translation.y;
+  x_v(2) = msgVicon->transform.translation.z;
+  quat_vm(0) = msgVicon->transform.rotation.x;
+  quat_vm(1) = msgVicon->transform.rotation.y;
+  quat_vm(2) = msgVicon->transform.rotation.z;
+  quat_vm(3) = msgVicon->transform.rotation.w;
 
 
   tf::Quaternion q(quat_vm(0),quat_vm(1),quat_vm(2),quat_vm(3));
@@ -530,10 +531,10 @@ int main(int argc, char **argv){
   dyn_serv = boost::bind(&odroid_node::callback, &odnode, _1, _2);
   server.setCallback(dyn_serv);
 
- typedef sync_policies::ApproximateTime<sensor_msgs::Imu, geometry_msgs::PoseStamped> MySyncPolicy;
+ typedef sync_policies::ApproximateTime<sensor_msgs::Imu, geometry_msgs::TransformStamped> MySyncPolicy;
 
   message_filters::Subscriber<sensor_msgs::Imu> imu_sub(nh,"raw_imu", 10);
-  message_filters::Subscriber<geometry_msgs::PoseStamped> vicon_sub(nh,"ground_truth_to_tf/pose", 10);
+  message_filters::Subscriber<geometry_msgs::TransformStamped> vicon_sub(nh,"vicon/Maya/Maya", 10);
   Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), imu_sub, vicon_sub);
   sync.registerCallback(boost::bind(&odroid_node::imu_vicon_callback, &odnode, _1, _2));
 
@@ -548,7 +549,7 @@ int main(int argc, char **argv){
     ros::spinOnce();
     if(odnode.getIMU()){
       odnode.ctl_callback();
-      odnode.gazebo_controll();
+      // odnode.gazebo_controll();
     }
     loop_rate.sleep();
     // ++count;

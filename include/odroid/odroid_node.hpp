@@ -84,7 +84,7 @@ class odroid_node
     //  kiR = integral attitude control gain
     double kx, kv, kiX, cX, kR, kW, kiR, cR;
     float phi, theta, psi;
-	double roll, pitch, yaw;
+    double roll, pitch, yaw;
     Matrix2d e; //inertial frame,
     // Measured Values in Vicon Frame
     Vector3d x_v, v_v, prev_x_v;// position in the Vicon frame

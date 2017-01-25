@@ -1,0 +1,146 @@
+<?xml version="1.0"?>
+<robot name="quadrotor" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Constants for robot dimensions -->
+  <xacro:property name="PI" value="3.1415926535897931"/>
+  <xacro:property name="mass" value="0.755" /> <!-- arbitrary value for mass -->
+  <xacro:property name="width" value="0.1" /> <!-- Square dimensions (widthxwidth) of beams -->
+  <xacro:property name="height1" value="2" /> <!-- Link 1 -->
+  <xacro:property name="height2" value="1" /> <!-- Link 2 -->
+  <xacro:property name="height3" value="1" /> <!-- Link 3 -->
+  <xacro:property name="camera_link" value="0.05" /> <!-- Size of square 'camera' box -->
+  <xacro:property name="axel_offset" value="0.05" /> <!-- Space btw top of beam and the each joint -->
+
+<!-- From Matlab
+
+J1=55710.50413e-7;
+J2=55710.50413e-7;
+J3=105053.7595e-7;
+J=diag([J1 J2 J3]);
+m=0.755;
+
+-->
+
+  <xacro:macro name="quadrotor_base_macro">
+  <link name="base_link">
+  <gravity>true</gravity>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.755"/>
+      <inertia
+        ixx="0.005571050413" ixy="0.0" ixz="0.0"
+        iyy="0.005571050413" iyz="0.0"
+        izz="0.01050537595"/>
+    </inertial>
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <collision name='collision'>
+      <geometry>
+        <sphere radius = "0.0001" />
+      </geometry>
+    </collision>
+
+    <visual name="quadrotor_center">
+  <geometry>
+  <cylinder radius="0.05" length="0.02" />
+  </geometry>
+  <material name="orange">
+  <color rgba="${255/255} ${108/255} ${10/255} 1.0"/>
+  </material>
+    </visual>
+
+    <visual name='quadrotor_x_arms'>
+  <origin xyz = "0.0 0.0 0.0" rpy ="0.0 1.5707 0.0" />
+  <geometry>
+  <cylinder radius=".006" length="0.66" />
+  </geometry>
+  <material name="orange">
+  <ambient> 0 0 0 1 </ambient>
+  </material>
+    </visual>
+
+    <visual name='quadrotor_y_arms'>
+<origin xyz="0.0 0.0 0.0" rpy="0.0 1.5707 1.5707" />
+<geometry>
+  <cylinder radius=".006" length="0.66" />
+</geometry>
+<material name="orange">
+<ambient> 0 0 0 1 </ambient>
+</material>
+    </visual>
+
+    <visual name='motor_pos_x'>
+<origin xyz="0.33 0.0 0.006" rpy="0.0 0.0 0.0" />
+<geometry>
+<cylinder radius=".006" length="0.024" />
+</geometry>
+<material name="white">
+  <ambient> 0.0 0.0 0.0 1.0 </ambient>
+</material>
+  </visual>
+    <visual name='prop_pos_x'>
+<origin xyz="0.33 0.0 0.02" rpy="0.0 0.0 0.0"/>
+<geometry>
+<cylinder radius=".1" length="0.01" />
+</geometry>
+<material name="white">
+<ambient> 0.5 0.5 0.5 1.0 </ambient>
+</material>
+    </visual>
+    <visual name='motor_neg_x'>
+<origin xyz ="-0.33 0.0 0.006" rpy="0.0 0.0 0.0"/>
+<geometry>
+<cylinder radius=".006" length="0.024"/>
+</geometry>
+<material name="white">
+<ambient> 0.0 0.0 0.0 1.0 </ambient>
+</material>
+    </visual>
+    <visual name='prop_neg_x'>
+<origin xyz="-0.33 0.0 0.02" rpy="0.0 0.0 0.0"/>
+<geometry>
+<cylinder   radius=".1" length="0.01" />
+</geometry>
+<material name="white">
+<ambient> 0.5 0.5 0.5 1.0 </ambient>
+</material>
+    </visual>
+    <visual name='motor_pos_y'>
+<origin xyz="0.0 0.33 0.006" rpy="0.0 0.0 0.0"/>
+<geometry>
+<cylinder radius=".006" length="0.024" />
+</geometry>
+<material name="white">
+<ambient> 0.0 0.0 0.0 1.0 </ambient>
+</material>
+    </visual>
+    <visual name='prop_pos_y'>
+<origin xyz="0.0 0.33 0.02" rpy="0.0 0.0 0.0" />
+<geometry>
+<cylinder radius = ".1" length="0.01"/>
+</geometry>
+<material name="white">
+<ambient> 0.5 0.5 0.5 1.0 </ambient>
+</material>
+    </visual>
+    <visual name='motor_neg_y'>
+<origin xyz="0.0 -0.33 0.006" rpy="0.0 0.0 0.0"/>
+<geometry>
+<cylinder radius=".006" length="0.024"/>
+</geometry>
+<material name="white">
+<ambient> 0.0 0.0 0.0 1.0 </ambient>
+</material>
+    </visual>
+    <visual name='prop_neg_y'>
+<origin xyz="0.0 -0.33 0.02" rpy = "0.0 0.0 0.0"/>
+<geometry>
+<cylinder radius=".1" length="0.01"/>
+</geometry>
+<material name="white">
+<ambient> 0.5 0.5 0.5 1.0 </ambient>
+</material>
+    </visual>
+
+  </link>
+  </xacro:macro>
+</robot>

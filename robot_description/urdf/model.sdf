@@ -1,0 +1,168 @@
+<?xml version='1.0'?>
+<sdf version='1.4'>
+  <model name="quadrotor_dc">
+  <static>false</static>
+          <link name='quadrotor'>
+          <gravity>0</gravity>
+            <pose>0 0 2.0 0 0 0</pose>
+            <collision name='collision'>
+              <geometry>
+                <sphere>
+                <radius>0.0001</radius>
+              </sphere>
+              </geometry>
+            </collision>
+
+            <visual name='quadrotor_center'>
+		  <geometry>
+		    <cylinder>
+		      <radius>.05</radius>
+		      <length>0.02</length>
+		    </cylinder>
+		  </geometry>
+		<material>
+			<ambient> 0 0 0 1 </ambient>
+		</material>
+            </visual>
+            <visual name='quadrotor_x_arms'>
+		<pose>0.0 0.0 0.0 0.0 1.5707 0.0</pose>
+		  <geometry>
+		    <cylinder>
+		      <radius>.006</radius>
+		      <length>0.66</length>
+		    </cylinder>
+		  </geometry>
+		<material>
+			<ambient> 0 0 0 1 </ambient>
+		</material>
+            </visual>
+            <visual name='quadrotor_y_arms'>
+		<pose>0.0 0.0 0.0 0.0 1.5707 1.5707</pose>
+		  <geometry>
+		    <cylinder>
+		      <radius>.006</radius>
+		      <length>0.66</length>
+		    </cylinder>
+		  </geometry>
+		<material>
+			<ambient> 0 0 0 1 </ambient>
+		</material>
+            </visual>
+
+            <visual name='motor_pos_x'>
+		<pose>0.33 0.0 0.006 0.0 0.0 0.0</pose>
+		  <geometry>
+		    <cylinder>
+		      <radius>.006</radius>
+		      <length>0.024</length>
+		    </cylinder>
+		  </geometry>
+		<material>
+			<ambient> 0.0 0.0 0.0 1.0 </ambient>
+		</material>
+            </visual>
+            <visual name='prop_pos_x'>
+		<pose>0.33 0.0 0.02 0.0 0.0 0.0</pose>
+		  <geometry>
+		    <cylinder>
+		      <radius>.1</radius>
+		      <length>0.01</length>
+		    </cylinder>
+		  </geometry>
+		<material>
+			<ambient> 0.5 0.5 0.5 1.0 </ambient>
+		</material>
+            </visual>
+            <visual name='motor_neg_x'>
+		<pose>-0.33 0.0 0.006 0.0 0.0 0.0</pose>
+		  <geometry>
+		    <cylinder>
+		      <radius>.006</radius>
+		      <length>0.024</length>
+		    </cylinder>
+		  </geometry>
+		<material>
+			<ambient> 0.0 0.0 0.0 1.0 </ambient>
+		</material>
+            </visual>
+            <visual name='prop_neg_x'>
+		<pose>-0.33 0.0 0.02 0.0 0.0 0.0</pose>
+		  <geometry>
+		    <cylinder>
+		      <radius>.1</radius>
+		      <length>0.01</length>
+		    </cylinder>
+		  </geometry>
+		<material>
+			<ambient> 0.5 0.5 0.5 1.0 </ambient>
+		</material>
+            </visual>
+            <visual name='motor_pos_y'>
+		<pose>0.0 0.33 0.006 0.0 0.0 0.0</pose>
+		  <geometry>
+		    <cylinder>
+		      <radius>.006</radius>
+		      <length>0.024</length>
+		    </cylinder>
+		  </geometry>
+		<material>
+			<ambient> 0.0 0.0 0.0 1.0 </ambient>
+		</material>
+            </visual>
+            <visual name='prop_pos_y'>
+		<pose>0.0 0.33 0.02 0.0 0.0 0.0</pose>
+		  <geometry>
+		    <cylinder>
+		      <radius>.1</radius>
+		      <length>0.01</length>
+		    </cylinder>
+		  </geometry>
+		<material>
+			<ambient> 0.5 0.5 0.5 1.0 </ambient>
+		</material>
+            </visual>
+            <visual name='motor_neg_y'>
+		<pose>0.0 -0.33 0.006 0.0 0.0 0.0</pose>
+		  <geometry>
+		    <cylinder>
+		      <radius>.006</radius>
+		      <length>0.024</length>
+		    </cylinder>
+		  </geometry>
+		<material>
+			<ambient> 0.0 0.0 0.0 1.0 </ambient>
+		</material>
+            </visual>
+            <visual name='prop_neg_y'>
+		<pose>0.0 -0.33 0.02 0.0 0.0 0.0</pose>
+		  <geometry>
+		    <cylinder>
+		      <radius>.1</radius>
+		      <length>0.01</length>
+		    </cylinder>
+		  </geometry>
+		<material>
+			<ambient> 0.5 0.5 0.5 1.0 </ambient>
+		</material>
+            </visual>
+
+          </link>
+
+    <include>
+      <uri>model://hokuyo</uri>
+      <pose>0.0 0 2.03 0 0 0</pose>
+    </include>
+    <joint name="hokuyo_joint" type="revolute">
+      <child>hokuyo::link</child>
+      <parent>quadrotor</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <upper>10</upper>
+          <lower>0</lower>
+        </limit>
+      </axis>
+    </joint>
+
+  </model>
+</sdf>

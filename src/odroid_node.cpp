@@ -243,7 +243,7 @@ void odroid_node::ctl_callback(){
 
   //GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR);
 
-QuadGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_vm);
+QuadGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
 // GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_eb);
 
 
@@ -318,8 +318,6 @@ void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, 
     Vector3d b1d(1,0,0);
     Vector3d b1d_dot = Vector3d::Zero();
     Vector3d b1d_ddot = Vector3d::Zero();
-
-
 
     Vector3d e3(0.0,0.0,1.0);// commonly-used unit vector
 

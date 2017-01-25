@@ -3,7 +3,7 @@
 <launch>
 
   <arg name="name" default="quadrotor"/>
-  <arg name="model" default="$(find ogm_ae)/robot_description/urdf/quadrotor.gazebo.xacro"/>
+  <arg name="model" default="$(find odroid)/robot_description/urdf/quadrotor.gazebo.xacro"/>
   <arg name="controllers" default="
     controller/position
     controller/velocity
@@ -11,7 +11,7 @@
     "/>
   <arg name="tf_prefix" default="$(optenv ROS_NAMESPACE)"/>
 
-  <arg name="x" default="-1.0"/>
+  <arg name="x" default="0.0"/>
   <arg name="y" default="0.0"/>
   <arg name="z" default="0.3"/>
 

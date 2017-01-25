@@ -35,6 +35,8 @@ rosrun rosserial_server serial_node _port:=/dev/ttyACM0 _baud:=115200
 ```
 
 ## Update versions
+tag v0.3
+- Gazebo simulation quad controller integration complete
 tag V0.2
 - Synchronized message from IMU and Vicon for sensor callback
 tag V0.1

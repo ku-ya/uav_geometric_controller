@@ -6,9 +6,8 @@
 
 using namespace Eigen;
 
-void vee_eigen(Matrix3d xhat, Vector3d x){
+void vee_eigen(Matrix3d xhat, Vector3d& x){
     x << xhat(2,1), xhat(0,2), xhat(1,0);
-    return;
 }
 
 void err_sat(double min_sat, double max_sat, Vector3d& err){

@@ -1,5 +1,5 @@
 #include <odroid/odroid_node.hpp>
-#include <odroid/controllers.h>// robotic control
+// #include <odroid/controllers.h>// robotic control
 // User header files
 
 using namespace std;
@@ -18,8 +18,6 @@ odroid_node::odroid_node(){
   J << 0.005571050413, 0.0           , 0.0          ,
        0.0           , 0.005571050413, 0.0          ,
        0.0           , 0.0           , 0.01050537595;
-
-
 
   IMU_flag = false;
   // f = VectorXd::Zero(6);
@@ -46,30 +44,6 @@ odroid_node::odroid_node(){
   vis_pub_ = n_.advertise<visualization_msgs::Marker>("/force",1);
   vis_pub_y = n_.advertise<visualization_msgs::Marker>("/force_y",1);
   vis_pub_z = n_.advertise<visualization_msgs::Marker>("/force_z",1);
-
-
-// Gains
-  controller_gains gains;
-
-    // Translational Gains
-    double wnx = 2.81;
-    double zetax = 0.7;
-    gains.properties2gainsX(wnx, zetax, m);// returns kx, kv
-    gains.kiX = 1.0;
-    gains.cX = 0.1;
-
-    // Rotational Gains
-    double wnR = 8.16;
-    double zetaR = 0.7;
-    gains.properties2gainsR(wnR, zetaR, J);// kR, kW
-    gains.kiR = 0.1;//0.01;
-    gains.cR = 0.1;
-
-    // Gains
-  //   cout<<"kx: "<<gains.kx<<" kv:"<<gains.kv<<" kiX:"<<gains.kiX<<" cX:"<<
-  //   gains.cX<<" kR:"<<gains.kR<<" kW:"<<gains.kW<<" kiR:"<<gains.kiR<<" cR:"<<gains.cR<<endl;
-  //
-  // return;
 
   ROS_INFO("Odroid node initialized");
 }
@@ -222,10 +196,13 @@ void odroid_node::ctl_callback(){
   xd_dot = VectorXd::Zero(3); xd_ddot = VectorXd::Zero(3);
   Rd = MatrixXd::Identity(3,3);
   Vector3d prev_x_e = x_e;
-  Vector3d prev_x_v = x_v;
+  // Vector3d prev_x_v = x_v;
   x_e = R_ev * x_v;
   v_e = (x_e - prev_x_e)*100;
+
   v_v = (x_v - prev_x_v)*100;
+  // cout<<"x_v\n"<<x_v.tanspose()<<"v_v\n"<<v_v.transpose()<<endl;
+  prev_x_v = x_v;
 
 
 
@@ -264,9 +241,9 @@ void odroid_node::ctl_callback(){
   }
 
 
-
   //GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR);
-QuadGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
+
+QuadGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_vm);
 // GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_eb);
 
 
@@ -329,7 +306,7 @@ QuadGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, 
   // motor_command();
 }
 
-void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W, Matrix3d R_v){
+void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W_in, Matrix3d R_v){
 
     // Bring to controller frame (and back) with 180 degree rotation about b1
     Matrix3d D = R_bm;
@@ -349,12 +326,12 @@ void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, 
     Vector3d x = D*x_v;// LI
     Vector3d v = D*v_v;// LI
     Matrix3d R = D*R_v*D;// LI<-LBFF
-    W = D*W;// LBFF
+    Vector3d W = D*W_in;// LBFF
 
     // std::cout<<"x_v:\n"<<x_v.transpose()<<std::endl;
     // std::cout<<"x:\n"<<x.transpose()<<std::endl;
     // std::cout<<"v:\n"<<v.transpose()<<std::endl;
-    // std::cout<<"R:\n"<<R<<std::endl;
+    // std::cout<<"R_v:\n"<<R_v<<std::endl;
     // std::cout<<"W:\n"<<W<<std::endl;
 
     xd = D*xd;
@@ -437,10 +414,10 @@ void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, 
 
     // Attitude Error 'eR'
     vee_eigen(.5*(Rd.transpose()*R-R.transpose()*Rd), eR);
-
+    // cout<<"eR:\n"<<eR<<endl;
     // Angular Velocity Error 'eW'
     eW = W-R.transpose()*Rd*Wd;
-
+    // cout<<"eW:\n"<<eW<<endl;
     // Attitude Integral Term
     eiR += del_t*(eR+cR*eW);
     err_sat(-eiR_sat, eiR_sat, eiR);
@@ -451,7 +428,112 @@ void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, 
     if(print_M){cout<<"M: "<<M.transpose()<<endl;}
 }
 
+void odroid_node::gazebo_controll(){
+  ros::ServiceClient client_FM = n_.serviceClient<gazebo_msgs::ApplyBodyWrench>("/gazebo/apply_body_wrench");
+  gazebo_msgs::ApplyBodyWrench FMcmds_srv;
 
+  Vector3d fvec_GB(0.0, 0.0, f_quad), fvec_GI;
+
+  fvec_GI = R_v*fvec_GB;
+  Vector3d M_out = R_v*M;
+
+  FMcmds_srv.request.body_name = "quadrotor::base_link";
+  FMcmds_srv.request.reference_frame = "world";
+  FMcmds_srv.request.reference_point.x = 0.0;
+  FMcmds_srv.request.reference_point.y = 0.0;
+  FMcmds_srv.request.reference_point.z = 0.0;
+  FMcmds_srv.request.start_time = ros::Time(0.0);
+  FMcmds_srv.request.duration = ros::Duration(0.01);// apply continuously until new command
+
+  FMcmds_srv.request.wrench.force.x = fvec_GI(0);
+  FMcmds_srv.request.wrench.force.y = fvec_GI(1);
+  FMcmds_srv.request.wrench.force.z = fvec_GI(2);
+
+  FMcmds_srv.request.wrench.torque.x = M_out(0);
+  FMcmds_srv.request.wrench.torque.y = M_out(1);
+  FMcmds_srv.request.wrench.torque.z = M_out(2);
+
+  client_FM.call(FMcmds_srv);
+  if(!FMcmds_srv.response.success)
+      cout << "Fail! Response message:\n" << FMcmds_srv.response.status_message << endl;
+}
+
+int main(int argc, char **argv){
+  // ros::init(argc, argv, "imu_listener");
+  ros::init(argc,argv,"hexacopter");
+  //  ros::NodeHandle nh;
+  odroid_node odnode;
+  ros::NodeHandle nh = odnode.getNH();
+  // IMU and keyboard input callback
+  // ros::Subscriber sub2 = nh.subscribe("imu/imu",100,&odroid_node::imu_callback,&odnode);
+  // ros::Subscriber sub_vicon = nh.subscribe("vicon/Maya/Maya",100,&odroid_node::vicon_callback,&odnode);
+  ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
+
+  // dynamic reconfiguration server for gains and print outs
+  dynamic_reconfigure::Server<odroid::GainsConfig> server;
+  dynamic_reconfigure::Server<odroid::GainsConfig>::CallbackType dyn_serv;
+  dyn_serv = boost::bind(&odroid_node::callback, &odnode, _1, _2);
+  server.setCallback(dyn_serv);
+
+ typedef sync_policies::ApproximateTime<sensor_msgs::Imu, geometry_msgs::TransformStamped> MySyncPolicy;
+
+  message_filters::Subscriber<sensor_msgs::Imu> imu_sub(nh,"raw_imu", 10);
+  message_filters::Subscriber<geometry_msgs::TransformStamped> vicon_sub(nh,"vicon/Maya/Maya", 10);
+  Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), imu_sub, vicon_sub);
+  sync.registerCallback(boost::bind(&odroid_node::imu_vicon_callback, &odnode, _1, _2));
+
+  // TimeSynchronizer<sensor_msgs::Imu, geometry_msgs::PoseStamped> sync(imu_sub, vicon_sub, 10);
+  // sync.registerCallback(boost::bind(&odroid_node::imu_vicon_callback, &odnode, _1, _2));
+  // open communication through I2C
+  // odnode.open_I2C();
+  ros::Rate loop_rate(100); // rate for the node loop
+  // int count = 0;
+  while (ros::ok()){
+    ros::spinOnce();
+    if(odnode.getIMU()){
+      odnode.ctl_callback();
+      odnode.gazebo_controll();
+    }
+    loop_rate.sleep();
+    // ++count;
+  }
+  return 0;
+}
+
+void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
+  ROS_INFO("Reconfigure Request: Update");
+  print_f = config.print_f;
+  print_imu = config.print_imu;
+  print_thr = config.print_thr;
+  print_test_variable = config.print_test_variable;
+  // Attitude controller gains
+  kR = config.kR;
+  kW = config.kW;
+  cR = config.cR;
+
+
+  // if(MOTOR_ON && !MotorWarmup){
+  kiR = config.kiR;
+  kiX = config.kiX;
+  // }
+  // Position controller gains
+  kx = config.kx;
+  kv = config.kv;
+  cX = config.cX;
+  MOTOR_ON = config.Motor;
+  MotorWarmup = config.MotorWarmup;
+  xd(0) =  config.x;
+  xd(1) =  config.y;
+  xd(2) =  config.z;
+  print_xd = config.print_xd;
+  print_x_v = config.print_x_v;
+  print_eX = config.print_eX;
+  print_eV = config.print_eV;
+  print_vicon = config.print_vicon;
+  print_M = config.print_M;
+  print_F = config.print_F;
+  print_R_eb = config.print_R_eb;
+}
 
 
 void odroid_node::motor_command(){
@@ -629,111 +711,4 @@ void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector
   VectorXd FM(6);
   FM << 0.0, 0.0, F_req, M(0), M(1), M(2);
   f = invFMmat * FM;
-}
-
-void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
-  ROS_INFO("Reconfigure Request: Update");
-  print_f = config.print_f;
-  print_imu = config.print_imu;
-  print_thr = config.print_thr;
-  print_test_variable = config.print_test_variable;
-  // Attitude controller gains
-  kR = config.kR;
-  kW = config.kW;
-  cR = config.cR;
-
-
-  // if(MOTOR_ON && !MotorWarmup){
-  kiR = config.kiR;
-  kiX = config.kiX;
-  // }
-  // Position controller gains
-  kx = config.kx;
-  kv = config.kv;
-  cX = config.cX;
-  MOTOR_ON = config.Motor;
-  MotorWarmup = config.MotorWarmup;
-  xd(0) =  config.x;
-  xd(1) =  config.y;
-  xd(2) =  config.z;
-  print_xd = config.print_xd;
-  print_x_v = config.print_x_v;
-  print_eX = config.print_eX;
-  print_eV = config.print_eV;
-  print_vicon = config.print_vicon;
-  print_M = config.print_M;
-  print_F = config.print_F;
-  print_R_eb = config.print_R_eb;
-}
-
-void odroid_node::gazebo_controll(){
-  ros::ServiceClient client_FM = n_.serviceClient<gazebo_msgs::ApplyBodyWrench>("/gazebo/apply_body_wrench");
-  gazebo_msgs::ApplyBodyWrench FMcmds_srv;
-
-  Vector3d fvec_GB(0.0, 0.0, f_quad), fvec_GI;
-
-  fvec_GI = R_v*fvec_GB;
-  M = R_v*M;
-
-  FMcmds_srv.request.body_name = "quadrotor::base_link";
-  FMcmds_srv.request.reference_frame = "world";
-  FMcmds_srv.request.reference_point.x = 0.0;
-  FMcmds_srv.request.reference_point.y = 0.0;
-  FMcmds_srv.request.reference_point.z = 0.0;
-  FMcmds_srv.request.start_time = ros::Time(0.0);
-  FMcmds_srv.request.duration = ros::Duration(0.01);// apply continuously until new command
-
-  FMcmds_srv.request.wrench.force.x = fvec_GI(0);
-  FMcmds_srv.request.wrench.force.y = fvec_GI(1);
-  FMcmds_srv.request.wrench.force.z = fvec_GI(2);
-
-  FMcmds_srv.request.wrench.torque.x = M(0);
-  FMcmds_srv.request.wrench.torque.y = M(1);
-  FMcmds_srv.request.wrench.torque.z = M(2);
-
-  client_FM.call(FMcmds_srv);
-  if(!FMcmds_srv.response.success)
-      cout << "Fail! Response message:\n" << FMcmds_srv.response.status_message << endl;
-}
-
-int main(int argc, char **argv){
-  // ros::init(argc, argv, "imu_listener");
-  ros::init(argc,argv,"hexacopter");
-  //  ros::NodeHandle nh;
-  odroid_node odnode;
-  ros::NodeHandle nh = odnode.getNH();
-  // IMU and keyboard input callback
-  // ros::Subscriber sub2 = nh.subscribe("imu/imu",100,&odroid_node::imu_callback,&odnode);
-  // ros::Subscriber sub_vicon = nh.subscribe("vicon/Maya/Maya",100,&odroid_node::vicon_callback,&odnode);
-  ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
-
-  // dynamic reconfiguration server for gains and print outs
-  dynamic_reconfigure::Server<odroid::GainsConfig> server;
-  dynamic_reconfigure::Server<odroid::GainsConfig>::CallbackType dyn_serv;
-  dyn_serv = boost::bind(&odroid_node::callback, &odnode, _1, _2);
-  server.setCallback(dyn_serv);
-
- typedef sync_policies::ApproximateTime<sensor_msgs::Imu, geometry_msgs::TransformStamped> MySyncPolicy;
-
-  message_filters::Subscriber<sensor_msgs::Imu> imu_sub(nh,"raw_imu", 10);
-  message_filters::Subscriber<geometry_msgs::TransformStamped> vicon_sub(nh,"vicon/Maya/Maya", 10);
-  Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), imu_sub, vicon_sub);
-  sync.registerCallback(boost::bind(&odroid_node::imu_vicon_callback, &odnode, _1, _2));
-
-  // TimeSynchronizer<sensor_msgs::Imu, geometry_msgs::PoseStamped> sync(imu_sub, vicon_sub, 10);
-  // sync.registerCallback(boost::bind(&odroid_node::imu_vicon_callback, &odnode, _1, _2));
-  // open communication through I2C
-  // odnode.open_I2C();
-  ros::Rate loop_rate(100); // rate for the node loop
-  // int count = 0;
-  while (ros::ok()){
-    ros::spinOnce();
-    if(odnode.getIMU()){
-      odnode.ctl_callback();
-      odnode.gazebo_controll();
-    }
-    loop_rate.sleep();
-    // ++count;
-  }
-  return 0;
 }

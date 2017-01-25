@@ -87,7 +87,7 @@ class odroid_node
 	double roll, pitch, yaw;
     Matrix2d e; //inertial frame,
     // Measured Values in Vicon Frame
-    Vector3d x_v, v_v;// position in the Vicon frame
+    Vector3d x_v, v_v, prev_x_v;// position in the Vicon frame
     // VectorXd quat_vm(4);
     Matrix<double, 4, 1> quat_vm;// attitude of markers measured by Vicon system
 
@@ -199,7 +199,7 @@ class odroid_node
     // Position controller function
     void GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W, Matrix3d R_v);
     // Quadrotor position controller
-    void QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R);
+    void QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W_in, Matrix3d R);
     // node handle getter
     ros::NodeHandle getNH(){return n_;};
     void gazebo_controll();

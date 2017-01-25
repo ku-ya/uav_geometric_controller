@@ -30,39 +30,43 @@ Matrix3d hat_eigen(Vector3d x){
 }
 
 
-void OutputMotor(Eigen::VectorXd f, int thr[6]){
-    int i;
+void OutputMotor(Eigen::VectorXd f_motor, int thr[4]){
+
+    // for(int k = 0; k < 4; k++){
+    //   thr(k) = floor(1/0.03*(f_motor(k)+0.37)+0.5);
+    // }
+
     // double a =  6.0252E-5;
     // double b =  8.4086E-3;
     // double c = -2.5194E-2;
 
-    double a_values[6] = {0.6252E-4, 0.8251E-4, 0.7659E-4, 0.8197E-4, 0.8162E-4, 0.7524E-4};
-    double b_values[6] = {0.0142, 0.0097, 0.0097, 0.0087, 0.0088, 0.0099};
-    double c_values[6] = {-0.3700, -0.2380, -0.2747, -0.2418, -0.2495, -0.2489};
-
-    double a, b, c;
-
-    f[1] = -f[1];
-    f[3] = -f[3];
-    f[5] = -f[5];
-    // Use a scale factor to correct for offset in motor calibration
-    // 12.5 V / 11.1 V = 1.1261
-    double scale_factor = 1;
-
-    for(i = 0; i < 6; i++)
-    {
-      a = a_values[i];
-      b = b_values[i];
-      c = c_values[i];
-
-        if(f[i] < 0.0)
-            f[i] = 0.0;
-        thr[i]=ceil((-b+sqrt(b*b-4.*a*(c-f[i])))/2./a/scale_factor);
-        if(thr[i] > 240.0)
-            thr[i]=240.0;
-        if(thr[i] < 0.0)
-            thr[i]=0.0;
-    }
+    // double a_values[6] = {0.6252E-4, 0.8251E-4, 0.7659E-4, 0.8197E-4, 0.8162E-4, 0.7524E-4};
+    // double b_values[6] = {0.0142, 0.0097, 0.0097, 0.0087, 0.0088, 0.0099};
+    // double c_values[6] = {-0.3700, -0.2380, -0.2747, -0.2418, -0.2495, -0.2489};
+    //
+    // double a, b, c;
+    //
+    // f[1] = -f[1];
+    // f[3] = -f[3];
+    // f[5] = -f[5];
+    // // Use a scale factor to correct for offset in motor calibration
+    // // 12.5 V / 11.1 V = 1.1261
+    // double scale_factor = 1;
+    //
+    // for(i = 0; i < 6; i++)
+    // {
+    //   a = a_values[i];
+    //   b = b_values[i];
+    //   c = c_values[i];
+    //
+    //     if(f[i] < 0.0)
+    //         f[i] = 0.0;
+    //     thr[i]=ceil((-b+sqrt(b*b-4.*a*(c-f[i])))/2./a/scale_factor);
+    //     if(thr[i] > 240.0)
+    //         thr[i]=240.0;
+    //     if(thr[i] < 0.0)
+    //         thr[i]=0.0;
+    // }
 }
 
 void eigen_skew (Eigen::Vector3d&  x, Eigen::Matrix3d& skewM)

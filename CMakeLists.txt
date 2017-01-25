@@ -14,7 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   dynamic_reconfigure
-  rosserial_arduino
+  # rosserial_arduino
   tf
 	message_generation
   cv_bridge

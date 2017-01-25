@@ -61,6 +61,7 @@ class odroid_node
     //  g = acceleration due to gravity
     //  J = moment of inertial matrix
     double m, g; Matrix3d J;
+    Matrix4d Ainv;
     // Control_Nonliner Inputs:
     //  xd = f(t) desired position in inertial frame
     //  xd_dot = f(xd) desired velocity in inertial frame
@@ -146,6 +147,7 @@ class odroid_node
     // Error Functions
     Vector3d eX, eV, eR, eW, F, M;
     double f_quad;
+    Matrix<double,4,1> f_motor;
     // Control_Nonlinear Outputs:
     //  eX = position error in inertial frame
     //  eV = velocity error in inertial frame
@@ -160,7 +162,7 @@ class odroid_node
     // Output of Control_Nonlinear() and Command Execution
     // VectorXd f;// Force of each motor/propeller/servo
     int mtr_addr[6] = {41, 42, 43, 44, 45, 46};;// Motor addresses 1-6
-    int thr[6];// i2c motor commands
+    int thr[4];// i2c motor commands
     int servo_addr[6] = {0, 1, 2, 3, 4, 5};// Servo addresses 1-6
     uint16_t servopl[6];// i2c servo pulse length (duty_cycle[i] = servopl[i]/4095 @ ~325 Hz)
     uint16_t zp[6] = {1300, 1285, 1230, 1280, 1215, 1275};

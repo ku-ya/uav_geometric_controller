@@ -14,10 +14,15 @@ odroid_node::odroid_node(){
   // 617.6577e-7,  55757.4605e-7, 100.6760e-7,
   // -250.2846e-7, 100.6760e-7, 105053.7595e-7;// kg*m^2
 
-  m = 0.755;
-  J << 0.005571050413, 0.0           , 0.0          ,
-       0.0           , 0.005571050413, 0.0          ,
-       0.0           , 0.0           , 0.01050537595;
+  // m = 0.755;
+  m=1.176;
+  // J << 0.005571050413, 0.0           , 0.0          ,
+  //      0.0           , 0.005571050413, 0.0          ,
+  //      0.0           , 0.0           , 0.01050537595;
+  J << 9.773E-3, 0.0,      0.0,
+        0.0,      9.773E-3, 0.0,
+        0.0,      0.0,   1.749E-2;
+
 
   IMU_flag = false;
   // f = VectorXd::Zero(6);
@@ -33,18 +38,29 @@ odroid_node::odroid_node(){
 
   // quat_vm = new VectorXd::Zeros(4);
   // Given the UAV arm length of 0.31 m and a prop. angle of 15 deg.
-  invFMmat <<  0.0000,    1.2879,   -0.1725,   -0.0000,    1.1132,    0.3071,
-  -1.1154,    0.6440,    0.1725,    0.9641,   -0.3420,    0.7579,
-  -1.1154,   -0.6440,   -0.1725,   -0.9641,   -0.7712,    1.7092,
-  -0.0000,   -1.2879,    0.1725,         0,    1.1132,    0.3071,
-  1.1154,   -0.6440,   -0.1725,    0.9641,   -0.3420,    0.7579,
-  1.1154,    0.6440,    0.1725,   -0.9641,   -0.7712,    1.7092;
+  // invFMmat <<  0.0000,    1.2879,   -0.1725,   -0.0000,    1.1132,    0.3071,
+  // -1.1154,    0.6440,    0.1725,    0.9641,   -0.3420,    0.7579,
+  // -1.1154,   -0.6440,   -0.1725,   -0.9641,   -0.7712,    1.7092,
+  // -0.0000,   -1.2879,    0.1725,         0,    1.1132,    0.3071,
+  // 1.1154,   -0.6440,   -0.1725,    0.9641,   -0.3420,    0.7579,
+  // 1.1154,    0.6440,    0.1725,   -0.9641,   -0.7712,    1.7092;
+
+  double l = 0.305;
+  double c_tf = 0.0928;
+  Matrix4d A;
+  A << 1.0,   1.0,  1.0,   1.0,
+       0.0,   -l,   0.0,   l,
+       l,     0.0,  -l,    0.0,
+       -c_tf, c_tf, -c_tf, c_tf;
+
+  Ainv = A.inverse();
 
   pub_ = n_.advertise<std_msgs::String>("/motor_command",1);
   vis_pub_ = n_.advertise<visualization_msgs::Marker>("/force",1);
   vis_pub_y = n_.advertise<visualization_msgs::Marker>("/force_y",1);
   vis_pub_z = n_.advertise<visualization_msgs::Marker>("/force_z",1);
-
+  prev_x_v= VectorXd::Zero(3);
+  prev_v_v = VectorXd::Zero(3);
   ROS_INFO("Odroid node initialized");
 }
 odroid_node::~odroid_node(){};
@@ -217,6 +233,8 @@ void odroid_node::ctl_callback(){
   R_vm(2,0) = (2*quat_vm[0]*quat_vm[2])-(2*quat_vm[3]*quat_vm[1]);
   R_vm(2,1) = (2*quat_vm[0]*quat_vm[3])+(2*quat_vm[2]*quat_vm[1]);
   R_vm(2,2) = 1-(2*(quat_vm[0])*(quat_vm[0]))-(2*(quat_vm[1])*(quat_vm[1]));
+
+
   // cout<<"R_vm\n"<<R_vm<<endl;
   // W_b << 0,0.0,0.5;
   // psi = 30/180*M_PI; //msg->orientation.x;
@@ -243,16 +261,22 @@ void odroid_node::ctl_callback(){
 
   //GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR);
 
-QuadGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
-// GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_eb);
+  QuadGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
+  // GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_eb);
 
 
-  // OutputMotor(f_quad,thr);
-  // if(print_thr){
-  //   cout<<"Throttle motor out: ";
-  //   for(int i = 0;i<6;i++){
-  //     cout<<thr[i]<<", ";} cout<<endl;
-  //   }
+  // OutputMotor(f_motor,thr);
+  // cout<<f_motor.transpose()<<endl;
+  for(int k = 0; k < 4; k++){
+    thr[k] = floor(1/0.03*(f_motor(k)+0.37)+0.5);
+  }
+
+
+  if(print_thr){
+    cout<<"Throttle motor out: ";
+    for(int i = 0;i<4;i++){
+      cout<<thr[i]<<", ";} cout<<endl;
+  }
 
   visualization_msgs::Marker marker;
   marker.header.frame_id = "base_link";
@@ -302,8 +326,8 @@ QuadGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, 
   vis_pub_z.publish( marker);
 
 
+  motor_command();
 
-  // motor_command();
 }
 
 void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W_in, Matrix3d R_v){
@@ -424,6 +448,15 @@ void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, 
     M = -kR*eR-kW*eW-kiR*eiR+hat_eigen(R.transpose()*Rd*Wd)*J*R.transpose()*Rd*Wd+J*R.transpose()*Rd*Wddot;// LBFF
     M = D*M;// LBFF->GBFF
     if(print_M){cout<<"M: "<<M.transpose()<<endl;}
+
+    Matrix<double, 4, 1> FM;
+    FM[0] = f;
+    FM[1] = M[0];
+    FM[2] = M[1];
+    FM[3] = M[2];
+
+
+    f_motor = Ainv*FM;
 }
 
 void odroid_node::gazebo_controll(){
@@ -463,7 +496,7 @@ int main(int argc, char **argv){
   odroid_node odnode;
   ros::NodeHandle nh = odnode.getNH();
   // IMU and keyboard input callback
-  // ros::Subscriber sub2 = nh.subscribe("imu/imu",100,&odroid_node::imu_callback,&odnode);
+  ros::Subscriber sub2 = nh.subscribe("imu/imu",100,&odroid_node::imu_callback,&odnode);
   // ros::Subscriber sub_vicon = nh.subscribe("vicon/Maya/Maya",100,&odroid_node::vicon_callback,&odnode);
   ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
 
@@ -475,7 +508,7 @@ int main(int argc, char **argv){
 
  typedef sync_policies::ApproximateTime<sensor_msgs::Imu, geometry_msgs::TransformStamped> MySyncPolicy;
 
-  message_filters::Subscriber<sensor_msgs::Imu> imu_sub(nh,"raw_imu", 10);
+  message_filters::Subscriber<sensor_msgs::Imu> imu_sub(nh,"imu/imu", 10);
   message_filters::Subscriber<geometry_msgs::TransformStamped> vicon_sub(nh,"vicon/Maya/Maya", 10);
   Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), imu_sub, vicon_sub);
   sync.registerCallback(boost::bind(&odroid_node::imu_vicon_callback, &odnode, _1, _2));
@@ -510,10 +543,13 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
   cR = config.cR;
 
 
-  // if(MOTOR_ON && !MotorWarmup){
-  kiR = config.kiR;
-  kiX = config.kiX;
-  // }
+  if(MOTOR_ON && !MotorWarmup){
+    kiR = config.kiR;
+    kiX = config.kiX;
+  }else{
+    kiR = 0;
+    kiX = 0;
+  }
   // Position controller gains
   kx = config.kx;
   kv = config.kv;
@@ -536,16 +572,16 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
 
 void odroid_node::motor_command(){
   // Execute motor output commands
-  for(int i = 0; i < 6; i++){
+  for(int i = 0; i < 4; i++){
     //printf("Motor %i I2C write command of %i to address %i (%e N).\n", i, thr[i], mtr_addr[i], f[i]);
     tcflush(fhi2c, TCIOFLUSH);
     usleep(500);
     if(ioctl(fhi2c, I2C_SLAVE, mtr_addr[i])<0)
     printf("ERROR: ioctl\n");
     if(MOTOR_ON == false)// set motor speed to zero
-    thr[i] = 0;
+      thr[i] = 0;
     else if(MotorWarmup == true)// warm up motors at 20 throttle command
-    thr[i] = 20;
+      thr[i] = 20;
     while(write(fhi2c, &thr[i], 1)!=1)
     printf("ERROR: Motor %i I2C write command of %i to address %i (%e N) not sent.\n", i, thr[i], mtr_addr[i], f[i]);
   }
@@ -572,7 +608,7 @@ void odroid_node::open_I2C(){
   int thr0 = 0;// 0 speed test command
   char PressEnter;
 
-  for(motornum = 1; motornum <= 6; motornum++){
+  for(motornum = 1; motornum <= 4; motornum++){
     motoraddr = motornum+40;// 1, 2, 3, ... -> 41, 42, 43, ...
     while(1){
       motorworks = 1;// will remain 1 if all works properly

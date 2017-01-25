@@ -200,7 +200,7 @@ void odroid_node::ctl_callback(){
   x_e = R_ev * x_v;
   v_e = (x_e - prev_x_e)*100;
 
-  v_v = (x_v - prev_x_v)*100;
+  v_v = ((x_v - prev_x_v)*100)*0.5 + prev_v_v*0.5;
   // cout<<"x_v\n"<<x_v.tanspose()<<"v_v\n"<<v_v.transpose()<<endl;
   prev_x_v = x_v;
 
@@ -324,7 +324,7 @@ void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, 
     Vector3d x = D*x_v;// LI
     Vector3d v = D*v_v;// LI
     Matrix3d R = D*R_v*D;// LI<-LBFF
-    Vector3d W = D*W_in;// LBFF
+    Vector3d W = W_in;// LBFF
 
     // std::cout<<"x_v:\n"<<x_v.transpose()<<std::endl;
     // std::cout<<"x:\n"<<x.transpose()<<std::endl;

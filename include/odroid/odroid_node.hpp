@@ -87,7 +87,7 @@ class odroid_node
     double roll, pitch, yaw;
     Matrix2d e; //inertial frame,
     // Measured Values in Vicon Frame
-    Vector3d x_v, v_v, prev_x_v;// position in the Vicon frame
+    Vector3d x_v, v_v, prev_x_v,prev_v_v;// position in the Vicon frame
     // VectorXd quat_vm(4);
     Matrix<double, 4, 1> quat_vm;// attitude of markers measured by Vicon system
 

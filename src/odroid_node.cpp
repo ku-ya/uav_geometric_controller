@@ -45,6 +45,17 @@ odroid_node::odroid_node(){
   // 1.1154,   -0.6440,   -0.1725,    0.9641,   -0.3420,    0.7579,
   // 1.1154,    0.6440,    0.1725,   -0.9641,   -0.7712,    1.7092;
 
+    double wnx = 4, zetax = 0.7;
+    kx = wnx*wnx*m;
+    kv = 2*wnx*zetax*m;
+
+    double wnR = 1, zetaR = 0.7;
+    double norm_J = J.lpNorm<Infinity>();
+    kR = wnR*wnR*norm_J;
+    kW = 2*wnR*zetaR*norm_J;
+
+    printf("Suggested gain from wnx %f wnR %f zeta %f:kx %f kv %f kR %f kW %f\n",wnx,wnR,zetax,kx,kv,kR,kW);
+
   double l = 0.305;
   double c_tf = 0.0928;
   Matrix4d A;

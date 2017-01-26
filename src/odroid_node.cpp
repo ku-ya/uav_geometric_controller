@@ -1,63 +1,24 @@
 #include <odroid/odroid_node.hpp>
 // #include <odroid/controllers.h>// robotic control
 // User header files
+#include <XmlRpcValue.h>
 
 using namespace std;
 using namespace Eigen;
 using namespace message_filters;
 
 odroid_node::odroid_node(){
-  del_t = 0.01;
-  // m = 1.25;
-  g = 9.81;
-  // J <<  55710.50413e-7, 617.6577e-7, -250.2846e-7,
-  // 617.6577e-7,  55757.4605e-7, 100.6760e-7,
-  // -250.2846e-7, 100.6760e-7, 105053.7595e-7;// kg*m^2
+  ros::param::get("/controller/del_t",del_t);  cout<<"\ndel_t: "<< del_t<<endl;
+  ros::param::get("/controller/g",g);
+  ros::param::get("/controller/m",m); cout<<"m: "<< m<<endl;
+  std::vector<double> J_vec;
+  ros::param::param<std::vector<double>>("/controller/J", J_vec, J_vec);
+  J=Matrix3d(J_vec.data());  std::cout<<"J: \n"<<J<<std::endl;
 
-  // m = 0.755;
-  m=1.176;
-  // J << 0.005571050413, 0.0           , 0.0          ,
-  //      0.0           , 0.005571050413, 0.0          ,
-  //      0.0           , 0.0           , 0.01050537595;
-  J << 9.773E-3, 0.0,      0.0,
-        0.0,      9.773E-3, 0.0,
-        0.0,      0.0,   1.749E-2;
+  double l, c_tf;
+  ros::param::get("/controller/l",l); cout<<"l: "<< l<<endl;
+  ros::param::get("/controller/c_tf",c_tf); cout<<"c_tf: "<< c_tf<<endl;
 
-
-  IMU_flag = false;
-  // f = VectorXd::Zero(6);
-  R_bm <<  1.0, 0.0, 0.0,
-  0.0, -1.0, 0.0,
-  0.0, 0.0, -1.0;// Markers frame (m) to the body frame (b) (fixed)
-  R_ev <<  1.0, 0.0, 0.0,
-  0.0, -1.0, 0.0,
-  0.0, 0.0, -1.0;// Vicon frame (v) to inertial frame (e) (fixed)
-  eiX_last = VectorXd::Zero(3);
-  eiR_last = VectorXd::Zero(3);
-	x_e = VectorXd::Zero(3);
-
-  // quat_vm = new VectorXd::Zeros(4);
-  // Given the UAV arm length of 0.31 m and a prop. angle of 15 deg.
-  // invFMmat <<  0.0000,    1.2879,   -0.1725,   -0.0000,    1.1132,    0.3071,
-  // -1.1154,    0.6440,    0.1725,    0.9641,   -0.3420,    0.7579,
-  // -1.1154,   -0.6440,   -0.1725,   -0.9641,   -0.7712,    1.7092,
-  // -0.0000,   -1.2879,    0.1725,         0,    1.1132,    0.3071,
-  // 1.1154,   -0.6440,   -0.1725,    0.9641,   -0.3420,    0.7579,
-  // 1.1154,    0.6440,    0.1725,   -0.9641,   -0.7712,    1.7092;
-
-    double wnx = 4, zetax = 0.7;
-    kx = wnx*wnx*m;
-    kv = 2*wnx*zetax*m;
-
-    double wnR = 1, zetaR = 0.7;
-    double norm_J = J.lpNorm<Infinity>();
-    kR = wnR*wnR*norm_J;
-    kW = 2*wnR*zetaR*norm_J;
-
-    printf("Suggested gain from wnx %f wnR %f zeta %f:kx %f kv %f kR %f kW %f\n",wnx,wnR,zetax,kx,kv,kR,kW);
-
-  double l = 0.305;
-  double c_tf = 0.0928;
   Matrix4d A;
   A << 1.0,   1.0,  1.0,   1.0,
        0.0,   -l,   0.0,   l,
@@ -66,13 +27,43 @@ odroid_node::odroid_node(){
 
   Ainv = A.inverse();
 
+  ros::param::param<std::vector<double>>("/controller/R_bm", J_vec, J_vec);
+  R_bm=Matrix3d(J_vec.data());  std::cout<<"R_bm: \n"<<R_bm<<std::endl;
+
+  IMU_flag = false; // IMU sensor reading check
+
+  R_ev = R_bm;
+
+  prev_x_v= VectorXd::Zero(3);  prev_v_v = VectorXd::Zero(3);
+  eiX_last = VectorXd::Zero(3);  eiR_last = VectorXd::Zero(3);
+	x_e = VectorXd::Zero(3);
+
+  double wnx = 4, zetax = 0.7;
+  kx = wnx*wnx*m;
+  kv = 2*wnx*zetax*m;
+
+  double wnR = 1, zetaR = 0.7;
+  double norm_J = J.lpNorm<Infinity>();
+  kR = wnR*wnR*norm_J;
+  kW = 2*wnR*zetaR*norm_J;
+
+  printf("Suggested gain from wnx %f wnR %f zeta %f\nkx %f kv %f kR %f kW %f\n",wnx,wnR,zetax,kx,kv,kR,kW);
+  ros::param::get("/controller/gain/att/kp",kR);
+  ros::param::get("/controller/gain/att/kd",kW);
+  ros::param::get("/controller/gain/att/ki",kiR);
+  ros::param::get("/controller/gain/att/kp",cR);
+
+  ros::param::get("/controller/gain/pos/kp",kx);
+  ros::param::get("/controller/gain/pos/kd",kv);
+  ros::param::get("/controller/gain/pos/ki",kiX);
+  ros::param::get("/controller/gain/pos/kp",cX);
+
   pub_ = n_.advertise<std_msgs::String>("/motor_command",1);
   vis_pub_0 = n_.advertise<visualization_msgs::Marker>("/force0",1);
   vis_pub_1 = n_.advertise<visualization_msgs::Marker>("/force1",1);
   vis_pub_2 = n_.advertise<visualization_msgs::Marker>("/force2",1);
   vis_pub_3 = n_.advertise<visualization_msgs::Marker>("/force3",1);
-  prev_x_v= VectorXd::Zero(3);
-  prev_v_v = VectorXd::Zero(3);
+
   ROS_INFO("Odroid node initialized");
 }
 odroid_node::~odroid_node(){};
@@ -87,6 +78,7 @@ void odroid_node::print_force(){
 
 // callback for IMU sensor det
 bool odroid_node::getIMU(){return IMU_flag;}
+bool odroid_node::getWarmup(){return MotorWarmup;}
 
 void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   W_raw(0) = msg->angular_velocity.x;
@@ -271,12 +263,7 @@ void odroid_node::ctl_callback(){
     cout<<"xd: "<<xd.transpose()<<endl;
   }
 
-
-  //GeometricControl_SphericalJoint_3DOF_eigen(Wd, Wd_dot, W_b, R_eb, del_t_CADS, eiR);
-
   QuadGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
-  // GeometricController_6DOF(xd, xd_dot, xd_ddot, Rd, Wd, Wd_dot, x_e, v_e, W_b, R_eb);
-
 
   // OutputMotor(f_motor,thr);
   // cout<<f_motor.transpose()<<endl;
@@ -291,7 +278,7 @@ void odroid_node::ctl_callback(){
       cout<<thr[i]<<", ";} cout<<endl;
   }
 
-  double mean = f_motor.mean();
+  double mean = f_motor.mean()*0.8;
   visualization_msgs::Marker marker;
   marker.header.frame_id = "base_link";
   marker.header.stamp = vicon_time;
@@ -538,15 +525,13 @@ int main(int argc, char **argv){
   // sync.registerCallback(boost::bind(&odroid_node::imu_vicon_callback, &odnode, _1, _2));
   // open communication through I2C
   ros::param::get("simulation",odnode.simulation);
-  odnode.simulation = !odnode.simulation;
   if(!odnode.simulation){
-  odnode.open_I2C();
+    odnode.open_I2C();
   }
   ros::Rate loop_rate(100); // rate for the node loop
-  // int count = 0;
   while (ros::ok()){
     ros::spinOnce();
-    if(odnode.getIMU()){
+    if(odnode.getIMU() or odnode.getWarmup()){
       odnode.ctl_callback();
 
       if(odnode.simulation){
@@ -554,7 +539,6 @@ int main(int argc, char **argv){
       }
     }
     loop_rate.sleep();
-    // ++count;
   }
   return 0;
 }
@@ -565,28 +549,21 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
   print_imu = config.print_imu;
   print_thr = config.print_thr;
   print_test_variable = config.print_test_variable;
-  // Attitude controller gains
-  kR = config.kR;
-  kW = config.kW;
-  cR = config.cR;
-
 
   if(MOTOR_ON && !MotorWarmup){
-    kiR = config.kiR;
-    kiX = config.kiX;
+    ros::param::get("/controller/gain/att/ki",kiR);
+    ros::param::get("/controller/gain/pos/ki",kiX);
   }else{
     kiR = 0;
     kiX = 0;
   }
-  // Position controller gains
-  kx = config.kx;
-  kv = config.kv;
-  cX = config.cX;
+
   MOTOR_ON = config.Motor;
   MotorWarmup = config.MotorWarmup;
   xd(0) =  config.x;
   xd(1) =  config.y;
   xd(2) =  config.z;
+
   print_xd = config.print_xd;
   print_x_v = config.print_x_v;
   print_eX = config.print_eX;

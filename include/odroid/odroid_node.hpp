@@ -185,7 +185,8 @@ class odroid_node
     //! Publish the message.
     // void publishMessage(ros::Publisher *pub_message);
 
-    //! Callback function for subscriber.
+    //! Callback function for subscriber
+    bool getWarmup();
     //! IMU sensor message subscriber
     void imu_callback(const sensor_msgs::Imu::ConstPtr& msg);
     //! Keyboard input message subscriber

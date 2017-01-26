@@ -1,0 +1,24 @@
+simulation: true
+controller:
+  g: 9.81
+  m: 1.176
+  J: [9.773E-3, 0.0, 0.0,
+    0.0, 9.773E-3, 0.0,
+    0.0,  0.0,  1.749E-2]
+  del_t: 0.01
+  R_bm: [1.0, 0.0, 0.0,
+        0.0, -1.0, 0.0,
+        0.0, 0.0, -1.0] # Markers frame (m) to the body frame (b) (fixed)
+  l: 0.305 # arm length
+  c_tf: 0.0928
+  gain:
+    att:
+      kp: 0.017
+      kd: 0.027
+      ki: 0.001
+      c: 0.1
+    pos:
+      kp: 4
+      kd: 3
+      ki: 0.001
+      c: 0.1

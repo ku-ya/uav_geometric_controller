@@ -1,7 +1,7 @@
 <launch>
 <!-- Based on pysical (MOCA) or simulation (Gazebo) testing choose option -->
     <arg name="MOCA" value="false"/>
-
+    <rosparam file="$(find odroid)/params/controller.yaml" />
     <group unless="$(arg MOCA)">
         <arg name="use_sim_time" default="true"/>
         <node name="sim_vicon" type="sim_vicon" pkg="odroid" output="screen" />

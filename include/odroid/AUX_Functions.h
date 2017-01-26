@@ -3,8 +3,29 @@
 #include <math.h>
 #include "math.hpp"
 #include <eigen3/Eigen/Dense>
-
+#include <ros/ros.h>
+#include <geometry_msgs/Vector3.h>
+#include <geometry_msgs/Quaternion.h>
 using namespace Eigen;
+
+void quatToMat(Matrix3d& mat, Vector4d v_in){
+  double qx = v_in(0), qy = v_in(1), qz = v_in(2), qw = v_in(3);
+  mat(0,0) = 1.0-2*qy*qy-2*qz*qz; mat(0,1) = 2*qx*qy-2*qz*qw;     mat(0,2) = 2*qx*qz+2*qy*qw;
+  mat(1,0) = 2*qx*qy+2*qz*qw;     mat(1,1) = 1.0-2*qx*qx-2*qz*qz; mat(1,2) = 2*qy*qz-2*qx*qw;
+  mat(2,0) = 2*qx*qz-2*qy*qw;     mat(2,1) = 2*qy*qz+2*qx*qw;     mat(2,2) = 1.0-2*qx*qx-2*qy*qy;
+}
+
+void vector3Transfer(Vector3d& v_out, geometry_msgs::Vector3 v_in){
+    v_out(0) = v_in.x;
+    v_out(1) = v_in.y;
+    v_out(2) = v_in.z;
+}
+void vector4Transfer(Vector4d& v_out, geometry_msgs::Quaternion v_in){
+    v_out(0) = v_in.x;
+    v_out(1) = v_in.y;
+    v_out(2) = v_in.z;
+    v_out(3) = v_in.w;
+}
 
 void vee_eigen(Matrix3d xhat, Vector3d& x){
     x << xhat(2,1), xhat(0,2), xhat(1,0);

@@ -158,7 +158,7 @@ class odroid_node
     // Control_Nonlinear Inputs & Outputs:
     //  eiX = integral position error
     //  eiR = integral attitude error
-
+    double eiX_sat, eiR_sat;
 
     // Output of Control_Nonlinear() and Command Execution
     // VectorXd f;// Force of each motor/propeller/servo

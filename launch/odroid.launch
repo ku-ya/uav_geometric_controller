@@ -6,6 +6,7 @@
         <arg name="use_sim_time" default="true"/>
         <node name="sim_vicon" type="sim_vicon" pkg="odroid" output="screen" />
     </group>
+    <param name="simulation" type="bool" value="true" />
     <arg name="paused" default="false"/>
     <arg name="gui" default="true"/>
     <arg name="debug" default="false"/>

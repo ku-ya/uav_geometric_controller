@@ -1,4 +1,3 @@
-simulation: true
 controller:
   g: 9.81
   m: 1.176
@@ -22,3 +21,6 @@ controller:
       kd: 3
       ki: 0.001
       c: 0.1
+  saturation:
+    x: 0.1
+    R: 0.01

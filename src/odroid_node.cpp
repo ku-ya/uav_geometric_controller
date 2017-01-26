@@ -219,6 +219,7 @@ void odroid_node::ctl_callback(){
   v_v = ((x_v - prev_x_v)*100)*0.5 + prev_v_v*0.5;
   // cout<<"x_v\n"<<x_v.tanspose()<<"v_v\n"<<v_v.transpose()<<endl;
   prev_x_v = x_v;
+  prev_v_v = v_v;
 
 
 
@@ -529,7 +530,7 @@ int main(int argc, char **argv){
     ros::spinOnce();
     if(odnode.getIMU()){
       odnode.ctl_callback();
-      
+
       if(odnode.simulation){
         odnode.gazebo_controll();
       }

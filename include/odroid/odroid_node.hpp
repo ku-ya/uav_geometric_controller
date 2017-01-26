@@ -51,6 +51,7 @@ using namespace Eigen;
 
 class odroid_node
 {
+
   private:
     ros::NodeHandle n_;
     ros::Publisher pub_;
@@ -173,6 +174,7 @@ class odroid_node
     char buffer[1000], buffer_[1000];
     struct sockaddr_in serv_addr, cli_addr;
   public:
+    bool simulation; 
     //! Constructor.
     odroid_node();
     //! Destructor.

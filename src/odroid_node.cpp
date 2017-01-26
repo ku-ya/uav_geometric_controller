@@ -326,7 +326,9 @@ void odroid_node::ctl_callback(){
   vis_pub_z.publish( marker);
 
 
-  // motor_command();
+  if(!simulation){
+    motor_command();
+  }
 
 }
 
@@ -496,9 +498,9 @@ int main(int argc, char **argv){
   odroid_node odnode;
   ros::NodeHandle nh = odnode.getNH();
   // IMU and keyboard input callback
-  ros::Subscriber sub2 = nh.subscribe("imu/imu",100,&odroid_node::imu_callback,&odnode);
+  // ros::Subscriber sub2 = nh.subscribe("imu/imu",100,&odroid_node::imu_callback,&odnode);
   // ros::Subscriber sub_vicon = nh.subscribe("vicon/Maya/Maya",100,&odroid_node::vicon_callback,&odnode);
-  ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
+  // ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
 
   // dynamic reconfiguration server for gains and print outs
   dynamic_reconfigure::Server<odroid::GainsConfig> server;
@@ -508,22 +510,29 @@ int main(int argc, char **argv){
 
  typedef sync_policies::ApproximateTime<sensor_msgs::Imu, geometry_msgs::TransformStamped> MySyncPolicy;
 
-  message_filters::Subscriber<sensor_msgs::Imu> imu_sub(nh,"imu/imu", 10);
-  message_filters::Subscriber<geometry_msgs::TransformStamped> vicon_sub(nh,"vicon/Maya/Maya", 10);
-  Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), imu_sub, vicon_sub);
+  message_filters::Subscriber<sensor_msgs::Imu> imu_sub(nh,"imu/imu", 100);
+  message_filters::Subscriber<geometry_msgs::TransformStamped> vicon_sub(nh,"vicon/Maya/Maya", 100);
+  Synchronizer<MySyncPolicy> sync(MySyncPolicy(100), imu_sub, vicon_sub);
   sync.registerCallback(boost::bind(&odroid_node::imu_vicon_callback, &odnode, _1, _2));
 
   // TimeSynchronizer<sensor_msgs::Imu, geometry_msgs::PoseStamped> sync(imu_sub, vicon_sub, 10);
   // sync.registerCallback(boost::bind(&odroid_node::imu_vicon_callback, &odnode, _1, _2));
   // open communication through I2C
-  // odnode.open_I2C();
+  ros::param::get("simulation",odnode.simulation);
+  odnode.simulation = !odnode.simulation;
+  if(!odnode.simulation){
+  odnode.open_I2C();
+  }
   ros::Rate loop_rate(100); // rate for the node loop
   // int count = 0;
   while (ros::ok()){
     ros::spinOnce();
     if(odnode.getIMU()){
       odnode.ctl_callback();
-      odnode.gazebo_controll();
+      
+      if(odnode.simulation){
+        odnode.gazebo_controll();
+      }
     }
     loop_rate.sleep();
     // ++count;

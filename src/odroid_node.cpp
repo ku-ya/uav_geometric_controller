@@ -326,7 +326,7 @@ void odroid_node::ctl_callback(){
   vis_pub_z.publish( marker);
 
 
-  motor_command();
+  // motor_command();
 
 }
 

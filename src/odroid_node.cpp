@@ -56,9 +56,10 @@ odroid_node::odroid_node(){
   Ainv = A.inverse();
 
   pub_ = n_.advertise<std_msgs::String>("/motor_command",1);
-  vis_pub_ = n_.advertise<visualization_msgs::Marker>("/force",1);
-  vis_pub_y = n_.advertise<visualization_msgs::Marker>("/force_y",1);
-  vis_pub_z = n_.advertise<visualization_msgs::Marker>("/force_z",1);
+  vis_pub_0 = n_.advertise<visualization_msgs::Marker>("/force0",1);
+  vis_pub_1 = n_.advertise<visualization_msgs::Marker>("/force1",1);
+  vis_pub_2 = n_.advertise<visualization_msgs::Marker>("/force2",1);
+  vis_pub_3 = n_.advertise<visualization_msgs::Marker>("/force3",1);
   prev_x_v= VectorXd::Zero(3);
   prev_v_v = VectorXd::Zero(3);
   ROS_INFO("Odroid node initialized");
@@ -279,6 +280,7 @@ void odroid_node::ctl_callback(){
       cout<<thr[i]<<", ";} cout<<endl;
   }
 
+  double mean = f_motor.mean();
   visualization_msgs::Marker marker;
   marker.header.frame_id = "base_link";
   marker.header.stamp = vicon_time;
@@ -286,14 +288,14 @@ void odroid_node::ctl_callback(){
   marker.id = 0;
   marker.type = visualization_msgs::Marker::ARROW;
   marker.action = visualization_msgs::Marker::ADD;
-  marker.pose.position.x = 0;
+  marker.pose.position.x = 0.3;
   marker.pose.position.y = 0;
   marker.pose.position.z = 0;
   marker.pose.orientation.x = 0;
-  marker.pose.orientation.y = 0;
+  marker.pose.orientation.y = -0.707;
   marker.pose.orientation.z = 0;
-  marker.pose.orientation.w = 1;
-  marker.scale.x = M(0);
+  marker.pose.orientation.w = 0.707;
+  marker.scale.x = f_motor(0) - mean;
   marker.scale.y = 0.05;
   marker.scale.z = 0.05;
   marker.color.a = 1.0; // Don't forget to set the alpha!
@@ -302,29 +304,34 @@ void odroid_node::ctl_callback(){
   marker.color.b = 0.0;
   //only if using a MESH_RESOURCE marker type:
   // marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
-  vis_pub_.publish( marker);
+  vis_pub_0.publish( marker);
 
-  marker.pose.orientation.x = 0;
-  marker.pose.orientation.y = 0;
-  marker.pose.orientation.z = 0.707;
-  marker.pose.orientation.w = 0.707;
-  marker.scale.x = M(1);
+  marker.pose.position.x = 0;
+  marker.pose.position.y = -0.3;
+  marker.scale.x = f_motor(1) - mean;
   marker.color.r = 0.0;
   marker.color.g = 1.0;
   marker.color.b = 0.0;
 
-  vis_pub_y.publish( marker);
+  vis_pub_1.publish( marker);
 
-  marker.pose.orientation.x = 0;
-  marker.pose.orientation.y = 0.707;
-  marker.pose.orientation.z = 0.0;
-  marker.pose.orientation.w = 0.707;
-  marker.scale.x = 0.5 * (f_quad - m*g);
+  marker.pose.position.x = -0.3;
+  marker.pose.position.y = 0;
+  marker.scale.x = f_motor(2) - mean;
   marker.color.r = 0.0;
   marker.color.g = 0.0;
   marker.color.b = 1.0;
 
-  vis_pub_z.publish( marker);
+  vis_pub_2.publish( marker);
+
+  marker.pose.position.x = 0;
+  marker.pose.position.y = 0.3;
+  marker.scale.x = f_motor(3) - mean;
+  marker.color.r = 0.0;
+  marker.color.g = 0.0;
+  marker.color.b = 1.0;
+
+  vis_pub_3.publish( marker);
 
 
   if(!simulation){

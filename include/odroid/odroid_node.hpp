@@ -55,7 +55,7 @@ class odroid_node
   private:
     ros::NodeHandle n_;
     ros::Publisher pub_;
-    ros::Publisher vis_pub_, vis_pub_y, vis_pub_z;
+    ros::Publisher vis_pub_0, vis_pub_1, vis_pub_2, vis_pub_3;
 
     ros::Time vicon_time;
     //  m = body mass
@@ -174,7 +174,7 @@ class odroid_node
     char buffer[1000], buffer_[1000];
     struct sockaddr_in serv_addr, cli_addr;
   public:
-    bool simulation; 
+    bool simulation;
     //! Constructor.
     odroid_node();
     //! Destructor.

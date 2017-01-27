@@ -1,5 +1,5 @@
 controller:
-  mode: 1 # mode attitude: 0, position 1
+  mode: 0 # mode attitude: 0, position 1
   g: 9.81
   m: 1.176
   J: [9.773E-3, 0.0, 0.0,
@@ -13,9 +13,9 @@ controller:
   c_tf: 0.0928
   gain:
     att:
-      kp: 0.037
-      kd: 0.027
-      ki: 0.001
+      kp: 1.5
+      kd: 0.27
+      ki: 0.3
       c: 0.1
     pos:
       kp: 4

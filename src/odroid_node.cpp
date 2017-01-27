@@ -14,8 +14,8 @@ int main(int argc, char **argv){
   odroid_node odnode;
   ros::NodeHandle nh = odnode.getNH();
   // IMU and keyboard input callback
-  // ros::Subscriber sub2 = nh.subscribe("imu/imu",100,&odroid_node::imu_callback,&odnode);
-  // ros::Subscriber sub_vicon = nh.subscribe("vicon/Maya/Maya",100,&odroid_node::vicon_callback,&odnode);
+  ros::Subscriber sub2 = nh.subscribe("imu/imu",100,&odroid_node::imu_callback,&odnode);
+  ros::Subscriber sub_vicon = nh.subscribe("vicon/Maya/Maya",100,&odroid_node::vicon_callback,&odnode);
   // ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
 
   // dynamic reconfiguration server for gains and print outs
@@ -24,12 +24,12 @@ int main(int argc, char **argv){
   dyn_serv = boost::bind(&odroid_node::callback, &odnode, _1, _2);
   server.setCallback(dyn_serv);
 
- typedef sync_policies::ApproximateTime<sensor_msgs::Imu, geometry_msgs::TransformStamped> MySyncPolicy;
-
-  message_filters::Subscriber<sensor_msgs::Imu> imu_sub(nh,"imu/imu", 100);
-  message_filters::Subscriber<geometry_msgs::TransformStamped> vicon_sub(nh,"vicon/Maya/Maya", 100);
-  Synchronizer<MySyncPolicy> sync(MySyncPolicy(100), imu_sub, vicon_sub);
-  sync.registerCallback(boost::bind(&odroid_node::imu_vicon_callback, &odnode, _1, _2));
+ // typedef sync_policies::ApproximateTime<sensor_msgs::Imu, geometry_msgs::TransformStamped> MySyncPolicy;
+ //
+ //  message_filters::Subscriber<sensor_msgs::Imu> imu_sub(nh,"imu/imu", 100);
+ //  message_filters::Subscriber<geometry_msgs::TransformStamped> vicon_sub(nh,"vicon/Maya/Maya", 100);
+ //  Synchronizer<MySyncPolicy> sync(MySyncPolicy(100), imu_sub, vicon_sub);
+ //  sync.registerCallback(boost::bind(&odroid_node::imu_vicon_callback, &odnode, _1, _2));
 
   // open communication through I2C
   ros::param::get("simulation",odnode.simulation);
@@ -189,6 +189,8 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   tf::Matrix3x3 m(q);
   m.getRPY(roll, pitch, yaw);
 
+  quatToMat(R_v, quat_vm);
+  
 	if(print_vicon){
     printf("Vicon: roll:[%f], pitch:[%f], yaw:[%f] \n", roll/M_PI*180, pitch/M_PI*180, yaw/M_PI*180);
   }

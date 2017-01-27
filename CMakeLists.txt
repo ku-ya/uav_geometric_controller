@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
 	message_generation
   cv_bridge
   image_transport
+  geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -68,6 +69,7 @@ include_directories(include ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
 add_message_files(
   FILES
   DAQ.msg
+	error.msg
   # Message2.msg
 )
 
@@ -89,6 +91,7 @@ add_message_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
+	geometry_msgs
 )
 
 ################################################
@@ -125,7 +128,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES odroid
- CATKIN_DEPENDS message_runtime cv_bridge roscpp rospy std_msgs image_transport
+ CATKIN_DEPENDS message_runtime cv_bridge roscpp rospy std_msgs image_transport geometry_msgs
 #  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )

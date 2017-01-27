@@ -1,4 +1,5 @@
 controller:
+  mode: 1 # mode attitude: 0, position 1
   g: 9.81
   m: 1.176
   J: [9.773E-3, 0.0, 0.0,

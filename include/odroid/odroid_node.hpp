@@ -84,6 +84,7 @@ class odroid_node
     //  kR = proportional attitude control gain
     //  kW = derivative attitude control gain
     //  kiR = integral attitude control gain
+    int mode;
     double kx, kv, kiX, cX, kR, kW, kiR, cR;
     float phi, theta, psi;
     double roll, pitch, yaw;
@@ -93,7 +94,7 @@ class odroid_node
     // VectorXd quat_vm(4);
     Matrix<double, 4, 1> quat_vm;// attitude of markers measured by Vicon system
 
-    bool IMU_flag, print_imu, print_f, print_thr, print_test_variable, print_xd, print_x_v,
+    bool IMU_flag, Vicon_flag, print_imu, print_f, print_thr, print_test_variable, print_xd, print_x_v,
       print_eX, print_eV, print_vicon, print_F, print_M, print_R_eb, print_eR,print_eW, print_f_motor;
     Matrix<double, 6, 1> f;
     Matrix3d R_bm;

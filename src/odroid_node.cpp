@@ -70,18 +70,22 @@ odroid_node::odroid_node(){
        -c_tf, c_tf, -c_tf, c_tf;
 
   Ainv = A.inverse();
-  cout<<"Ainv:\n"<<Ainv<<endl;
+  cout<<"Ainv:\n\n"<<Ainv<<endl;
 
+  ros::param::get("/controller/mode",mode);
+  cout<<"Mode: "<<mode<<" (0: Attitude, 1: Position)\n"<<endl;
   ros::param::param<std::vector<double>>("/controller/R_bm", J_vec, J_vec);
   R_bm=Matrix3d(J_vec.data());  std::cout<<"R_bm: \n"<<R_bm<<std::endl;
 
   IMU_flag = false; // IMU sensor reading check
+  Vicon_flag = false; // IMU sensor reading check
 
   R_ev = R_bm;
 
-  prev_x_v= VectorXd::Zero(3);  prev_v_v = VectorXd::Zero(3);
-  eiX_last = VectorXd::Zero(3);  eiR_last = VectorXd::Zero(3);
-	x_e = VectorXd::Zero(3); eiR = VectorXd::Zero(3);eiX = VectorXd::Zero(3);
+  prev_x_v= Vector3d::Zero();  prev_v_v = Vector3d::Zero();
+  eiX_last = Vector3d::Zero();  eiR_last = Vector3d::Zero();
+	x_e = Vector3d::Zero(); eiR = Vector3d::Zero();
+  eiX = Vector3d::Zero();
 
   double wnx = 4, zetax = 0.7;
   kx = wnx*wnx*m;
@@ -92,7 +96,7 @@ odroid_node::odroid_node(){
   kR = wnR*wnR*norm_J;
   kW = 2*wnR*zetaR*norm_J;
 
-  printf("Suggested gain from wnx %f wnR %f zeta %f\nkx %f kv %f kR %f kW %f\n",wnx,wnR,zetax,kx,kv,kR,kW);
+  printf("Suggested gain from wnx %f wnR %f zeta %f\nkx %f kv %f kR %f kW %f\n\n\n",wnx,wnR,zetax,kx,kv,kR,kW);
   ros::param::get("/controller/gain/att/kp",kR);
   ros::param::get("/controller/gain/att/kd",kW);
   ros::param::get("/controller/gain/att/ki",kiR);
@@ -192,6 +196,9 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   transform.setOrigin( tf::Vector3(x_v(0),x_v(1), x_v(2)));
   transform.setRotation(q);
   br.sendTransform(tf::StampedTransform(transform, vicon_time, "world", "base_link"));
+
+  if(!Vicon_flag){ ROS_INFO("Vicon ready");}
+  Vicon_flag = true;
 }
 
 // callback for key Inputs
@@ -361,6 +368,12 @@ void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, 
     // Translational Error Functions
     Vector3d ex = x - xd;
     Vector3d ev = v - xd_dot;
+
+    if(mode == 0){
+      ex = Vector3d::Zero();
+      ev = Vector3d::Zero();
+    }
+
     eiX = eiX_last+del_t*(ex+cX*ev);
     err_sat(-eiX_sat, eiX_sat, eiX);
     eiX_last = eiX;
@@ -370,7 +383,6 @@ void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, 
     // std::cout<<"ex:\n"<<ex.transpose()<<std::endl;
     // std::cout<<"ev:\n"<<ev.transpose()<<std::endl;
     // std::cout<<"eiX:\n"<<eiX.transpose()<<std::endl;
-
     // Force 'f' along negative b3-axis
     Vector3d A = -kx*ex-kv*ev-kiX*eiX-m*g*e3+m*xd_2dot;
     Vector3d L = R*e3;

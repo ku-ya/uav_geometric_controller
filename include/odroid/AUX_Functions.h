@@ -32,7 +32,6 @@ void vee_eigen(Matrix3d xhat, Vector3d& x){
 }
 
 void err_sat(double min_sat, double max_sat, Vector3d& err){
-    Vector3d err_checked;
 
     for(int i = 0; i < 3; i++){
         if  (err(i) < min_sat)
@@ -40,6 +39,7 @@ void err_sat(double min_sat, double max_sat, Vector3d& err){
         else if(err(i) > max_sat)
             err(i) = max_sat;
     }
+    return;
 }
 
 Matrix3d hat_eigen(Vector3d x){

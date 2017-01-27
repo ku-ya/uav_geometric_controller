@@ -81,7 +81,7 @@ odroid_node::odroid_node(){
 
   prev_x_v= VectorXd::Zero(3);  prev_v_v = VectorXd::Zero(3);
   eiX_last = VectorXd::Zero(3);  eiR_last = VectorXd::Zero(3);
-	x_e = VectorXd::Zero(3);
+	x_e = VectorXd::Zero(3); eiR = VectorXd::Zero(3);eiX = VectorXd::Zero(3);
 
   double wnx = 4, zetax = 0.7;
   kx = wnx*wnx*m;
@@ -112,6 +112,7 @@ odroid_node::odroid_node(){
   vis_pub_2 = n_.advertise<visualization_msgs::Marker>("/force2",1);
   vis_pub_3 = n_.advertise<visualization_msgs::Marker>("/force3",1);
 
+  ros::Duration(1).sleep();
   ROS_INFO("Odroid node initialized");
 }
 odroid_node::~odroid_node(){};
@@ -165,25 +166,13 @@ void odroid_node::imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu, c
     cout<<"x_v: "<<x_v.transpose()<<endl;
   }
 
-  static tf::TransformBroadcaster br;
-  tf::Transform transform;
-  transform.setOrigin( tf::Vector3(x_v(0),x_v(1), x_v(2)));
-  transform.setRotation(q);
-  br.sendTransform(tf::StampedTransform(transform, vicon_time, "vicon", "base_link"));
-  br.sendTransform(tf::StampedTransform(transform, vicon_time, "vicon", "imu"));
-
-  Vector3d temp = M;
-  temp = temp.normalized();
-  tf::Quaternion q1;
-  q1.setEuler(temp(0),temp(1),temp(2));
-  transform.setRotation(q1);
-  br.sendTransform(tf::StampedTransform(transform, vicon_time, "vicon", "moment"));
 }
 
 // vicon information callback
 void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg){
   vicon_time = msg->header.stamp;
   vector3Transfer(x_v, msg->transform.translation);
+  // x_v << 0, 0, 0;
   vector4Transfer(quat_vm, msg->transform.rotation);
 
   tf::Quaternion q(quat_vm(0),quat_vm(1),quat_vm(2),quat_vm(3));
@@ -202,16 +191,7 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   tf::Transform transform;
   transform.setOrigin( tf::Vector3(x_v(0),x_v(1), x_v(2)));
   transform.setRotation(q);
-  br.sendTransform(tf::StampedTransform(transform, vicon_time, "vicon", "base_link"));
-  br.sendTransform(tf::StampedTransform(transform, vicon_time, "vicon", "imu"));
-
-  Vector3d temp = M;
-  temp = temp.normalized();
-  tf::Quaternion q1;
-  q1.setEuler(temp(0),temp(1),temp(2));
-  transform.setRotation(q1);
-  br.sendTransform(tf::StampedTransform(transform, vicon_time, "vicon", "moment"));
-
+  br.sendTransform(tf::StampedTransform(transform, vicon_time, "world", "base_link"));
 }
 
 // callback for key Inputs
@@ -289,7 +269,7 @@ void odroid_node::ctl_callback(){
       cout<<thr[i]<<", ";} cout<<endl;
   }
 
-  double mean = f_motor.mean()*0.8;
+  double mean = f_motor.mean();
   visualization_msgs::Marker marker;
   marker.header.frame_id = "base_link";
   marker.header.stamp = vicon_time;
@@ -350,7 +330,7 @@ void odroid_node::ctl_callback(){
 }
 
 void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W_in, Matrix3d R_v){
-
+  std::cout.precision(5);
     // Bring to controller frame (and back) with 180 degree rotation about b1
     Matrix3d D = R_bm;
 
@@ -381,8 +361,9 @@ void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, 
     // Translational Error Functions
     Vector3d ex = x - xd;
     Vector3d ev = v - xd_dot;
-    Vector3d eiX = eiX+del_t*(ex+cX*ev);
+    eiX = eiX_last+del_t*(ex+cX*ev);
     err_sat(-eiX_sat, eiX_sat, eiX);
+    eiX_last = eiX;
 
     if(print_eX){cout<<"eX: "<<ex.transpose()<<endl;}
     if(print_eV){cout<<"eV: "<<ev.transpose()<<endl;}
@@ -448,9 +429,9 @@ void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, 
     if(print_eW){cout<<"eW: "<<eW.transpose()<<endl;}
     // cout<<"eW:\n"<<eW<<endl;
     // Attitude Integral Term
-    eiR += del_t*(eR+cR*eW);
+    eiR = del_t*(eR+cR*eW) + eiR_last;
     err_sat(-eiR_sat, eiR_sat, eiR);
-
+    eiR_last = eiR;
     // 3D Moment
     M = -kR*eR-kW*eW-kiR*eiR+hat_eigen(R.transpose()*Rd*Wd)*J*R.transpose()*Rd*Wd+J*R.transpose()*Rd*Wddot;// LBFF
     M = D*M;// LBFF->GBFF

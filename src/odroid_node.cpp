@@ -430,6 +430,7 @@ void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, 
 
     // Vector3d Wd, Wddot;
     vee_eigen(Rd.transpose()*Rddot, Wd);
+    Wd << 0.0, 0.0, 0.0;// check later-> use this for attitude tests
     vee_eigen(Rd.transpose()*Rdddot-hat_eigen(Wd)*hat_eigen(Wd), Wddot);
 
     // Attitude Error 'eR'
@@ -446,7 +447,7 @@ void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, 
     eiR_last = eiR;
     // 3D Moment
     M = -kR*eR-kW*eW-kiR*eiR+hat_eigen(R.transpose()*Rd*Wd)*J*R.transpose()*Rd*Wd+J*R.transpose()*Rd*Wddot;// LBFF
-    M = D*M;// LBFF->GBFF
+    // M = D*M;// LBFF->GBFF
     if(print_M){cout<<"M: "<<M.transpose()<<endl;}
 
     Matrix<double, 4, 1> FM;
@@ -494,6 +495,10 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
   print_f = config.print_f;
   print_imu = config.print_imu;
   print_thr = config.print_thr;
+
+  kR = config.kP;
+  kW = config.kW;
+  kiR = config.ki;
 
   if(MOTOR_ON && !MotorWarmup){
     ros::param::get("/controller/gain/att/ki",kiR);

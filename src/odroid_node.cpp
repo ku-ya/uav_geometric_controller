@@ -70,6 +70,7 @@ odroid_node::odroid_node(){
        -c_tf, c_tf, -c_tf, c_tf;
 
   Ainv = A.inverse();
+  cout<<"Ainv:\n"<<Ainv<<endl;
 
   ros::param::param<std::vector<double>>("/controller/R_bm", J_vec, J_vec);
   R_bm=Matrix3d(J_vec.data());  std::cout<<"R_bm: \n"<<R_bm<<std::endl;
@@ -133,7 +134,7 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   IMU_flag = true;
   // if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
   if(print_imu){
-   printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", W_raw(0), W_raw(1), W_raw(2));
+   printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", W_b(0), W_b(1), W_b(2));
   }
 }
 
@@ -190,7 +191,7 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   m.getRPY(roll, pitch, yaw);
 
   quatToMat(R_v, quat_vm);
-  
+
 	if(print_vicon){
     printf("Vicon: roll:[%f], pitch:[%f], yaw:[%f] \n", roll/M_PI*180, pitch/M_PI*180, yaw/M_PI*180);
   }
@@ -275,6 +276,9 @@ void odroid_node::ctl_callback(){
 
   // OutputMotor(f_motor,thr);
   // cout<<f_motor.transpose()<<endl;
+  if(print_f_motor){
+    cout<<"f_motor: "<<f_motor.transpose()<<endl;
+  }
   for(int k = 0; k < 4; k++){
     thr[k] = floor(1/0.03*(f_motor(k)+0.37)+0.5);
   }
@@ -437,9 +441,11 @@ void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, 
 
     // Attitude Error 'eR'
     vee_eigen(.5*(Rd.transpose()*R-R.transpose()*Rd), eR);
+    if(print_eR){cout<<"eR: "<<eR.transpose()<<endl;}
     // cout<<"eR:\n"<<eR<<endl;
     // Angular Velocity Error 'eW'
     eW = W-R.transpose()*Rd*Wd;
+    if(print_eW){cout<<"eW: "<<eW.transpose()<<endl;}
     // cout<<"eW:\n"<<eW<<endl;
     // Attitude Integral Term
     eiR += del_t*(eR+cR*eW);
@@ -514,9 +520,12 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
   print_x_v = config.print_x_v;
   print_eX = config.print_eX;
   print_eV = config.print_eV;
+  print_eR = config.print_eR;
+  print_eW = config.print_eW;
   print_vicon = config.print_vicon;
   print_M = config.print_M;
   print_F = config.print_F;
+  print_f_motor = config.print_f_motor;
   print_R_eb = config.print_R_eb;
 }
 

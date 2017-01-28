@@ -13,9 +13,9 @@ controller:
   c_tf: 0.0928
   gain:
     att:
-      kp: 1.5
-      kd: 0.27
-      ki: 0.3
+      kp: 0.975
+      kd: 0.3
+      ki: 0.15
       c: 0.1
     pos:
       kp: 4

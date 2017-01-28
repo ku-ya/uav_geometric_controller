@@ -68,7 +68,7 @@ odroid_node::odroid_node(){
   A << 1.0,   1.0,  1.0,   1.0,
        0.0,   -l,   0.0,   l,
        l,     0.0,  -l,    0.0,
-       -c_tf, c_tf, -c_tf, c_tf;
+       c_tf, -c_tf, c_tf, -c_tf;
 
   Ainv = A.inverse();
   cout<<"Ainv:\n\n"<<Ainv<<endl;
@@ -426,14 +426,24 @@ void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, 
     Vector3d Rd1dot = hat_eigen(Rd2dot)*Ld+hat_eigen(Rd2)*Lddot;
     Vector3d Rd1ddot = hat_eigen(Rd2ddot)*Ld+2*hat_eigen(Rd2dot)*Lddot+hat_eigen(Rd2)*Ldddot;
 
+
     Matrix3d Rd, Rddot, Rdddot;
     Rd << Rd1, Rd2, Ld;
     Rddot << Rd1dot, Rd2dot, Lddot;
     Rdddot << Rd1ddot, Rd2ddot, Ldddot;
+    if(print_Rd){cout<<"Rd: "<<Rd.transpose()<<endl;}
+
+    /*
+    cout << "Rd = \n"
+    << Rd(0,0) << "," << Rd(0,1) << "," << Rd(0,2) << ","
+    << Rd(1,0) << "," << Rd(1,1) << "," << Rd(1,2) << ","
+    << Rd(2,0) << "," << Rd(2,1) << "," << Rd(2,2) << endl;
+    */
 
     // Vector3d Wd, Wddot;
     vee_eigen(Rd.transpose()*Rddot, Wd);
-    Wd << 0.0, 0.0, 0.0;// check later-> use this for attitude tests
+    Rd = MatrixXd::Identity(3,3);
+    Wd = VectorXd::Zero(3);
     vee_eigen(Rd.transpose()*Rdddot-hat_eigen(Wd)*hat_eigen(Wd), Wddot);
 
     // Attitude Error 'eR'
@@ -533,7 +543,7 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
   print_x_v = config.print_x_v;
   print_eX = config.print_eX;
   print_eV = config.print_eV;
-  print_eR = config.print_eR;
+  print_eR = config.print_eR;print_Rd = config.print_Rd;
   print_eW = config.print_eW;
   print_vicon = config.print_vicon;
   print_M = config.print_M;
@@ -559,8 +569,8 @@ void odroid_node::motor_command(){
     printf("ERROR: Motor %i I2C write command of %i to address %i (%e N) not sent.\n", i, thr[i], mtr_addr[i], f[i]);
   }
 
-  std_msgs::String out;
-  pub_.publish(out);
+  // std_msgs::String out;
+  // pub_.publish(out);
 }
 
 void odroid_node::open_I2C(){

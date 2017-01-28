@@ -1,5 +1,5 @@
+environment: 0 # Gazebo: 0, MOCA: 1
 controller:
-  mode: 0 # mode attitude: 0, position 1
   g: 9.81
   m: 1.176
   J: [9.773E-3, 0.0, 0.0,
@@ -10,7 +10,7 @@ controller:
         0.0, -1.0, 0.0,
         0.0, 0.0, -1.0] # Markers frame (m) to the body frame (b) (fixed)
   l: 0.305 # arm length
-  c_tf: 0.0928
+  c_tf: 0.0928 # moment constant
   gain:
     att:
       kp: 0.975

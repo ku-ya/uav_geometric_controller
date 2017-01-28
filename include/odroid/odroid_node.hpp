@@ -53,6 +53,7 @@ class odroid_node
 {
 
   private:
+    int environment, mode;
     ros::NodeHandle n_;
     ros::Publisher pub_;
     ros::Publisher vis_pub_0, vis_pub_1, vis_pub_2, vis_pub_3;
@@ -61,7 +62,7 @@ class odroid_node
     //  m = body mass
     //  g = acceleration due to gravity
     //  J = moment of inertial matrix
-    double m, g; Matrix3d J;
+    double m, g, l, c_tf; Matrix3d J;
     Matrix4d Ainv;
     // Control_Nonliner Inputs:
     //  xd = f(t) desired position in inertial frame
@@ -84,7 +85,6 @@ class odroid_node
     //  kR = proportional attitude control gain
     //  kW = derivative attitude control gain
     //  kiR = integral attitude control gain
-    int mode;
     double kx, kv, kiX, cX, kR, kW, kiR, cR;
     float phi, theta, psi;
     double roll, pitch, yaw;
@@ -209,7 +209,7 @@ class odroid_node
     // node handle getter
     ros::NodeHandle getNH(){return n_;};
     void gazebo_controll();
-
+    int getEnv(){return environment;}
     void motor_command();
     void open_I2C();
     void print_J();

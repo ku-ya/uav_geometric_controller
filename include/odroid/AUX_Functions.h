@@ -8,6 +8,15 @@
 #include <geometry_msgs/Quaternion.h>
 using namespace Eigen;
 
+Matrix4d getAinv(double l, double c_tf){
+  Matrix4d A;
+  A << 1.0,   1.0,  1.0,   1.0,
+       0.0,   -l,   0.0,   l,
+       l,     0.0,  -l,    0.0,
+       c_tf, -c_tf, c_tf, -c_tf;
+  return A.inverse();
+}
+
 void quatToMat(Matrix3d& mat, Vector4d v_in){
   double qx = v_in(0), qy = v_in(1), qz = v_in(2), qw = v_in(3);
   mat(0,0) = 1.0-2*qy*qy-2*qz*qz; mat(0,1) = 2*qx*qy-2*qz*qw;     mat(0,2) = 2*qx*qz+2*qy*qw;

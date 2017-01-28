@@ -9,9 +9,7 @@ using namespace Eigen;
 using namespace message_filters;
 
 int main(int argc, char **argv){
-  // ros::init(argc, argv, "imu_listener");
   ros::init(argc,argv,"hexacopter");
-  //  ros::NodeHandle nh;
   odroid_node odnode;
   ros::NodeHandle nh = odnode.getNH();
   // IMU and keyboard input callback
@@ -25,16 +23,8 @@ int main(int argc, char **argv){
   dyn_serv = boost::bind(&odroid_node::callback, &odnode, _1, _2);
   server.setCallback(dyn_serv);
 
- // typedef sync_policies::ApproximateTime<sensor_msgs::Imu, geometry_msgs::TransformStamped> MySyncPolicy;
- //
- //  message_filters::Subscriber<sensor_msgs::Imu> imu_sub(nh,"imu/imu", 100);
- //  message_filters::Subscriber<geometry_msgs::TransformStamped> vicon_sub(nh,"vicon/Maya/Maya", 100);
- //  Synchronizer<MySyncPolicy> sync(MySyncPolicy(100), imu_sub, vicon_sub);
- //  sync.registerCallback(boost::bind(&odroid_node::imu_vicon_callback, &odnode, _1, _2));
-
   // open communication through I2C
-  ros::param::get("simulation",odnode.simulation);
-  if(!odnode.simulation){
+  if(odnode.getEnv() == 1){
     odnode.open_I2C();
   }
   ros::Rate loop_rate(100); // rate for the node loop
@@ -43,7 +33,7 @@ int main(int argc, char **argv){
     if(odnode.getIMU() or odnode.getWarmup()){
       odnode.ctl_callback();
 
-      if(odnode.simulation){
+      if(odnode.getEnv() == 0){
         odnode.gazebo_controll();
       }
     }
@@ -56,23 +46,17 @@ odroid_node::odroid_node(){
   ros::param::get("/controller/del_t",del_t);  cout<<"\ndel_t: "<< del_t<<endl;
   ros::param::get("/controller/g",g);
   ros::param::get("/controller/m",m); cout<<"m: "<< m<<endl;
+
   std::vector<double> J_vec;
   ros::param::param<std::vector<double>>("/controller/J", J_vec, J_vec);
   J=Matrix3d(J_vec.data());  std::cout<<"J: \n"<<J<<std::endl;
 
-  double l, c_tf;
   ros::param::get("/controller/l",l); cout<<"l: "<< l<<endl;
   ros::param::get("/controller/c_tf",c_tf); cout<<"c_tf: "<< c_tf<<endl;
+  Ainv = getAinv(l, c_tf);
 
-  Matrix4d A;
-  A << 1.0,   1.0,  1.0,   1.0,
-       0.0,   -l,   0.0,   l,
-       l,     0.0,  -l,    0.0,
-       c_tf, -c_tf, c_tf, -c_tf;
-
-  Ainv = A.inverse();
   cout<<"Ainv:\n\n"<<Ainv<<endl;
-
+  ros::param::get("/environment",environment);
   ros::param::get("/controller/mode",mode);
   cout<<"Mode: "<<mode<<" (0: Attitude, 1: Position)\n"<<endl;
   ros::param::param<std::vector<double>>("/controller/R_bm", J_vec, J_vec);
@@ -85,8 +69,7 @@ odroid_node::odroid_node(){
 
   prev_x_v= Vector3d::Zero();  prev_v_v = Vector3d::Zero();
   eiX_last = Vector3d::Zero();  eiR_last = Vector3d::Zero();
-	x_e = Vector3d::Zero(); eiR = Vector3d::Zero();
-  eiX = Vector3d::Zero();
+	x_e = Vector3d::Zero(); eiR = Vector3d::Zero(); eiX = Vector3d::Zero();
 
   double wnx = 4, zetax = 0.7;
   kx = wnx*wnx*m;
@@ -111,7 +94,7 @@ odroid_node::odroid_node(){
   ros::param::get("/controller/saturation/x",eiX_sat);
   ros::param::get("/controller/saturation/R",eiR_sat);
 
-  pub_ = n_.advertise<odroid::error>("/motor_command",1);
+  pub_ = n_.advertise<odroid::error>("/error_values",1);
   vis_pub_0 = n_.advertise<visualization_msgs::Marker>("/force0",1);
   vis_pub_1 = n_.advertise<visualization_msgs::Marker>("/force1",1);
   vis_pub_2 = n_.advertise<visualization_msgs::Marker>("/force2",1);
@@ -223,7 +206,6 @@ void odroid_node::ctl_callback(){
     kiX = 0;
   }
 
-  // xd = VectorXd::Zero(3);
   xd_dot = VectorXd::Zero(3); xd_ddot = VectorXd::Zero(3);
   Rd = MatrixXd::Identity(3,3);
   Vector3d prev_x_e = x_e;
@@ -237,15 +219,6 @@ void odroid_node::ctl_callback(){
 
   quatToMat(R_vm, quat_vm);
 
-  // cout<<"R_vm\n"<<R_vm<<endl;
-  // W_b << 0,0.0,0.5;
-  // psi = 30/180*M_PI; //msg->orientation.x;
-  // theta = 30/180*M_PI;//msg->orientation.y;
-  // phi = 30/180*M_PI; //msg->orientation.z;
-  // //cout<<"psi: "<<psi<<" theta: "<<theta<<" phi: "<<phi<<endl;
-  // Eigen::Vector3d angle(roll,pitch,yaw);
-  //euler_Rvm(R_vm, angle);
-
   R_eb = R_ev * R_vm * R_bm;
   if(print_R_eb){cout<<"R_eb: "<<R_eb<<endl;}
   //cout<<"R_eb\n"<<R_eb<<endl;
@@ -253,17 +226,13 @@ void odroid_node::ctl_callback(){
 //cout<<"roll"<<atan2(-R_eb(1,2),R_eb(1,1))<<endl;
 //cout<<"pitch"<<asin(R_eb(1,0))<<endl;
 
-  // R_eb = R_vm.transpose();
-  del_t_CADS = 0.01;
-
   if(print_xd){
     cout<<"xd: "<<xd.transpose()<<endl;
   }
 
   QuadGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
 
-  // OutputMotor(f_motor,thr);
-  // cout<<f_motor.transpose()<<endl;
+
   if(print_f_motor){
     cout<<"f_motor: "<<f_motor.transpose()<<endl;
   }
@@ -333,7 +302,7 @@ void odroid_node::ctl_callback(){
   vis_pub_3.publish( marker);
 
 
-  if(!simulation){
+  if(environment == 1){
     motor_command();
   }
 
@@ -431,14 +400,7 @@ void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, 
     Rd << Rd1, Rd2, Ld;
     Rddot << Rd1dot, Rd2dot, Lddot;
     Rdddot << Rd1ddot, Rd2ddot, Ldddot;
-    if(print_Rd){cout<<"Rd: "<<Rd.transpose()<<endl;}
-
-    /*
-    cout << "Rd = \n"
-    << Rd(0,0) << "," << Rd(0,1) << "," << Rd(0,2) << ","
-    << Rd(1,0) << "," << Rd(1,1) << "," << Rd(1,2) << ","
-    << Rd(2,0) << "," << Rd(2,1) << "," << Rd(2,2) << endl;
-    */
+    if(print_Rd){cout<<"Rd: "<<Rd<<endl;}
 
     // Vector3d Wd, Wddot;
     vee_eigen(Rd.transpose()*Rddot, Wd);
@@ -517,6 +479,8 @@ void odroid_node::gazebo_controll(){
 
 void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
   ROS_INFO("Reconfigure Request: Update");
+
+  mode = config.mode;
   print_f = config.print_f;
   print_imu = config.print_imu;
   print_thr = config.print_thr;
@@ -532,7 +496,7 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
     kiR = 0;
     kiX = 0;
   }
-
+  mode = config.mode;
   MOTOR_ON = config.Motor;
   MotorWarmup = config.MotorWarmup;
   xd(0) =  config.x;

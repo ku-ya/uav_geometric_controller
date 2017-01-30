@@ -133,35 +133,6 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   }
 }
 
-void odroid_node::imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu, const geometry_msgs::TransformStamped::ConstPtr& msgVicon){
-
-  vector3Transfer(W_raw, msgImu->angular_velocity);
-
-  W_b = W_raw;
-  if(!IMU_flag){ ROS_INFO("IMU ready");}
-  IMU_flag = true;
-  // if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
-
-  if(print_imu){
-   printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", W_raw(0), W_raw(1), W_raw(2));
-  }
-  vector3Transfer(x_v, msgVicon->transform.translation);
-  vector4Transfer(quat_vm, msgVicon->transform.rotation);
-
-  quatToMat(R_v, quat_vm);
-  tf::Quaternion q(quat_vm(0),quat_vm(1),quat_vm(2),quat_vm(3));
-  tf::Matrix3x3 m(q);
-  m.getRPY(roll, pitch, yaw);
-
-	if(print_vicon){
-    printf("Vicon: xyz:[%f, %f, %f] roll:[%f], pitch:[%f], yaw:[%f] \n", x_v(0),x_v(1),x_v(2), roll/M_PI*180, pitch/M_PI*180, yaw/M_PI*180);
-  }
-  if(print_x_v){
-    cout<<"x_v: "<<x_v.transpose()<<endl;
-  }
-
-}
-
 // vicon information callback
 void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg){
   vicon_time = msg->header.stamp;
@@ -227,10 +198,6 @@ void odroid_node::ctl_callback(hw_interface hw_intf){
 
   R_eb = R_ev * R_vm * R_bm;
   if(print_R_eb){cout<<"R_eb: "<<R_eb<<endl;}
-  //cout<<"R_eb\n"<<R_eb<<endl;
-//cout<<"yaw"<<atan2(-R_eb(2,0),R_eb(0,0))<<endl;
-//cout<<"roll"<<atan2(-R_eb(1,2),R_eb(1,1))<<endl;
-//cout<<"pitch"<<asin(R_eb(1,0))<<endl;
 
   if(print_xd){
     cout<<"xd: "<<xd.transpose()<<endl;

@@ -45,6 +45,7 @@ using namespace Eigen;
 // Auto-generated from cfg/ directory.
 #include <odroid/GainsConfig.h>
 #include <odroid/hw_interface.hpp>
+// #include <odroid/visualize.hpp>
 
 class odroid_node
 {
@@ -129,7 +130,7 @@ public:
     double t_CADS, del_t_CADS, t_prev_CADS;// Control thread
     double Speed_Vicon_Thread, Speed_IMU_Thread, Speed_CADS_Thread;
     double RC_vel = 0.0139 , RC_IMU = 0.0054;
-
+    double scale;
 
     // Intermediate Variables (V  // Integral errors begin at zero
     // VectorXd eiX, eiR;

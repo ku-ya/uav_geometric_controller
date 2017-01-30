@@ -9,7 +9,7 @@
 class sensor
 {
 public:
-  static void imu_callback(const sensor_msgs::Imu::ConstPtr& msg);
+  static void imu_callback(const sensor_msgs::Imu::ConstPtr& msg, odroid_node& node);
   static void vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msgVicon);
 
 //odroid_node node,Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W_in, Matrix3d R_v);

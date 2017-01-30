@@ -2,7 +2,9 @@
 // #include <odroid/controllers.h>// robotic control
 // User header files
 #include <odroid/controller.hpp>
-#include <odroid/hw_interface.hpp>
+// #include <odroid/sensor.hpp>
+// #include <odroid/visualize.hpp>
+// #include <odroid/hw_interface.hpp>
 #include <odroid/error.h>
 #include <XmlRpcValue.h>
 
@@ -15,7 +17,7 @@ int main(int argc, char **argv){
   odroid_node odnode;
   ros::NodeHandle nh = odnode.getNH();
   // IMU and keyboard input callback
-  ros::Subscriber sub2 = nh.subscribe("imu/imu",100,&odroid_node::imu_callback,&odnode);
+  ros::Subscriber sub2 = nh.subscribe("imu/imu",100, &odroid_node::imu_callback, &odnode);
   ros::Subscriber sub_vicon = nh.subscribe("vicon/Maya/Maya",100,&odroid_node::vicon_callback,&odnode);
   // ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
 
@@ -25,8 +27,8 @@ int main(int argc, char **argv){
   dyn_serv = boost::bind(&odroid_node::callback, &odnode, _1, _2);
   server.setCallback(dyn_serv);
 
-
-
+  // visualize vis_pub;
+  // vis_pub.publisher_initialization(odnode);
   // open communication through I2C
   hw_interface hw_intf;
   if(odnode.getEnv() == 1){
@@ -100,10 +102,6 @@ odroid_node::odroid_node(){
   ros::param::get("/controller/saturation/R",eiR_sat);
 
   pub_ = n_.advertise<odroid::error>("/error_values",1);
-  vis_pub_0 = n_.advertise<visualization_msgs::Marker>("/force0",1);
-  vis_pub_1 = n_.advertise<visualization_msgs::Marker>("/force1",1);
-  vis_pub_2 = n_.advertise<visualization_msgs::Marker>("/force2",1);
-  vis_pub_3 = n_.advertise<visualization_msgs::Marker>("/force3",1);
 
   ros::Duration(1).sleep();
   ROS_INFO("Odroid node initialized");
@@ -229,60 +227,10 @@ void odroid_node::ctl_callback(hw_interface hw_intf){
   }
 
   double mean = f_motor.mean();
-  double scale = 0.1;
+  scale = 0.1;
 
-  visualization_msgs::Marker marker;
-  marker.header.frame_id = "base_link";
-  marker.header.stamp = vicon_time;
-  marker.ns = "odroid";
-  marker.id = 0;
-  marker.type = visualization_msgs::Marker::ARROW;
-  marker.action = visualization_msgs::Marker::ADD;
-  marker.pose.position.x = 0.3;
-  marker.pose.position.y = 0;
-  marker.pose.position.z = 0;
-  marker.pose.orientation.x = 0;
-  marker.pose.orientation.y = -0.707;
-  marker.pose.orientation.z = 0;
-  marker.pose.orientation.w = 0.707;
-  marker.scale.x = f_motor(0) * scale;
-  marker.scale.y = 0.05;
-  marker.scale.z = 0.05;
-  marker.color.a = 1.0; // Don't forget to set the alpha!
-  marker.color.r = 1.0;
-  marker.color.g = 0.0;
-  marker.color.b = 0.0;
-  //only if using a MESH_RESOURCE marker type:
-  // marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
-  vis_pub_0.publish( marker);
-
-  marker.pose.position.x = 0;
-  marker.pose.position.y = -0.3;
-  marker.scale.x = f_motor(1)* scale;
-  marker.color.r = 0.0;
-  marker.color.g = 1.0;
-  marker.color.b = 0.0;
-
-  vis_pub_1.publish( marker);
-
-  marker.pose.position.x = -0.3;
-  marker.pose.position.y = 0;
-  marker.scale.x = f_motor(2)* scale;
-  marker.color.r = 0.0;
-  marker.color.g = 0.0;
-  marker.color.b = 1.0;
-
-  vis_pub_2.publish( marker);
-
-  marker.pose.position.x = 0;
-  marker.pose.position.y = 0.3;
-  marker.scale.x = f_motor(3)* scale;
-  marker.color.r = 0.0;
-  marker.color.g = 0.0;
-  marker.color.b = 1.0;
-
-  vis_pub_3.publish( marker);
-
+  // TODO: plave visualization command here
+  // viz_pub(*this)
 
   if(environment == 1){
     hw_intf.motor_command(thr, MotorWarmup, MOTOR_ON);

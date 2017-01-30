@@ -237,7 +237,12 @@ void odroid_node::ctl_callback(){
   }
 
   // QuadGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
-  controller::GeometricPositionController(*this, xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
+  if(mode == 0){
+    controller::GeometricControl_SphericalJoint_3DOF(*this, Wd, Wd_dot, W_b, R_v);
+  }else if(mode == 1){
+    controller::GeometricPositionController(*this, xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
+  }
+  // controller::GeometricControl_SphericalJoint_3DOF(*this, Wd, Wd_dot, W_b, R_v);
 
   if(print_f_motor){
     cout<<"f_motor: "<<f_motor.transpose()<<endl;

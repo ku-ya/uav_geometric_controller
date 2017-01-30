@@ -154,7 +154,12 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
 }
 
 
-void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, VectorXd eiR_last){
+void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3d Wd, Vector3d Wddot, Vector3d Win, Matrix3d Rin){
+
+  Matrix3d D = node.R_bm;
+  Matrix3d R = D*Rin;// LI<-LBFF
+  Vector3d W = Win;// LBFF
+
   Matrix3d Rd = MatrixXd::Identity(3,3);
   Vector3d e3(0,0,1), b3(0,0,1), vee_3by1;
   double l = 0;//.05;// length of rod connecting to the spherical joint
@@ -164,12 +169,13 @@ void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3
   //   Calculate eR (rotation matrix error)
   Matrix3d inside_vee_3by3 = Rd.transpose() * R - R.transpose() * Rd;
   eigen_invskew(inside_vee_3by3, vee_3by1);// 3x1
-  Vector3d eR = 0.5 * vee_3by1;
+  node.eR = 0.5 * vee_3by1;
   // Calculate eW (angular velocity error in body-fixed frame)
   Vector3d eW = W - R.transpose() * Rd * Wd;
+  node.eW = eW;
   // Update integral term of control
   // Attitude:
-  // Vector3d eiR = eiR_last + del_t * eR;
+  node.eiR = node.eiR_last + node.del_t * node.eR;
   node.eiR_last = node.eiR;
   // Calculate 3 DOFs of M (controlled moment in body-fixed frame)
   // MATLAB: M = -kR*eR-kW*eW-kRi*eiR+cross(W,J*W)+J*(R'*Rd*Wddot-hat(W)*R'*Rd*Wd);
@@ -178,13 +184,27 @@ void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3
   Vector3d What_J_W = What * node.J * W;
   Vector3d Jmult = R.transpose() * Rd * Wddot - What * R.transpose() * Rd * Wd;
   Vector3d J_Jmult = node.J * Jmult;
-  Vector3d M = -node.kR * eR - node.kW * eW - node.kiR * node.eiR + What_J_W + J_Jmult - M_g;
+  Vector3d M = -node.kR * node.eR - node.kW * eW - node.kiR * node.eiR + What_J_W + J_Jmult - M_g;
   // To try different motor speeds, choose a force in the radial direction
-  double F_req = -node.m*node.g;// N
+  double F_req = node.m*node.g;// N
   // Convert forces & moments to f_i for i = 1:6 (forces of i-th prop)
-  VectorXd FM(6);
-  FM << 0.0, 0.0, F_req, M(0), M(1), M(2);
+  VectorXd FM(4);
+  FM << F_req, M(0), M(1), M(2);
+  node.M = M;
   node.f_motor = node.Ainv * FM;
+
+  odroid::error e_msg;
+  Vector3d kR_eR = node.kR*node.eR;
+  Vector3d kW_eW = node.kW*node.eW;
+  e_msg.kW = node.kW; e_msg.kR = node.kR;
+  e_msg.eR.x = node.eR(0); e_msg.eR.y = node.eR(1);e_msg.eR.z = node.eR(2);
+  e_msg.kR_eR.x = kR_eR(0); e_msg.kR_eR.y = kR_eR(1);e_msg.kR_eR.z = kR_eR(2);
+  e_msg.eW.x = node.eW(0); e_msg.eW.y = node.eW(1);e_msg.eW.z = node.eW(2);
+  e_msg.kW_eW.x = kW_eW(0); e_msg.kW_eW.y = kW_eW(1);e_msg.kW_eW.z = kW_eW(2);
+  e_msg.M.x = node.M(0); e_msg.M.y = node.M(1);e_msg.M.z = node.M(2);
+  node.pub_.publish(e_msg);
+
+
 }
 
 

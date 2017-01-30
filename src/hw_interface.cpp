@@ -1,6 +1,8 @@
+#include <odroid/hw_interface.hpp>
 
-
-void hw_interface::motor_command(){
+hw_interface::hw_interface(){}
+hw_interface::~hw_interface(){}
+void hw_interface::motor_command(int thr[4], bool MotorWarmup, bool MOTOR_ON){
   // Execute motor output commands
   for(int i = 0; i < 4; i++){
     //printf("Motor %i I2C write command of %i to address %i (%e N).\n", i, thr[i], mtr_addr[i], f[i]);
@@ -13,11 +15,8 @@ void hw_interface::motor_command(){
     else if(MotorWarmup == true)// warm up motors at 20 throttle command
       thr[i] = 20;
     while(write(fhi2c, &thr[i], 1)!=1)
-    printf("ERROR: Motor %i I2C write command of %i to address %i (%e N) not sent.\n", i, thr[i], mtr_addr[i], f[i]);
+    printf("ERROR: Motor %i I2C write command of %i to address %i not sent.\n", i, thr[i], mtr_addr[i]);
   }
-
-  // std_msgs::String out;
-  // pub_.publish(out);
 }
 
 void hw_interface::open_I2C(){

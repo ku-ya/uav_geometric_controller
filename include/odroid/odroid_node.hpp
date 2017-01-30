@@ -2,17 +2,16 @@
 #define ODROID_NODE_H
 // System header files (gcc compiler on ODROID)
 #include <math.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <termios.h>
+// #include <netinet/in.h>
+// #include <arpa/inet.h>
+// #include <sys/types.h>
+// #include <sys/socket.h>
 
 #include "AUX_Functions.h"
-#include <linux/i2c-dev.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>    /* For O_RDWR */
-#include <unistd.h>   /* For open(), creat() */
+// #include <linux/i2c-dev.h>
+// #include <sys/ioctl.h>
+// #include <fcntl.h>    /* For O_RDWR */
+// #include <unistd.h>   /* For open(), creat() */
 
 #include <iostream>
 #include <vector>
@@ -23,8 +22,6 @@
 #include "math.hpp"
 
 using namespace Eigen;
-// Adafruit PCA9685 Servo Informatio
-#define i2c_addr 0x40
 
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/String.h>
@@ -34,9 +31,9 @@ using namespace Eigen;
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
 #include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
-#include <message_filters/synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
+// #include <message_filters/time_synchronizer.h>
+// #include <message_filters/synchronizer.h>
+// #include <message_filters/sync_policies/approximate_time.h>
 
 #include <gazebo_msgs/ModelState.h>
 #include <gazebo_msgs/SetModelState.h>
@@ -47,6 +44,7 @@ using namespace Eigen;
 #include <dynamic_reconfigure/server.h>
 // Auto-generated from cfg/ directory.
 #include <odroid/GainsConfig.h>
+#include <odroid/hw_interface.hpp>
 
 class odroid_node
 {
@@ -122,8 +120,8 @@ public:
     bool MotorWarmup = true;
     // Special conditions
     bool SphericalJointTest = true;
-    // Open ports to I2C (motors)
-    int fhi2c;
+    // // Open ports to I2C (motors)
+    // int fhi2c;
 
     // Time stamps
     double del_t, t_IMU, del_t_IMU, t_prev_IMU;// I2C thread
@@ -162,17 +160,17 @@ public:
 
     // Output of Control_Nonlinear() and Command Execution
     // VectorXd f;// Force of each motor/propeller/servo
-    int mtr_addr[6] = {41, 42, 43, 44, 45, 46};;// Motor addresses 1-6
+    // int mtr_addr[6] = {41, 42, 43, 44, 45, 46};;// Motor addresses 1-6
     int thr[4];// i2c motor commands
-    int servo_addr[6] = {0, 1, 2, 3, 4, 5};// Servo addresses 1-6
-    uint16_t servopl[6];// i2c servo pulse length (duty_cycle[i] = servopl[i]/4095 @ ~325 Hz)
-    uint16_t zp[6] = {1300, 1285, 1230, 1280, 1215, 1275};
+    // int servo_addr[6] = {0, 1, 2, 3, 4, 5};// Servo addresses 1-6
+    // uint16_t servopl[6];// i2c servo pulse length (duty_cycle[i] = servopl[i]/4095 @ ~325 Hz)
+    // uint16_t zp[6] = {1300, 1285, 1230, 1280, 1215, 1275};
 
     //TCP Communication
-    int sockfd, newsockfd, port_number, n;
-    socklen_t client_ln;
-    char buffer[1000], buffer_[1000];
-    struct sockaddr_in serv_addr, cli_addr;
+    // int sockfd, newsockfd, port_number, n;
+    // socklen_t client_ln;
+    // char buffer[1000], buffer_[1000];
+    // struct sockaddr_in serv_addr, cli_addr;
 
     Matrix3d R_bm;
 
@@ -194,7 +192,7 @@ public:
     //! Keyboard input message subscriber
     void key_callback(const std_msgs::String::ConstPtr& msg);
     //! Controller
-    void ctl_callback();
+    void ctl_callback(hw_interface hw_intf);
     //! Vicon sensor message subscriber
     void vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg);
     // IMU and Vicon synchronization callback
@@ -211,8 +209,8 @@ public:
     ros::NodeHandle getNH(){return n_;};
     // void gazebo_controll();
     int getEnv(){return environment;}
-    void motor_command();
-    void open_I2C();
+    // void motor_command();
+    // void open_I2C();
     void print_J();
     void print_force();
     bool getIMU();

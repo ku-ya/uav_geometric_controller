@@ -207,6 +207,36 @@ void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3
 
 }
 
+void controller::gazebo_controll(odroid_node& node){
+  ros::ServiceClient client_FM = node.n_.serviceClient<gazebo_msgs::ApplyBodyWrench>("/gazebo/apply_body_wrench");
+  gazebo_msgs::ApplyBodyWrench FMcmds_srv;
+
+  Vector3d fvec_GB(0.0, 0.0, node.f_quad), fvec_GI;
+
+  fvec_GI = node.R_v*fvec_GB;
+  Vector3d M_out = node.R_v*node.R_bm*node.M;
+
+  FMcmds_srv.request.body_name = "quadrotor::base_link";
+  FMcmds_srv.request.reference_frame = "world";
+  FMcmds_srv.request.reference_point.x = 0.0;
+  FMcmds_srv.request.reference_point.y = 0.0;
+  FMcmds_srv.request.reference_point.z = 0.0;
+  FMcmds_srv.request.start_time = ros::Time(0.0);
+  FMcmds_srv.request.duration = ros::Duration(0.01);// apply continuously until new command
+
+  FMcmds_srv.request.wrench.force.x = fvec_GI(0);
+  FMcmds_srv.request.wrench.force.y = fvec_GI(1);
+  FMcmds_srv.request.wrench.force.z = fvec_GI(2);
+
+  FMcmds_srv.request.wrench.torque.x = M_out(0);
+  FMcmds_srv.request.wrench.torque.y = M_out(1);
+  FMcmds_srv.request.wrench.torque.z = M_out(2);
+
+  client_FM.call(FMcmds_srv);
+  if(!FMcmds_srv.response.success)
+      cout << "Fail! Response message:\n" << FMcmds_srv.response.status_message << endl;
+}
+
 
 // void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R)
 //   {
@@ -283,8 +313,3 @@ void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3
 //
 //   }
 //
-
-int main()
-{
-  return 0;
-}

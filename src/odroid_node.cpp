@@ -35,7 +35,7 @@ int main(int argc, char **argv){
       odnode.ctl_callback();
 
       if(odnode.getEnv() == 0){
-        odnode.gazebo_controll();
+        controller::gazebo_controll(odnode);
       }
     }
     loop_rate.sleep();
@@ -317,36 +317,6 @@ void odroid_node::ctl_callback(){
     motor_command();
   }
 
-}
-
-void odroid_node::gazebo_controll(){
-  ros::ServiceClient client_FM = n_.serviceClient<gazebo_msgs::ApplyBodyWrench>("/gazebo/apply_body_wrench");
-  gazebo_msgs::ApplyBodyWrench FMcmds_srv;
-
-  Vector3d fvec_GB(0.0, 0.0, f_quad), fvec_GI;
-
-  fvec_GI = R_v*fvec_GB;
-  Vector3d M_out = R_v*R_bm*M;
-
-  FMcmds_srv.request.body_name = "quadrotor::base_link";
-  FMcmds_srv.request.reference_frame = "world";
-  FMcmds_srv.request.reference_point.x = 0.0;
-  FMcmds_srv.request.reference_point.y = 0.0;
-  FMcmds_srv.request.reference_point.z = 0.0;
-  FMcmds_srv.request.start_time = ros::Time(0.0);
-  FMcmds_srv.request.duration = ros::Duration(0.01);// apply continuously until new command
-
-  FMcmds_srv.request.wrench.force.x = fvec_GI(0);
-  FMcmds_srv.request.wrench.force.y = fvec_GI(1);
-  FMcmds_srv.request.wrench.force.z = fvec_GI(2);
-
-  FMcmds_srv.request.wrench.torque.x = M_out(0);
-  FMcmds_srv.request.wrench.torque.y = M_out(1);
-  FMcmds_srv.request.wrench.torque.z = M_out(2);
-
-  client_FM.call(FMcmds_srv);
-  if(!FMcmds_srv.response.success)
-      cout << "Fail! Response message:\n" << FMcmds_srv.response.status_message << endl;
 }
 
 void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {

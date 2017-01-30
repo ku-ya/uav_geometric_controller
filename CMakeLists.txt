@@ -146,9 +146,9 @@ include_directories(
 
 
 ## Declare a C++ library
-# add_library(odroidsensor_msgs
-#   src/${PROJECT_NAME}/odroid.cpp
-# )
+add_library(controller
+  src/controller.cpp
+)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -159,6 +159,7 @@ include_directories(
 add_executable(odroid_node src/odroid_node.cpp)
 add_executable(calibration src/calibration.cpp)
 add_executable(sim_vicon src/sim_vicon.cpp)
+# add_executable(controller src/controller.cpp)
 
 add_dependencies(odroid_node ${PROJECT_NAME}_gencfg)
 add_dependencies(calibration ${PROJECT_NAME}_gencfg)
@@ -168,12 +169,10 @@ add_dependencies(calibration ${PROJECT_NAME}_gencfg)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(odroid_node
-  ${catkin_LIBRARIES}
+  ${catkin_LIBRARIES} controller
 )
-target_link_libraries(sim_vicon
-  ${catkin_LIBRARIES}
-)
-
+target_link_libraries(sim_vicon ${catkin_LIBRARIES})
+target_link_libraries(controller ${catkin_LIBRARIES})
 
 target_link_libraries(calibration
   ${catkin_LIBRARIES}

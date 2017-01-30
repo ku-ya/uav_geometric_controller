@@ -13,7 +13,6 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>    /* For O_RDWR */
 #include <unistd.h>   /* For open(), creat() */
-#include "controller.h"
 
 #include <iostream>
 #include <vector>
@@ -52,7 +51,7 @@ using namespace Eigen;
 class odroid_node
 {
 
-  private:
+public:
     int environment, mode;
     ros::NodeHandle n_;
     ros::Publisher pub_;
@@ -95,9 +94,9 @@ class odroid_node
     Matrix<double, 4, 1> quat_vm;// attitude of markers measured by Vicon system
 
     bool IMU_flag, Vicon_flag, print_imu, print_f, print_thr, print_test_variable, print_xd, print_x_v, print_Rd,
-      print_eX, print_eV, print_vicon, print_F, print_M, print_R_eb, print_eR,print_eW, print_f_motor;
+      print_eX, print_eV, print_vicon, print_F, print_M, print_R_eb, print_eR,print_eW, print_f_motor, print_gains;
     Matrix<double, 6, 1> f;
-    Matrix3d R_bm;
+
 
     // Integral errors begin at zero
     Vector3d eiX, eiR, eiX_last, eiR_last;
@@ -174,7 +173,9 @@ class odroid_node
     socklen_t client_ln;
     char buffer[1000], buffer_[1000];
     struct sockaddr_in serv_addr, cli_addr;
-  public:
+
+    Matrix3d R_bm;
+
     bool simulation;
     //! Constructor.
     odroid_node();
@@ -201,11 +202,11 @@ class odroid_node
     //! dynamic reconfigure callback
     void callback(odroid::GainsConfig &config, uint32_t level);
     //! Controller function
-    void GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, VectorXd eiR_last);
+    // void GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, VectorXd eiR_last);
     // Position controller function
-    void GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W, Matrix3d R_v);
+    // void GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W, Matrix3d R_v);
     // Quadrotor position controller
-    void QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W_in, Matrix3d R);
+    // void QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W_in, Matrix3d R);
     // node handle getter
     ros::NodeHandle getNH(){return n_;};
     void gazebo_controll();

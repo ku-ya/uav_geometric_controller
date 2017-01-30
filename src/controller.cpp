@@ -1,3 +1,191 @@
+#include <odroid/controller.hpp>
+using namespace Eigen;
+using namespace std;
+
+void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W_in, Matrix3d R_v){
+  std::cout.precision(5);
+  // Bring to controller frame (and back) with 180 degree rotation about b1
+  Matrix3d D = node.R_bm;
+
+  Vector3d xd_2dot = Vector3d::Zero();
+  Vector3d xd_3dot = xd_2dot;
+  Vector3d xd_4dot = xd_2dot;
+  Vector3d b1d(1,0,0);
+  Vector3d b1d_dot = xd_2dot;
+  Vector3d b1d_ddot = xd_2dot;
+
+  Vector3d e3(0.0,0.0,1.0);// commonly-used unit vector
+
+  Vector3d x = D*x_v;// LI
+  Vector3d v = D*v_v;// LI
+  Matrix3d R = D*R_v*D;// LI<-LBFF
+  Vector3d W = W_in;// LBFF
+
+  xd = D*xd;
+  xd_dot = D*xd_dot;
+  xd_2dot = D*xd_2dot;
+  xd_3dot = D*xd_3dot;
+  xd_4dot = D*xd_4dot;
+
+  b1d = D*b1d;
+  b1d_dot = D*b1d_dot;
+  b1d_ddot = D*b1d_ddot;
+
+  // Translational Error Functions
+  Vector3d ex = x - xd;
+  Vector3d ev = v - xd_dot;
+
+  if(node.mode == 0){
+    ex = Vector3d::Zero();
+    ev = Vector3d::Zero();
+  }
+
+  node.eiX = node.eiX_last+node.del_t*(ex+node.cX*ev);
+  err_sat(-node.eiX_sat, node.eiX_sat, node.eiX);
+  node.eiX_last = node.eiX;
+
+  if(node.print_eX){cout<<"eX: "<<ex.transpose()<<endl;}
+  if(node.print_eV){cout<<"eV: "<<ev.transpose()<<endl;}
+  // std::cout<<"ex:\n"<<ex.transpose()<<std::endl;
+  // std::cout<<"ev:\n"<<ev.transpose()<<std::endl;
+  // std::cout<<"eiX:\n"<<eiX.transpose()<<std::endl;
+  // Force 'f' along negative b3-axis
+
+  double kx = node.kx;
+  double kv = node.kv;
+  double kiX = node.kiX;
+  double kR = node.kR;
+  double kW = node.kW;
+  double kiR = node.kiR;
+
+  double m = node.m;
+  double g = node.g;
+
+  bool print_f = node.print_f;
+
+
+  Vector3d A = -kx*ex-kv*ev-kiX*node.eiX-m*g*e3+m*xd_2dot;
+  Vector3d L = R*e3;
+  Vector3d Ldot = R*hat_eigen(W)*e3;
+  double f = -A.dot(R*e3);
+  // std::cout<<f<<std::endl;
+  node.f_quad = f;
+
+  // if(print_f){node.print_force();}
+  // Intermediate Terms for Rotational Errors
+  Vector3d ea = g*e3-f/m*L-xd_2dot;
+  Vector3d Adot = -kx*ev-kv*ea+m*xd_3dot;// Lee Matlab: -ki*satdot(sigma,ei,ev+c1*ex);
+
+  double fdot = -Adot.dot(L)-A.dot(Ldot);
+  Vector3d eb = -fdot/m*L-f/m*Ldot-xd_3dot;
+  Vector3d Addot = -kx*ea-kv*eb+m*xd_4dot;// Lee Matlab: -ki*satdot(sigma,ei,ea+c1*ev);
+
+  double nA = A.norm();
+  Vector3d Ld = -A/nA;
+  Vector3d Lddot = -Adot/nA+A*A.dot(Adot)/pow(nA,3);
+  Vector3d Ldddot = -Addot/nA+Adot/pow(nA,3)*(2*A.dot(Adot))
+          +A/pow(nA,3)*(Adot.dot(Adot)+A.dot(Addot))
+          -3*A/pow(nA,5)*pow(A.dot(Adot),2);
+
+  Vector3d Ld2 = -hat_eigen(b1d)*Ld;
+  Vector3d Ld2dot = -hat_eigen(b1d_dot)*Ld-hat_eigen(b1d)*Lddot;
+  Vector3d Ld2ddot = -hat_eigen(b1d_ddot)*Ld-2*hat_eigen(b1d_dot)*Lddot-hat_eigen(b1d)*Ldddot;
+
+  double nLd2 = Ld2.norm();
+  Vector3d Rd2 = Ld2/nLd2;
+  Vector3d Rd2dot = Ld2dot/nLd2-Ld2.dot(Ld2dot)/pow(nLd2,3)*Ld2;
+  Vector3d Rd2ddot = Ld2ddot/nLd2-Ld2.dot(Ld2dot)/pow(nLd2,3)*Ld2dot
+          -Ld2dot.dot(Ld2dot)/pow(nLd2,3)*Ld2-Ld2.dot(Ld2ddot)/pow(nLd2,3)*Ld2
+          -Ld2.dot(Ld2dot)/pow(nLd2,3)*Ld2dot
+          +3*pow(Ld2.dot(Ld2dot),2)/pow(nLd2,5)*Ld2;
+
+  Vector3d Rd1 = hat_eigen(Rd2)*Ld;
+  Vector3d Rd1dot = hat_eigen(Rd2dot)*Ld+hat_eigen(Rd2)*Lddot;
+  Vector3d Rd1ddot = hat_eigen(Rd2ddot)*Ld+2*hat_eigen(Rd2dot)*Lddot+hat_eigen(Rd2)*Ldddot;
+
+
+  Matrix3d Rd, Rddot, Rdddot;
+  Rd << Rd1, Rd2, Ld;
+  Rddot << Rd1dot, Rd2dot, Lddot;
+  Rdddot << Rd1ddot, Rd2ddot, Ldddot;
+  // if(print_Rd){cout<<"Rd: "<<Rd<<endl;}
+
+  // Vector3d Wd, Wddot;
+  vee_eigen(Rd.transpose()*Rddot, Wd);
+  // Rd = MatrixXd::Identity(3,3);
+  // Wd = VectorXd::Zero(3);
+  vee_eigen(Rd.transpose()*Rdddot-hat_eigen(Wd)*hat_eigen(Wd), Wddot);
+
+  // Attitude Error 'eR'
+  vee_eigen(.5*(Rd.transpose()*R-R.transpose()*Rd), node.eR);
+  // if(print_eR){cout<<"eR: "<<eR.transpose()<<endl;}
+
+  // Angular Velocity Error 'eW'
+  node.eW = W-R.transpose()*Rd*Wd;
+  // if(print_eW){cout<<"eW: "<<eW.transpose()<<endl;}
+
+  // Attitude Integral Term
+  node.eiR = node.del_t*(node.eR+node.cR*node.eW) + node.eiR_last;
+  err_sat(-node.eiR_sat, node.eiR_sat, node.eiR);
+  node.eiR_last = node.eiR;
+  // 3D Moment
+  node.M = -kR*node.eR-kW*node.eW-kiR*node.eiR+hat_eigen(R.transpose()*Rd*Wd)*node.J*R.transpose()*Rd*Wd+node.J*R.transpose()*Rd*Wddot;// LBFF
+
+  // if(print_M){cout<<"M: "<<M.transpose()<<endl;}
+
+  Matrix<double, 4, 1> FM;
+  FM[0] = f;
+  FM[1] = node.M[0];
+  FM[2] = node.M[1];
+  FM[3] = node.M[2];
+
+  node.f_motor = node.Ainv*FM;
+
+  odroid::error e_msg;
+  Vector3d kR_eR = kR*node.eR;
+  Vector3d kW_eW = kW*node.eW;
+  e_msg.kW = kW; e_msg.kR = kR;
+  e_msg.eR.x = node.eR(0); e_msg.eR.y = node.eR(1);e_msg.eR.z = node.eR(2);
+  e_msg.kR_eR.x = kR_eR(0); e_msg.kR_eR.y = kR_eR(1);e_msg.kR_eR.z = kR_eR(2);
+  e_msg.eW.x = node.eW(0); e_msg.eW.y = node.eW(1);e_msg.eW.z = node.eW(2);
+  e_msg.kW_eW.x = kW_eW(0); e_msg.kW_eW.y = kW_eW(1);e_msg.kW_eW.z = kW_eW(2);
+  e_msg.M.x = node.M(0); e_msg.M.y = node.M(1);e_msg.M.z = node.M(2);
+  node.pub_.publish(e_msg);
+}
+
+
+void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, VectorXd eiR_last){
+  Matrix3d Rd = MatrixXd::Identity(3,3);
+  Vector3d e3(0,0,1), b3(0,0,1), vee_3by1;
+  double l = 0;//.05;// length of rod connecting to the spherical joint
+  Vector3d r = -l * b3;
+  Vector3d F_g = node.m * node.g * R.transpose() * e3;
+  Vector3d M_g = r.cross(F_g);
+  //   Calculate eR (rotation matrix error)
+  Matrix3d inside_vee_3by3 = Rd.transpose() * R - R.transpose() * Rd;
+  eigen_invskew(inside_vee_3by3, vee_3by1);// 3x1
+  Vector3d eR = 0.5 * vee_3by1;
+  // Calculate eW (angular velocity error in body-fixed frame)
+  Vector3d eW = W - R.transpose() * Rd * Wd;
+  // Update integral term of control
+  // Attitude:
+  // Vector3d eiR = eiR_last + del_t * eR;
+  node.eiR_last = node.eiR;
+  // Calculate 3 DOFs of M (controlled moment in body-fixed frame)
+  // MATLAB: M = -kR*eR-kW*eW-kRi*eiR+cross(W,J*W)+J*(R'*Rd*Wddot-hat(W)*R'*Rd*Wd);
+  Matrix3d What;
+  eigen_skew(W, What);
+  Vector3d What_J_W = What * node.J * W;
+  Vector3d Jmult = R.transpose() * Rd * Wddot - What * R.transpose() * Rd * Wd;
+  Vector3d J_Jmult = node.J * Jmult;
+  Vector3d M = -node.kR * eR - node.kW * eW - node.kiR * node.eiR + What_J_W + J_Jmult - M_g;
+  // To try different motor speeds, choose a force in the radial direction
+  double F_req = -node.m*node.g;// N
+  // Convert forces & moments to f_i for i = 1:6 (forces of i-th prop)
+  VectorXd FM(6);
+  FM << 0.0, 0.0, F_req, M(0), M(1), M(2);
+  node.f_motor = node.Ainv * FM;
+}
 
 
 // void odroid_node::GeometricController_6DOF(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot, Matrix3d Rd, Vector3d Wd, Vector3d Wddot, Vector3d x_e, Vector3d v_e, Vector3d W, Matrix3d R)
@@ -75,35 +263,8 @@
 //
 //   }
 //
-// void odroid_node::GeometricControl_SphericalJoint_3DOF_eigen(Vector3d Wd, Vector3d Wddot, Vector3d W, Matrix3d R, VectorXd eiR_last){
-//   Matrix3d Rd = MatrixXd::Identity(3,3);
-//   Vector3d e3(0,0,1), b3(0,0,1), vee_3by1;
-//   double l = 0;//.05;// length of rod connecting to the spherical joint
-//   Vector3d r = -l * b3;
-//   Vector3d F_g = m * g * R.transpose() * e3;
-//   Vector3d M_g = r.cross(F_g);
-//   //   Calculate eR (rotation matrix error)
-//   Matrix3d inside_vee_3by3 = Rd.transpose() * R - R.transpose() * Rd;
-//   eigen_invskew(inside_vee_3by3, vee_3by1);// 3x1
-//   Vector3d eR = 0.5 * vee_3by1;
-//   // Calculate eW (angular velocity error in body-fixed frame)
-//   Vector3d eW = W - R.transpose() * Rd * Wd;
-//   // Update integral term of control
-//   // Attitude:
-//   Vector3d eiR = eiR_last + del_t * eR;
-//   eiR_last = eiR;
-//   // Calculate 3 DOFs of M (controlled moment in body-fixed frame)
-//   // MATLAB: M = -kR*eR-kW*eW-kRi*eiR+cross(W,J*W)+J*(R'*Rd*Wddot-hat(W)*R'*Rd*Wd);
-//   Matrix3d What;
-//   eigen_skew(W, What);
-//   Vector3d What_J_W = What * J * W;
-//   Vector3d Jmult = R.transpose() * Rd * Wddot - What * R.transpose() * Rd * Wd;
-//   Vector3d J_Jmult = J * Jmult;
-//   Vector3d M = -kR * eR - kW * eW - kiR * eiR + What_J_W + J_Jmult - M_g;
-//   // To try different motor speeds, choose a force in the radial direction
-//   double F_req = -m*g;// N
-//   // Convert forces & moments to f_i for i = 1:6 (forces of i-th prop)
-//   VectorXd FM(6);
-//   FM << 0.0, 0.0, F_req, M(0), M(1), M(2);
-//   f = invFMmat * FM;
-// }
+
+int main()
+{
+  return 0;
+}

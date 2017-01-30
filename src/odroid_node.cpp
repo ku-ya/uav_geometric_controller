@@ -1,6 +1,7 @@
 #include <odroid/odroid_node.hpp>
 // #include <odroid/controllers.h>// robotic control
 // User header files
+#include <odroid/controller.hpp>
 #include <odroid/error.h>
 #include <XmlRpcValue.h>
 
@@ -112,6 +113,7 @@ void odroid_node::print_J(){
 void odroid_node::print_force(){
   std::cout<<"force: "<<f_quad<<std::endl;
 }
+
 
 // callback for IMU sensor det
 bool odroid_node::getIMU(){return IMU_flag;}
@@ -230,8 +232,12 @@ void odroid_node::ctl_callback(){
     cout<<"xd: "<<xd.transpose()<<endl;
   }
 
-  QuadGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
+  if(print_gains){
+    printf("Gain values: kx %f kv %f kiX %f kR %f kW %f kiR %f\n",kx,kv,kiX,kR,kW,kiR);
+  }
 
+  // QuadGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
+  controller::GeometricPositionController(*this, xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
 
   if(print_f_motor){
     cout<<"f_motor: "<<f_motor.transpose()<<endl;
@@ -308,145 +314,6 @@ void odroid_node::ctl_callback(){
 
 }
 
-void odroid_node::QuadGeometricPositionController(Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W_in, Matrix3d R_v){
-  std::cout.precision(5);
-    // Bring to controller frame (and back) with 180 degree rotation about b1
-    Matrix3d D = R_bm;
-
-    Vector3d xd_2dot = Vector3d::Zero();
-    Vector3d xd_3dot = xd_2dot;
-    Vector3d xd_4dot = xd_2dot;
-    Vector3d b1d(1,0,0);
-    Vector3d b1d_dot = xd_2dot;
-    Vector3d b1d_ddot = xd_2dot;
-
-    Vector3d e3(0.0,0.0,1.0);// commonly-used unit vector
-
-    Vector3d x = D*x_v;// LI
-    Vector3d v = D*v_v;// LI
-    Matrix3d R = D*R_v*D;// LI<-LBFF
-    Vector3d W = W_in;// LBFF
-
-    xd = D*xd;
-    xd_dot = D*xd_dot;
-    xd_2dot = D*xd_2dot;
-    xd_3dot = D*xd_3dot;
-    xd_4dot = D*xd_4dot;
-
-    b1d = D*b1d;
-    b1d_dot = D*b1d_dot;
-    b1d_ddot = D*b1d_ddot;
-
-    // Translational Error Functions
-    Vector3d ex = x - xd;
-    Vector3d ev = v - xd_dot;
-
-    if(mode == 0){
-      ex = Vector3d::Zero();
-      ev = Vector3d::Zero();
-    }
-
-    eiX = eiX_last+del_t*(ex+cX*ev);
-    err_sat(-eiX_sat, eiX_sat, eiX);
-    eiX_last = eiX;
-
-    if(print_eX){cout<<"eX: "<<ex.transpose()<<endl;}
-    if(print_eV){cout<<"eV: "<<ev.transpose()<<endl;}
-    // std::cout<<"ex:\n"<<ex.transpose()<<std::endl;
-    // std::cout<<"ev:\n"<<ev.transpose()<<std::endl;
-    // std::cout<<"eiX:\n"<<eiX.transpose()<<std::endl;
-    // Force 'f' along negative b3-axis
-    Vector3d A = -kx*ex-kv*ev-kiX*eiX-m*g*e3+m*xd_2dot;
-    Vector3d L = R*e3;
-    Vector3d Ldot = R*hat_eigen(W)*e3;
-    double f = -A.dot(R*e3);
-    // std::cout<<f<<std::endl;
-    f_quad = f;
-
-    if(print_f){print_force();}
-    // Intermediate Terms for Rotational Errors
-    Vector3d ea = g*e3-f/m*L-xd_2dot;
-    Vector3d Adot = -kx*ev-kv*ea+m*xd_3dot;// Lee Matlab: -ki*satdot(sigma,ei,ev+c1*ex);
-
-    double fdot = -Adot.dot(L)-A.dot(Ldot);
-    Vector3d eb = -fdot/m*L-f/m*Ldot-xd_3dot;
-    Vector3d Addot = -kx*ea-kv*eb+m*xd_4dot;// Lee Matlab: -ki*satdot(sigma,ei,ea+c1*ev);
-
-    double nA = A.norm();
-    Vector3d Ld = -A/nA;
-    Vector3d Lddot = -Adot/nA+A*A.dot(Adot)/pow(nA,3);
-    Vector3d Ldddot = -Addot/nA+Adot/pow(nA,3)*(2*A.dot(Adot))
-            +A/pow(nA,3)*(Adot.dot(Adot)+A.dot(Addot))
-            -3*A/pow(nA,5)*pow(A.dot(Adot),2);
-
-    Vector3d Ld2 = -hat_eigen(b1d)*Ld;
-    Vector3d Ld2dot = -hat_eigen(b1d_dot)*Ld-hat_eigen(b1d)*Lddot;
-    Vector3d Ld2ddot = -hat_eigen(b1d_ddot)*Ld-2*hat_eigen(b1d_dot)*Lddot-hat_eigen(b1d)*Ldddot;
-
-    double nLd2 = Ld2.norm();
-    Vector3d Rd2 = Ld2/nLd2;
-    Vector3d Rd2dot = Ld2dot/nLd2-Ld2.dot(Ld2dot)/pow(nLd2,3)*Ld2;
-    Vector3d Rd2ddot = Ld2ddot/nLd2-Ld2.dot(Ld2dot)/pow(nLd2,3)*Ld2dot
-            -Ld2dot.dot(Ld2dot)/pow(nLd2,3)*Ld2-Ld2.dot(Ld2ddot)/pow(nLd2,3)*Ld2
-            -Ld2.dot(Ld2dot)/pow(nLd2,3)*Ld2dot
-            +3*pow(Ld2.dot(Ld2dot),2)/pow(nLd2,5)*Ld2;
-
-    Vector3d Rd1 = hat_eigen(Rd2)*Ld;
-    Vector3d Rd1dot = hat_eigen(Rd2dot)*Ld+hat_eigen(Rd2)*Lddot;
-    Vector3d Rd1ddot = hat_eigen(Rd2ddot)*Ld+2*hat_eigen(Rd2dot)*Lddot+hat_eigen(Rd2)*Ldddot;
-
-
-    Matrix3d Rd, Rddot, Rdddot;
-    Rd << Rd1, Rd2, Ld;
-    Rddot << Rd1dot, Rd2dot, Lddot;
-    Rdddot << Rd1ddot, Rd2ddot, Ldddot;
-    if(print_Rd){cout<<"Rd: "<<Rd<<endl;}
-
-    // Vector3d Wd, Wddot;
-    vee_eigen(Rd.transpose()*Rddot, Wd);
-    Rd = MatrixXd::Identity(3,3);
-    Wd = VectorXd::Zero(3);
-    vee_eigen(Rd.transpose()*Rdddot-hat_eigen(Wd)*hat_eigen(Wd), Wddot);
-
-    // Attitude Error 'eR'
-    vee_eigen(.5*(Rd.transpose()*R-R.transpose()*Rd), eR);
-    if(print_eR){cout<<"eR: "<<eR.transpose()<<endl;}
-    // cout<<"eR:\n"<<eR<<endl;
-    // Angular Velocity Error 'eW'
-    eW = W-R.transpose()*Rd*Wd;
-    if(print_eW){cout<<"eW: "<<eW.transpose()<<endl;}
-    // cout<<"eW:\n"<<eW<<endl;
-    // Attitude Integral Term
-    eiR = del_t*(eR+cR*eW) + eiR_last;
-    err_sat(-eiR_sat, eiR_sat, eiR);
-    eiR_last = eiR;
-    // 3D Moment
-    M = -kR*eR-kW*eW-kiR*eiR+hat_eigen(R.transpose()*Rd*Wd)*J*R.transpose()*Rd*Wd+J*R.transpose()*Rd*Wddot;// LBFF
-    // M = D*M;// LBFF->GBFF
-    if(print_M){cout<<"M: "<<M.transpose()<<endl;}
-
-    Matrix<double, 4, 1> FM;
-    FM[0] = f;
-    FM[1] = M[0];
-    FM[2] = M[1];
-    FM[3] = M[2];
-
-
-    f_motor = Ainv*FM;
-
-    odroid::error e_msg;
-    Vector3d kR_eR = kR*eR;
-    Vector3d kW_eW = kW*eW;
-    e_msg.kW = kW; e_msg.kR = kR;
-    e_msg.eR.x = eR(0); e_msg.eR.y = eR(1);e_msg.eR.z = eR(2);
-    e_msg.kR_eR.x = kR_eR(0); e_msg.kR_eR.y = kR_eR(1);e_msg.kR_eR.z = kR_eR(2);
-    e_msg.eW.x = eW(0); e_msg.eW.y = eW(1);e_msg.eW.z = eW(2);
-    e_msg.kW_eW.x = kW_eW(0); e_msg.kW_eW.y = kW_eW(1);e_msg.kW_eW.z = kW_eW(2);
-    e_msg.M.x = M(0); e_msg.M.y = M(1);e_msg.M.z = M(2);
-    pub_.publish(e_msg);
-
-}
-
 void odroid_node::gazebo_controll(){
   ros::ServiceClient client_FM = n_.serviceClient<gazebo_msgs::ApplyBodyWrench>("/gazebo/apply_body_wrench");
   gazebo_msgs::ApplyBodyWrench FMcmds_srv;
@@ -454,7 +321,7 @@ void odroid_node::gazebo_controll(){
   Vector3d fvec_GB(0.0, 0.0, f_quad), fvec_GI;
 
   fvec_GI = R_v*fvec_GB;
-  Vector3d M_out = R_v*M;
+  Vector3d M_out = R_v*R_bm*M;
 
   FMcmds_srv.request.body_name = "quadrotor::base_link";
   FMcmds_srv.request.reference_frame = "world";
@@ -481,6 +348,7 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
   ROS_INFO("Reconfigure Request: Update");
 
   mode = config.mode;
+  print_gains = config.print_gains;
   print_f = config.print_f;
   print_imu = config.print_imu;
   print_thr = config.print_thr;

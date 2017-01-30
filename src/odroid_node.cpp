@@ -385,7 +385,7 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
   print_vicon = config.print_vicon;
   print_M = config.print_M;
   print_F = config.print_F;
-  print_f_motor = config.print_f_motor;
+  print_f_motor = config.print_f;
   print_R_eb = config.print_R_eb;
 }
 

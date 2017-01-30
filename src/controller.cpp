@@ -169,7 +169,7 @@ void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3
   //   Calculate eR (rotation matrix error)
   Matrix3d inside_vee_3by3 = Rd.transpose() * R - R.transpose() * Rd;
   eigen_invskew(inside_vee_3by3, vee_3by1);// 3x1
-  node.eR = 0.5 * vee_3by1;
+  node.eR = vee_3by1/2;
   // Calculate eW (angular velocity error in body-fixed frame)
   Vector3d eW = W - R.transpose() * Rd * Wd;
   node.eW = eW;
@@ -181,15 +181,16 @@ void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3
   // MATLAB: M = -kR*eR-kW*eW-kRi*eiR+cross(W,J*W)+J*(R'*Rd*Wddot-hat(W)*R'*Rd*Wd);
   Matrix3d What;
   eigen_skew(W, What);
-  Vector3d What_J_W = What * node.J * W;
-  Vector3d Jmult = R.transpose() * Rd * Wddot - What * R.transpose() * Rd * Wd;
-  Vector3d J_Jmult = node.J * Jmult;
-  Vector3d M = -node.kR * node.eR - node.kW * eW - node.kiR * node.eiR + What_J_W + J_Jmult - M_g;
+  // Vector3d What_J_W = What * node.J * W;
+  // Vector3d Jmult = R.transpose() * Rd * Wddot - What * R.transpose() * Rd * Wd;
+  // Vector3d J_Jmult = node.J * Jmult;
+  Vector3d M = -node.kR * node.eR - node.kW * eW + W.cross(node.J*W) - node.J*(What*R.transpose()*Rd*Wd - R.transpose()*Rd*Wddot);
+  // - node.kiR * node.eiR + What_J_W + J_Jmult - M_g;
   // To try different motor speeds, choose a force in the radial direction
-  double F_req = node.m*node.g;// N
+  double f = - node.m*node.g;// N
   // Convert forces & moments to f_i for i = 1:6 (forces of i-th prop)
   VectorXd FM(4);
-  FM << F_req, M(0), M(1), M(2);
+  FM << f, M(0), M(1), M(2);
   node.M = M;
   node.f_motor = node.Ainv * FM;
 
@@ -203,7 +204,6 @@ void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3
   e_msg.kW_eW.x = kW_eW(0); e_msg.kW_eW.y = kW_eW(1);e_msg.kW_eW.z = kW_eW(2);
   e_msg.M.x = node.M(0); e_msg.M.y = node.M(1);e_msg.M.z = node.M(2);
   node.pub_.publish(e_msg);
-
 
 }
 

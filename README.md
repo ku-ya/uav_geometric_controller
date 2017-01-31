@@ -1,4 +1,15 @@
 # ROS_odroid_node
+## Installation
+
+1. First you need [ROS] (use kinetic distro)
+2. Also install `rosservice-arduino` using
+~~~
+$ sudo apt-get install ros-<distro>-rosservice-arduino
+~~~
+3. Steps to run a node
+4. How to run tests
+
+
 ## Odroid node class implementation for ROS
 
 ### Hardware procedure

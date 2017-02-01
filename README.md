@@ -1,13 +1,27 @@
 # ROS_odroid_node
 ## Installation
 
-1. First you need [ROS] (use kinetic distro)
-2. Also install `rosservice-arduino` using
+1. First you need [ROS](http://wiki.ros.org/indigo/Installation) (use kinetic distro)
+  * This is easy and is simply a `apt-get` call. Just follow the instructions like a good engineer
+2. Also install `rosserial-arduino` using
 ~~~
-$ sudo apt-get install ros-<distro>-rosservice-arduino
+$ sudo apt-get install ros-<distro>-rosserial-arduino
 ~~~
-3. Steps to run a node
-4. How to run tests
+3. Create a `catkin_ws/src` workspace in a convienent directory
+~~~
+$ mkdir -p ~/fdcl_ros/src
+$ cd ~/fdcl_ros
+~~~
+4. Clone and then build the package
+~~~
+$ cd ~/fdcl/src
+$ git clone https://github.com/fdcl-gwu/ROS_odroid_node.git .
+$ cd ../
+$ catkin_make
+~~~
+5. Source the package path files `$ source devel/setup.bash`
+6. ....
+7. Profit
 
 
 ## Odroid node class implementation for ROS

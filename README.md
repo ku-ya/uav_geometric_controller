@@ -90,6 +90,23 @@ sudo date --set="$(ssh user@host date)"
 
 *Make sure to ROSBAG all the test data!!!*
 
+## Some common issues
+
 Check:
 - If the compiling error appear on Odroid, check rospkg, catkin_pkg installation. Python distribution change to conda caused the issue. 01/07/2017
 - compiling with anaconda python https://gist.github.com/mitmul/538315c68c2069f16f11
+
+### Python issues
+
+  * If you have Anaconda installed, you can simply uncomment the path modifcation in your `~/.bashrc` file
+  This will ensure that the system Python is Pin use rather than Anaconda. 
+
+    More explicitly, make sure the following line is commented in `~/.bashrc` and then run `source ~/.bashrc` or open a new terminal window and verify that the system python is running.
+    ~~~
+    # added by Anaconda3 4.3.0 installer
+    # export PATH="/home/shankar/anaconda3/bin:$PATH"
+    ~~~
+  Ensure you have `catkin_pkg` installed via `pip install --user catkin_pkg`
+  * Check which Python you're using by `$ python --version`
+  * Install `pip` using the system package manager - `$ sudo apt-get install python-pip python3-pip`
+

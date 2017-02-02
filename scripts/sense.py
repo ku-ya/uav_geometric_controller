@@ -6,7 +6,7 @@ import rospy
 import cv2
 import message_filters
 from std_msgs.msg import String
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, LaserScan
 from cv_bridge import CvBridge, CvBridgeError
 
 # from __future__ import print_function
@@ -14,14 +14,14 @@ class image_converter:
   def __init__(self):
     self.image_pub = rospy.Publisher("depth_reduced",Image,queue_size=100)
     self.bridge = CvBridge()
-    depth_sub = message_filters.Subscriber("/depth/image_raw",Image)
+    depth_sub = message_filters.Subscriber("/depth/image",Image)
     image_sub = message_filters.Subscriber("/rgb/image",Image)
-
-    self.ts = message_filters.ApproximateTimeSynchronizer([image_sub, depth_sub], 10, 0.5)
+    laser_sub = message_filters.Subscriber("/scan",LaserScan)
+    self.ts = message_filters.ApproximateTimeSynchronizer([image_sub, depth_sub, laser_sub], 10, 0.5)
     self.ts.registerCallback(self.callback)
 
 
-  def callback(self,rgb_data, depth_data):
+  def callback(self,rgb_data, depth_data, laser_data):
     try:
       image = self.bridge.imgmsg_to_cv2(rgb_data, "bgr8")
       cv_image = self.bridge.imgmsg_to_cv2(depth_data, "passthrough")

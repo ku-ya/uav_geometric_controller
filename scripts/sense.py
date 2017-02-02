@@ -4,43 +4,53 @@ roslib.load_manifest('odroid')
 import sys
 import rospy
 import cv2
+import message_filters
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
 # from __future__ import print_function
-
 class image_converter:
-
   def __init__(self):
     self.image_pub = rospy.Publisher("depth_reduced",Image,queue_size=100)
-
     self.bridge = CvBridge()
-    self.image_sub = rospy.Subscriber("/camera/depth/image_raw",Image,self.callback)
+    depth_sub = message_filters.Subscriber("/depth/image_raw",Image)
+    image_sub = message_filters.Subscriber("/rgb/image",Image)
 
-  def callback(self,data):
+    self.ts = message_filters.ApproximateTimeSynchronizer([image_sub, depth_sub], 10, 0.5)
+    self.ts.registerCallback(self.callback)
+
+
+  def callback(self,rgb_data, depth_data):
     try:
-      cv_image = self.bridge.imgmsg_to_cv2(data, "32FC1")
+      image = self.bridge.imgmsg_to_cv2(rgb_data, "bgr8")
+      cv_image = self.bridge.imgmsg_to_cv2(depth_data, "passthrough")
     except CvBridgeError as e:
       print(e)
 
     (rows,cols) = cv_image.shape
+    # print(rows, cols)
+    image[235:245,:,0] = 0
+    image[235:245,:,1] = 0
+    image[235:245,:,2] = cv_image[235:245,:]
+
     if cols > 60 and rows > 60 :
       cv2.circle(cv_image, (50,50), 10, 255)
 
-    cv_image = cv2.resize(cv_image, (0,0), fx=0.5, fy=0.5)
+    cv_image = cv2.resize(cv_image, (0,0), fx=0.2, fy=0.2)
 
-    cv2.imshow("Image window", cv_image)
-    cv2.waitKey(3)
+    # cv2.imshow("Image window", cv_image)
+    cv2.imshow("Image window", image)
+    cv2.waitKey(10)
 
     try:
-      self.image_pub.publish(self.bridge.cv2_to_imgmsg(cv_image, "32FC1"))
+      self.image_pub.publish(self.bridge.cv2_to_imgmsg(cv_image, "passthrough"))
     except CvBridgeError as e:
       print(e)
 
 def main(args):
   ic = image_converter()
-  rospy.init_node('image_resize', anonymous=False)
+  rospy.init_node('image_resize', anonymous=True)
   try:
     rospy.spin()
   except KeyboardInterrupt:

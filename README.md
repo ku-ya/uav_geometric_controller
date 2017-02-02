@@ -21,6 +21,11 @@ $ catkin_make
 ~~~
 5. Source the package path files `$ source devel/setup.bash`
 6. ....
+
+roslaunch odroid empty_gazebo.launch
+roslaunch odroid odroid_gazebo.launch
+rosrun rqt_reqconfigure
+
 7. Profit
 
 

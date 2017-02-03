@@ -27,7 +27,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Boost REQUIRED COMPONENTS thread)
 find_package(Eigen3 REQUIRED)
-include_directories(EIGEN3_INCLUDE_DIR)
+include_directories(EIGEN3_INCLUDE_DIR ${GTEST_INCLUDE_DIRS})
+
 
 
 # find_package(OpenCV 3 REQUIRED)
@@ -218,7 +219,9 @@ target_link_libraries(calibration
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_odroid.cpp)
+catkin_add_gtest(test_controller test/test_controller.cpp src/controller_sep.cpp)
+target_link_libraries(test_controller ${catkin_LIBRARIES})
+#catkin_add_gtest(${PROJECT_NAME}-test test/test_odroid.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

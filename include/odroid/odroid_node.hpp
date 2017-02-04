@@ -46,11 +46,12 @@ using namespace Eigen;
 #include <odroid/GainsConfig.h>
 #include <odroid/hw_interface.hpp>
 // #include <odroid/visualize.hpp>
+#include <boost/thread/mutex.hpp>
 
 class odroid_node
 {
-
 public:
+    boost::mutex mutex_;
     int environment, mode;
     ros::NodeHandle n_;
     ros::NodeHandle nhSub_;
@@ -192,6 +193,7 @@ public:
     //! Callback function for subscriber
     bool getWarmup();
     //! IMU sensor message subscriber
+    void get_sensor();
     void imu_callback(const sensor_msgs::Imu::ConstPtr& msg);
     //! Keyboard input message subscriber
     void key_callback(const std_msgs::String::ConstPtr& msg);

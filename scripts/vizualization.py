@@ -7,13 +7,16 @@ import pylab
 from scipy.interpolate import interp1d
 import time
 
-fname = '1486076222644094698'
+fname = '1486168125011874907'
 x = np.load('laser/'+fname+'.npy')
 laser_angle_range = 1081*0.25
 laser_angle = np.linspace(-1./2*laser_angle_range,1./2*laser_angle_range,1081, endpoint=True)
 f = interp1d(laser_angle, x[::-1],kind='cubic')
 # plt.plot(angle, x[::-1],'o')
 x = np.load('depth/'+fname+'.npy')
+x = np.mean(x,axis=0)
+
+
 angle_range = 58
 angle = np.linspace(-1./2*angle_range,1./2*angle_range,640, endpoint=True)
 
@@ -24,9 +27,7 @@ print(f(angle).shape)
 # plt.plot(angle,f(angle)-x, 'o')
 pylab.xlim([-1./2*angle_range, 1./2*angle_range])
 pylab.ylim([0, 10])
-# plt.show()
-
-# exit(0)
+plt.show()
 
 directory = 'laser/'
 out_directory = 'laser_fov/'

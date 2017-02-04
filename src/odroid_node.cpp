@@ -7,45 +7,113 @@
 // #include <odroid/hw_interface.hpp>
 #include <odroid/error.h>
 #include <XmlRpcValue.h>
-
+#include <boost/thread.hpp>
 using namespace std;
 using namespace Eigen;
 using namespace message_filters;
 
+
+void imu_callback(const sensor_msgs::Imu::ConstPtr& msg, odroid_node* node){
+  cout<<node->W_b<<endl;
+  // vector3Transfer(W_b, msg->angular_velocity);
+  // if(!IMU_flag){ ROS_INFO("IMU ready");}
+  // IMU_flag = true;
+  // if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
+  // if(print_imu){
+  //  printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", W_b(0), W_b(1), W_b(2));
+  // }
+}
+
+void vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg){
+  // vicon_time =msg->header.stamp
+  // vector3Transfer(x_v, msg->transform.translation);
+  // // x_v << 0, 0, 0;
+  // vector4Transfer(quat_vm, msg->transform.rotation);
+  //
+  // tf::Quaternion q(quat_vm(0),quat_vm(1),quat_vm(2),quat_vm(3));
+  // tf::Matrix3x3 m(q);
+  // m.getRPY(roll, pitch, yaw);
+  //
+  // quatToMat(R_v, quat_vm);
+  //
+	// if(print_vicon){
+  //   printf("Vicon: roll:[%f], pitch:[%f], yaw:[%f] \n", roll/M_PI*180, pitch/M_PI*180, yaw/M_PI*180);
+  // }
+  // if(print_x_v){
+  //   cout<<"x_v: "<<x_v.transpose()<<endl;
+  // }
+  // static tf::TransformBroadcaster br;
+  // tf::Transform transform;
+  // transform.setOrigin( tf::Vector3(x_v(0),x_v(1), x_v(2)));
+  // transform.setRotation(q);
+  // br.sendTransform(tf::StampedTransform(transform, vicon_time, "world", "base_link"));
+  //
+  // if(!Vicon_flag){ ROS_INFO("Vicon ready");}
+  // Vicon_flag = true;
+}
+
+void get_sensor(odroid_node* node){
+  ros::NodeHandle nh_sens;
+    // IMU and keyboard input callback
+  ros::Subscriber imu_sub = nh_sens.subscribe("imu/imu",100, boost::bind(imu_callback, _1, node));
+  ros::Subscriber vicon_sub = nh_sens.subscribe("vicon/Maya/Maya",100, vicon_callback);
+  ros::spin();
+}
+
+void control(odroid_node& node){
+  ros::Rate loop_rate(100); // rate for the node loop
+  while (ros::ok()){
+    // ros::spinOnce();
+    // if(odnode.getIMU() or odnode.getWarmup()){
+    // odnode.ctl_callback(hw_intf);
+    // cout<<"control"<<node.W_b<<endl;
+    // if(odnode.getEnv() == 0){
+    //   controller::gazebo_controll(odnode);
+    // }
+    // }
+    loop_rate.sleep();
+  }
+}
+
 int main(int argc, char **argv){
   ros::init(argc,argv,"hexacopter");
-  odroid_node odnode;
-  ros::NodeHandle nh = odnode.getNH();
+  odroid_node* odnode;
+  ros::NodeHandle nh = odnode->getNH();
+  boost::thread subscribe(&get_sensor, odnode);
+  // boost::thread command(&control, odnode);
   // IMU and keyboard input callback
-  ros::Subscriber sub2 = nh.subscribe("imu/imu",100, &odroid_node::imu_callback, &odnode);
-  ros::Subscriber sub_vicon = nh.subscribe("vicon/Maya/Maya",100,&odroid_node::vicon_callback,&odnode);
+  // odnode.imu_sub = nh.subscribe("imu/imu",100, &odroid_node::imu_callback, &odnode);
+  // odnode.vicon_sub = nh.subscribe("vicon/Maya/Maya",100,&odroid_node::vicon_callback,&odnode);
   // ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
 
   // dynamic reconfiguration server for gains and print outs
-  dynamic_reconfigure::Server<odroid::GainsConfig> server;
-  dynamic_reconfigure::Server<odroid::GainsConfig>::CallbackType dyn_serv;
-  dyn_serv = boost::bind(&odroid_node::callback, &odnode, _1, _2);
-  server.setCallback(dyn_serv);
+  // dynamic_reconfigure::Server<odroid::GainsConfig> server;
+  // dynamic_reconfigure::Server<odroid::GainsConfig>::CallbackType dyn_serv;
+  // dyn_serv = boost::bind(&odroid_node::callback, &odnode, _1, _2);
+  // server.setCallback(dyn_serv);
 
   // visualize vis_pub;
   // vis_pub.publisher_initialization(odnode);
   // open communication through I2C
   hw_interface hw_intf;
-  if(odnode.getEnv() == 1){
+  if(odnode->getEnv() == 1){
     hw_intf.open_I2C();
   }
-  ros::Rate loop_rate(100); // rate for the node loop
+  ros::Rate loop_rate(10); // rate for the node loop
   while (ros::ok()){
+    cout<<"node rate"<<endl;
     ros::spinOnce();
-    if(odnode.getIMU() or odnode.getWarmup()){
-      odnode.ctl_callback(hw_intf);
+    // if(odnode.getIMU() or odnode.getWarmup()){
+    odnode->ctl_callback(hw_intf);
 
-      if(odnode.getEnv() == 0){
-        controller::gazebo_controll(odnode);
-      }
+    if(odnode->getEnv() == 0){
+      controller::gazebo_controll(&odnode);
     }
+    // }
     loop_rate.sleep();
   }
+  ros::shutdown();
+  subscribe.join();
   return 0;
 }
 

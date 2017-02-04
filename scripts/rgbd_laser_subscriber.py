@@ -47,8 +47,8 @@ class image_converter:
 
     try:
       fname =str(depth_data.header.stamp)
-      cv2.imwrite('rgb/'+fname+'.jpg',image[240:241,:,:])
-      np.save('depth/'+fname, cv_image[240,:])
+      cv2.imwrite('rgb/'+fname+'.jpg',image[235:245,:,:])
+      np.save('depth/'+fname, cv_image[235:245,:])
       np.save('laser/'+fname, laser_data.ranges)
       print('saving data:' + str(counter))
       counter=counter+1

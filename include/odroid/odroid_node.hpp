@@ -53,6 +53,9 @@ class odroid_node
 public:
     int environment, mode;
     ros::NodeHandle n_;
+    ros::NodeHandle nhSub_;
+
+
     ros::Publisher pub_;
     ros::Publisher vis_pub_0, vis_pub_1, vis_pub_2, vis_pub_3;
 

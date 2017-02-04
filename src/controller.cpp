@@ -3,6 +3,7 @@ using namespace Eigen;
 using namespace std;
 
 void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W_in, Matrix3d R_v){
+
   std::cout.precision(5);
   // Bring to controller frame (and back) with 180 degree rotation about b1
   Matrix3d D = node.R_bm;
@@ -142,6 +143,9 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   node.f_motor = node.Ainv*FM;
 
   odroid::error e_msg;
+  // for(int i = 0; i<9; i++){
+  //   e_msg.R_v[i] = (float)R_v(i);
+  // }
   Vector3d kR_eR = kR*node.eR;
   Vector3d kW_eW = kW*node.eW;
   e_msg.kW = kW; e_msg.kR = kR;
@@ -193,18 +197,6 @@ void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3
   FM << f, M(0), M(1), M(2);
   node.M = M;
   node.f_motor = node.Ainv * FM;
-
-  odroid::error e_msg;
-  Vector3d kR_eR = node.kR*node.eR;
-  Vector3d kW_eW = node.kW*node.eW;
-  e_msg.kW = node.kW; e_msg.kR = node.kR;
-  e_msg.eR.x = node.eR(0); e_msg.eR.y = node.eR(1);e_msg.eR.z = node.eR(2);
-  e_msg.kR_eR.x = kR_eR(0); e_msg.kR_eR.y = kR_eR(1);e_msg.kR_eR.z = kR_eR(2);
-  e_msg.eW.x = node.eW(0); e_msg.eW.y = node.eW(1);e_msg.eW.z = node.eW(2);
-  e_msg.kW_eW.x = kW_eW(0); e_msg.kW_eW.y = kW_eW(1);e_msg.kW_eW.z = kW_eW(2);
-  e_msg.M.x = node.M(0); e_msg.M.y = node.M(1);e_msg.M.z = node.M(2);
-  node.pub_.publish(e_msg);
-
 }
 
 void controller::gazebo_controll(odroid_node& node){
@@ -212,6 +204,7 @@ void controller::gazebo_controll(odroid_node& node){
   gazebo_msgs::ApplyBodyWrench FMcmds_srv;
 
   Vector3d fvec_GB(0.0, 0.0, node.f_quad), fvec_GI;
+
 
   fvec_GI = node.R_v*fvec_GB;
   Vector3d M_out = node.R_v*node.R_bm*node.M;

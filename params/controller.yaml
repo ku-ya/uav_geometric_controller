@@ -1,7 +1,7 @@
 environment: 0 # Gazebo: 0, MOCA: 1
 controller:
   g: 9.81
-  m: 1.45
+  m: 1.176
   J: [9.773E-3, 0.0, 0.0,
     0.0, 9.773E-3, 0.0,
     0.0,  0.0,  1.749E-2]
@@ -18,8 +18,8 @@ controller:
       ki: 0.01
       c: 0.1
     pos:
-      kp: 2.3
-      kd: 0.5
+      kp: 2.8
+      kd: 1.4
       ki: 0.01
       c: 0.1
   saturation:

@@ -55,7 +55,7 @@ void vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg){
 void get_sensor(odroid_node* node){
   ros::NodeHandle nh_sens;
     // IMU and keyboard input callback
-  ros::Subscriber imu_sub = nh_sens.subscribe("imu/imu",100, boost::bind(imu_callback, _1, node));
+  // ros::Subscriber imu_sub = nh_sens.subscribe("imu/imu",100, boost::bind(imu_callback, _1, node));
   ros::Subscriber vicon_sub = nh_sens.subscribe("vicon/Maya/Maya",100, vicon_callback);
   ros::spin();
 }
@@ -107,7 +107,7 @@ int main(int argc, char **argv){
     odnode->ctl_callback(hw_intf);
 
     if(odnode->getEnv() == 0){
-      controller::gazebo_controll(&odnode);
+      // controller::gazebo_controll(&odnode);
     }
     // }
     loop_rate.sleep();

@@ -46,13 +46,17 @@ using namespace Eigen;
 #include <odroid/GainsConfig.h>
 #include <odroid/hw_interface.hpp>
 // #include <odroid/visualize.hpp>
+#include <boost/thread/mutex.hpp>
 
 class odroid_node
 {
-
 public:
+    boost::mutex mutex_;
     int environment, mode;
     ros::NodeHandle n_;
+    ros::NodeHandle nhSub_;
+
+
     ros::Publisher pub_;
     ros::Publisher vis_pub_0, vis_pub_1, vis_pub_2, vis_pub_3;
 
@@ -94,19 +98,19 @@ public:
 
     bool IMU_flag, Vicon_flag, print_imu, print_f, print_thr, print_test_variable, print_xd, print_x_v, print_Rd,
       print_eX, print_eV, print_vicon, print_F, print_M, print_R_eb, print_eR,print_eW, print_f_motor, print_gains;
-    Matrix<double, 6, 1> f;
+    // Matrix<double, 6, 1> f;
 
 
     // Integral errors begin at zero
     Vector3d eiX, eiR, eiX_last, eiR_last;
-    Eigen::Matrix<double, 6, 6> invFMmat;
+    // Eigen::Matrix<double, 6, 6> invFMmat;
     // Eigen::Matrix<int, 6, 1> thr;
     // Calibrating and Temporary Saving IMU Data
     double phi_bias, theta_bias, psi_bias, W1_bias, W2_bias, W3_bias;
-    Vector3d W_b_, W_b_noisy;// Angular velocity of previous loop
+    // Vector3d W_b_, W_b_noisy;// Angular velocity of previous loop
     Vector3d EAngles_imu_;// Euler Angles of previous loop
     // double EAngles_imu[3];
-    Vector3d x_e_init[3]; Matrix3d R_eb_init;// Initial position and attitude
+    // Vector3d x_e_init[3]; Matrix3d R_eb_init;// Initial position and attitude
     Vector3d x_ss, x_ss_; // Steady state error used for landing correction
 
     double EAngles_imu[3];
@@ -189,10 +193,12 @@ public:
     //! Callback function for subscriber
     bool getWarmup();
     //! IMU sensor message subscriber
+    void get_sensor();
     void imu_callback(const sensor_msgs::Imu::ConstPtr& msg);
     //! Keyboard input message subscriber
     void key_callback(const std_msgs::String::ConstPtr& msg);
     //! Controller
+    void control();
     void ctl_callback(hw_interface hw_intf);
     //! Vicon sensor message subscriber
     void vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg);

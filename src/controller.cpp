@@ -193,18 +193,6 @@ void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3
   FM << f, M(0), M(1), M(2);
   node.M = M;
   node.f_motor = node.Ainv * FM;
-
-  odroid::error e_msg;
-  Vector3d kR_eR = node.kR*node.eR;
-  Vector3d kW_eW = node.kW*node.eW;
-  e_msg.kW = node.kW; e_msg.kR = node.kR;
-  e_msg.eR.x = node.eR(0); e_msg.eR.y = node.eR(1);e_msg.eR.z = node.eR(2);
-  e_msg.kR_eR.x = kR_eR(0); e_msg.kR_eR.y = kR_eR(1);e_msg.kR_eR.z = kR_eR(2);
-  e_msg.eW.x = node.eW(0); e_msg.eW.y = node.eW(1);e_msg.eW.z = node.eW(2);
-  e_msg.kW_eW.x = kW_eW(0); e_msg.kW_eW.y = kW_eW(1);e_msg.kW_eW.z = kW_eW(2);
-  e_msg.M.x = node.M(0); e_msg.M.y = node.M(1);e_msg.M.z = node.M(2);
-  node.pub_.publish(e_msg);
-
 }
 
 void controller::gazebo_controll(odroid_node& node){

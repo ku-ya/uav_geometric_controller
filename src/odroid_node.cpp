@@ -7,20 +7,52 @@
 // #include <odroid/hw_interface.hpp>
 #include <odroid/error.h>
 #include <XmlRpcValue.h>
-
+#include <boost/thread.hpp>
 using namespace std;
 using namespace Eigen;
 using namespace message_filters;
 
+
+void odroid_node::control(){
+  hw_interface hw_intf;
+  if(getEnv() == 1){
+    hw_intf.open_I2C();
+  }
+  ros::Rate loop_rate(100); // rate for the node loop
+  while (ros::ok()){
+    // ros::spinOnce();
+    // if(odnode.getIMU() or odnode.getWarmup()){
+    ctl_callback(hw_intf);
+    // cout<<"control"<<node.W_b<<endl;
+    // if(odnode.getEnv() == 0){
+    //   controller::gazebo_controll(odnode);
+    // }
+    // }
+    loop_rate.sleep();
+  }
+}
+void publish_error(odroid_node& node){
+    odroid::error e_msg;
+    Vector3d kR_eR = node.kR*node.eR;
+    Vector3d kW_eW = node.kW*node.eW;
+    e_msg.kW = node.kW; e_msg.kR = node.kR;
+    e_msg.eR.x = node.eR(0); e_msg.eR.y = node.eR(1);e_msg.eR.z = node.eR(2);
+    e_msg.kR_eR.x = kR_eR(0); e_msg.kR_eR.y = kR_eR(1);e_msg.kR_eR.z = kR_eR(2);
+    e_msg.eW.x = node.eW(0); e_msg.eW.y = node.eW(1);e_msg.eW.z = node.eW(2);
+    e_msg.kW_eW.x = kW_eW(0); e_msg.kW_eW.y = kW_eW(1);e_msg.kW_eW.z = kW_eW(2);
+    e_msg.M.x = node.M(0); e_msg.M.y = node.M(1);e_msg.M.z = node.M(2);
+    node.pub_.publish(e_msg);
+
+}
+
 int main(int argc, char **argv){
-  ros::init(argc,argv,"hexacopter");
+  ros::init(argc,argv,"Xrotor");
   odroid_node odnode;
   ros::NodeHandle nh = odnode.getNH();
   // IMU and keyboard input callback
-  ros::Subscriber sub2 = nh.subscribe("imu/imu",100, &odroid_node::imu_callback, &odnode);
-  ros::Subscriber sub_vicon = nh.subscribe("vicon/Maya/Maya",100,&odroid_node::vicon_callback,&odnode);
-  // ros::Subscriber sub_key = nh.subscribe("cmd_key", 100, &odroid_node::key_callback, &odnode);
-
+  boost::thread subscribe(&odroid_node::get_sensor, &odnode);
+  // subscribe.join();
+  boost::thread command(&odroid_node::control, &odnode);
   // dynamic reconfiguration server for gains and print outs
   dynamic_reconfigure::Server<odroid::GainsConfig> server;
   dynamic_reconfigure::Server<odroid::GainsConfig>::CallbackType dyn_serv;
@@ -30,22 +62,26 @@ int main(int argc, char **argv){
   // visualize vis_pub;
   // vis_pub.publisher_initialization(odnode);
   // open communication through I2C
-  hw_interface hw_intf;
-  if(odnode.getEnv() == 1){
-    hw_intf.open_I2C();
-  }
-  ros::Rate loop_rate(100); // rate for the node loop
+  // hw_interface hw_intf;
+  // if(odnode.getEnv() == 1){
+  //   hw_intf.open_I2C();
+  // }
+  ros::Rate loop_rate(10); // rate for the node loop
   while (ros::ok()){
     ros::spinOnce();
+    publish_error(odnode);
     if(odnode.getIMU() or odnode.getWarmup()){
-      odnode.ctl_callback(hw_intf);
+    // odnode.ctl_callback(hw_intf);
 
-      if(odnode.getEnv() == 0){
-        controller::gazebo_controll(odnode);
-      }
+    // if(odnode.getEnv() == 0){
+      // controller::gazebo_controll(odnode);
+    // }
+
     }
     loop_rate.sleep();
   }
+  ros::shutdown();
+
   return 0;
 }
 
@@ -73,10 +109,13 @@ odroid_node::odroid_node(){
   Vicon_flag = false; // IMU sensor reading check
 
   R_ev = R_bm;
+  R_v = Matrix3d::Zero();
 
-  prev_x_v= Vector3d::Zero();  prev_v_v = Vector3d::Zero();
-  eiX_last = Vector3d::Zero();  eiR_last = Vector3d::Zero();
-	x_e = Vector3d::Zero(); eiR = Vector3d::Zero(); eiX = Vector3d::Zero();
+  prev_x_v= prev_v_v = eiX =  eiX_last = eiR_last = Vector3d::Zero();
+	x_e = v_e = eiR = eiX = Vector3d::Zero();
+  xd = xd_dot = xd_ddot= Wd = Wd_dot = W_b = W_raw = Vector3d::Zero();
+  x_v = v_v = prev_x_v = prev_v_v = Vector3d::Zero();
+  quat_vm = Vector4d::Zero();
 
   double wnx = 4, zetax = 0.7;
   kx = wnx*wnx*m;
@@ -122,26 +161,28 @@ bool odroid_node::getIMU(){return IMU_flag;}
 bool odroid_node::getWarmup(){return MotorWarmup;}
 
 void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
+  // cout<<this->vicon_time<<endl;
+  boost::mutex::scoped_lock scopedLock(mutex_);
+
   vector3Transfer(W_b, msg->angular_velocity);
   if(!IMU_flag){ ROS_INFO("IMU ready");}
   IMU_flag = true;
-  // if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
+  if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
   if(print_imu){
    printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", W_b(0), W_b(1), W_b(2));
   }
 }
 
-// vicon information callback
 void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg){
-  vicon_time = msg->header.stamp;
+  boost::mutex::scoped_lock scopedLock(mutex_);
+
+  vicon_time =msg->header.stamp;
   vector3Transfer(x_v, msg->transform.translation);
-  // x_v << 0, 0, 0;
   vector4Transfer(quat_vm, msg->transform.rotation);
 
   tf::Quaternion q(quat_vm(0),quat_vm(1),quat_vm(2),quat_vm(3));
   tf::Matrix3x3 m(q);
   m.getRPY(roll, pitch, yaw);
-
   quatToMat(R_v, quat_vm);
 
 	if(print_vicon){
@@ -160,11 +201,20 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   Vicon_flag = true;
 }
 
-// callback for key Inputs
-void odroid_node::key_callback(const std_msgs::String::ConstPtr&  msg){
-  std::cout<<*msg<<std::endl;
-  // TODO: case function here for changing parameter dynamically. Or just make ros dynamic reconfigure file.
+void odroid_node::get_sensor(){
+  ros::NodeHandle nh_sens;
+    // IMU and keyboard input callback
+  ros::Subscriber imu_sub = nh_sens.subscribe("imu/imu",100, &odroid_node::imu_callback, this);
+  ros::Subscriber vicon_sub = nh_sens.subscribe("vicon/Maya/Maya",100, &odroid_node::vicon_callback, this);
+  ros::Rate loop_rate(10); // rate for the node loop
+  while (ros::ok()){
+    ros::spinOnce();
+    loop_rate.sleep();
+  }
+
+  // ros::spin();
 }
+
 // Action for controller
 void odroid_node::ctl_callback(hw_interface hw_intf){
   VectorXd Wd, Wd_dot;
@@ -209,6 +259,7 @@ void odroid_node::ctl_callback(hw_interface hw_intf){
   if(mode == 0){
     controller::GeometricControl_SphericalJoint_3DOF(*this, Wd, Wd_dot, W_b, R_v);
   }else if(mode == 1){
+    boost::mutex::scoped_lock scopedLock(mutex_);
     controller::GeometricPositionController(*this, xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
   }
   // controller::GeometricControl_SphericalJoint_3DOF(*this, Wd, Wd_dot, W_b, R_v);
@@ -234,6 +285,8 @@ void odroid_node::ctl_callback(hw_interface hw_intf){
 
   if(environment == 1){
     hw_intf.motor_command(thr, MotorWarmup, MOTOR_ON);
+  }else{
+    controller::gazebo_controll(*this);
   }
 
 }

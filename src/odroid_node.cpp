@@ -14,20 +14,13 @@ using namespace message_filters;
 
 
 void odroid_node::control(){
-  hw_interface hw_intf;
-  if(getEnv() == 1){
-    hw_intf.open_I2C();
-  }
+  hw_interface hw_intf;  // open communication through I2C
+  if(getEnv() == 1) hw_intf.open_I2C();
   ros::Rate loop_rate(100); // rate for the node loop
   while (ros::ok()){
-    // ros::spinOnce();
-    // if(odnode.getIMU() or odnode.getWarmup()){
-    ctl_callback(hw_intf);
-    // cout<<"control"<<node.W_b<<endl;
-    // if(odnode.getEnv() == 0){
-    //   controller::gazebo_controll(odnode);
-    // }
-    // }
+    if(getIMU() or getWarmup()){
+      ctl_callback(hw_intf);
+    }
     loop_rate.sleep();
   }
 }
@@ -42,17 +35,12 @@ void publish_error(odroid_node& node){
     e_msg.kW_eW.x = kW_eW(0); e_msg.kW_eW.y = kW_eW(1);e_msg.kW_eW.z = kW_eW(2);
     e_msg.M.x = node.M(0); e_msg.M.y = node.M(1);e_msg.M.z = node.M(2);
     node.pub_.publish(e_msg);
-
 }
 
 int main(int argc, char **argv){
   ros::init(argc,argv,"Xrotor");
   odroid_node odnode;
   ros::NodeHandle nh = odnode.getNH();
-  // IMU and keyboard input callback
-  boost::thread subscribe(&odroid_node::get_sensor, &odnode);
-  // subscribe.join();
-  boost::thread command(&odroid_node::control, &odnode);
   // dynamic reconfiguration server for gains and print outs
   dynamic_reconfigure::Server<odroid::GainsConfig> server;
   dynamic_reconfigure::Server<odroid::GainsConfig>::CallbackType dyn_serv;
@@ -61,27 +49,19 @@ int main(int argc, char **argv){
 
   // visualize vis_pub;
   // vis_pub.publisher_initialization(odnode);
-  // open communication through I2C
-  // hw_interface hw_intf;
-  // if(odnode.getEnv() == 1){
-  //   hw_intf.open_I2C();
-  // }
+  ros::Duration(1).sleep();
+  // IMU and keyboard input callback
+  boost::thread subscribe(&odroid_node::get_sensor, &odnode);
+  boost::thread command(&odroid_node::control, &odnode);
+
   ros::Rate loop_rate(10); // rate for the node loop
   while (ros::ok()){
     ros::spinOnce();
     publish_error(odnode);
-    if(odnode.getIMU() or odnode.getWarmup()){
-    // odnode.ctl_callback(hw_intf);
-
-    // if(odnode.getEnv() == 0){
-      // controller::gazebo_controll(odnode);
-    // }
-
-    }
     loop_rate.sleep();
   }
-  ros::shutdown();
-
+  subscribe.join();
+  command.join();
   return 0;
 }
 
@@ -115,7 +95,7 @@ odroid_node::odroid_node(){
 	x_e = v_e = eiR = eiX = Vector3d::Zero();
   xd = xd_dot = xd_ddot= Wd = Wd_dot = W_b = W_raw = Vector3d::Zero();
   x_v = v_v = prev_x_v = prev_v_v = Vector3d::Zero();
-  quat_vm = Vector4d::Zero();
+  quat_vm = f_motor =  Vector4d::Zero();
 
   double wnx = 4, zetax = 0.7;
   kx = wnx*wnx*m;
@@ -142,7 +122,6 @@ odroid_node::odroid_node(){
 
   pub_ = n_.advertise<odroid::error>("/error_values",1);
 
-  ros::Duration(1).sleep();
   ROS_INFO("Odroid node initialized");
 }
 odroid_node::~odroid_node(){};
@@ -155,25 +134,29 @@ void odroid_node::print_force(){
   std::cout<<"force: "<<f_quad<<std::endl;
 }
 
-
 // callback for IMU sensor det
 bool odroid_node::getIMU(){return IMU_flag;}
 bool odroid_node::getWarmup(){return MotorWarmup;}
 
 void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
-  // cout<<this->vicon_time<<endl;
-  boost::mutex::scoped_lock scopedLock(mutex_);
-
-  vector3Transfer(W_b, msg->angular_velocity);
   if(!IMU_flag){ ROS_INFO("IMU ready");}
   IMU_flag = true;
-  if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
-  if(print_imu){
-   printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", W_b(0), W_b(1), W_b(2));
-  }
+  dt_imu = (msg->header.stamp - imu_time).toSec();
+  imu_time = msg->header.stamp;
+  boost::mutex::scoped_lock scopedLock(mutex_);
+  vector3Transfer(W_b, msg->angular_velocity);
+  // if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
+  // if(print_imu){
+  //  printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", W_b(0), W_b(1), W_b(2));
+  // }
 }
 
 void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg){
+  if(!Vicon_flag){ ROS_INFO("Vicon ready");}
+  Vicon_flag = true;
+  dt_vicon = (msg->header.stamp - vicon_time).toSec();
+  vicon_time = msg->header.stamp;
+
   boost::mutex::scoped_lock scopedLock(mutex_);
 
   vicon_time =msg->header.stamp;
@@ -185,20 +168,20 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   m.getRPY(roll, pitch, yaw);
   quatToMat(R_v, quat_vm);
 
-	if(print_vicon){
-    printf("Vicon: roll:[%f], pitch:[%f], yaw:[%f] \n", roll/M_PI*180, pitch/M_PI*180, yaw/M_PI*180);
-  }
-  if(print_x_v){
-    cout<<"x_v: "<<x_v.transpose()<<endl;
-  }
-  static tf::TransformBroadcaster br;
-  tf::Transform transform;
-  transform.setOrigin( tf::Vector3(x_v(0),x_v(1), x_v(2)));
-  transform.setRotation(q);
-  br.sendTransform(tf::StampedTransform(transform, vicon_time, "world", "base_link"));
+	// if(print_vicon){
+  //   printf("Vicon: roll:[%f], pitch:[%f], yaw:[%f] \n", roll/M_PI*180, pitch/M_PI*180, yaw/M_PI*180);
+  // }
+  // if(print_x_v){
+  //   cout<<"x_v: "<<x_v.transpose()<<endl;
+  // }
+  // static tf::TransformBroadcaster br;
+  // tf::Transform transform;
+  // transform.setOrigin( tf::Vector3(x_v(0),x_v(1), x_v(2)));
+  // transform.setRotation(q);
+  // br.sendTransform(tf::StampedTransform(transform, vicon_time, "world", "base_link"));
 
-  if(!Vicon_flag){ ROS_INFO("Vicon ready");}
-  Vicon_flag = true;
+  // if(!Vicon_flag){ ROS_INFO("Vicon ready");}
+  // Vicon_flag = true;
 }
 
 void odroid_node::get_sensor(){
@@ -206,13 +189,7 @@ void odroid_node::get_sensor(){
     // IMU and keyboard input callback
   ros::Subscriber imu_sub = nh_sens.subscribe("imu/imu",100, &odroid_node::imu_callback, this);
   ros::Subscriber vicon_sub = nh_sens.subscribe("vicon/Maya/Maya",100, &odroid_node::vicon_callback, this);
-  ros::Rate loop_rate(10); // rate for the node loop
-  while (ros::ok()){
-    ros::spinOnce();
-    loop_rate.sleep();
-  }
-
-  // ros::spin();
+  ros::spin();
 }
 
 // Action for controller

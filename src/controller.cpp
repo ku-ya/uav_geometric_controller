@@ -37,8 +37,7 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   Vector3d ev = v - xd_dot;
 
   if(node.mode == 0){
-    ex = Vector3d::Zero();
-    ev = Vector3d::Zero();
+    ex = ev = Vector3d::Zero();
   }
 
   node.eiX = node.eiX_last+node.del_t*(ex+node.cX*ev);
@@ -47,11 +46,8 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
 
   if(node.print_eX){cout<<"eX: "<<ex.transpose()<<endl;}
   if(node.print_eV){cout<<"eV: "<<ev.transpose()<<endl;}
-  // std::cout<<"ex:\n"<<ex.transpose()<<std::endl;
-  // std::cout<<"ev:\n"<<ev.transpose()<<std::endl;
-  // std::cout<<"eiX:\n"<<eiX.transpose()<<std::endl;
-  // Force 'f' along negative b3-axis
 
+  // Force 'f' along negative b3-axis
   double kx = node.kx;
   double kv = node.kv;
   double kiX = node.kiX;
@@ -62,17 +58,12 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   double m = node.m;
   double g = node.g;
 
-  bool print_f = node.print_f;
-
-
   Vector3d A = -kx*ex-kv*ev-kiX*node.eiX-m*g*e3+m*xd_2dot;
   Vector3d L = R*e3;
   Vector3d Ldot = R*hat_eigen(W)*e3;
   double f = -A.dot(R*e3);
-  // std::cout<<f<<std::endl;
   node.f_quad = f;
 
-  // if(print_f){node.print_force();}
   // Intermediate Terms for Rotational Errors
   Vector3d ea = g*e3-f/m*L-xd_2dot;
   Vector3d Adot = -kx*ev-kv*ea+m*xd_3dot;// Lee Matlab: -ki*satdot(sigma,ei,ev+c1*ex);
@@ -104,35 +95,23 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   Vector3d Rd1dot = hat_eigen(Rd2dot)*Ld+hat_eigen(Rd2)*Lddot;
   Vector3d Rd1ddot = hat_eigen(Rd2ddot)*Ld+2*hat_eigen(Rd2dot)*Lddot+hat_eigen(Rd2)*Ldddot;
 
-
   Matrix3d Rd, Rddot, Rdddot;
   Rd << Rd1, Rd2, Ld;
   Rddot << Rd1dot, Rd2dot, Lddot;
   Rdddot << Rd1ddot, Rd2ddot, Ldddot;
-  // if(print_Rd){cout<<"Rd: "<<Rd<<endl;}
-
   // Vector3d Wd, Wddot;
   vee_eigen(Rd.transpose()*Rddot, Wd);
-  // Rd = MatrixXd::Identity(3,3);
-  // Wd = VectorXd::Zero(3);
   vee_eigen(Rd.transpose()*Rdddot-hat_eigen(Wd)*hat_eigen(Wd), Wddot);
-
   // Attitude Error 'eR'
   vee_eigen(.5*(Rd.transpose()*R-R.transpose()*Rd), node.eR);
-  // if(print_eR){cout<<"eR: "<<eR.transpose()<<endl;}
-
   // Angular Velocity Error 'eW'
   node.eW = W-R.transpose()*Rd*Wd;
-  // if(print_eW){cout<<"eW: "<<eW.transpose()<<endl;}
-
   // Attitude Integral Term
   node.eiR = node.del_t*(node.eR+node.cR*node.eW) + node.eiR_last;
   err_sat(-node.eiR_sat, node.eiR_sat, node.eiR);
   node.eiR_last = node.eiR;
   // 3D Moment
   node.M = -kR*node.eR-kW*node.eW-kiR*node.eiR+hat_eigen(R.transpose()*Rd*Wd)*node.J*R.transpose()*Rd*Wd+node.J*R.transpose()*Rd*Wddot;// LBFF
-
-  // if(print_M){cout<<"M: "<<M.transpose()<<endl;}
 
   Matrix<double, 4, 1> FM;
   FM[0] = f;
@@ -141,22 +120,7 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   FM[3] = node.M[2];
 
   node.f_motor = node.Ainv*FM;
-
-  odroid::error e_msg;
-  // for(int i = 0; i<9; i++){
-  //   e_msg.R_v[i] = (float)R_v(i);
-  // }
-  Vector3d kR_eR = kR*node.eR;
-  Vector3d kW_eW = kW*node.eW;
-  e_msg.kW = kW; e_msg.kR = kR;
-  e_msg.eR.x = node.eR(0); e_msg.eR.y = node.eR(1);e_msg.eR.z = node.eR(2);
-  e_msg.kR_eR.x = kR_eR(0); e_msg.kR_eR.y = kR_eR(1);e_msg.kR_eR.z = kR_eR(2);
-  e_msg.eW.x = node.eW(0); e_msg.eW.y = node.eW(1);e_msg.eW.z = node.eW(2);
-  e_msg.kW_eW.x = kW_eW(0); e_msg.kW_eW.y = kW_eW(1);e_msg.kW_eW.z = kW_eW(2);
-  e_msg.M.x = node.M(0); e_msg.M.y = node.M(1);e_msg.M.z = node.M(2);
-  node.pub_.publish(e_msg);
 }
-
 
 void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3d Wd, Vector3d Wddot, Vector3d Win, Matrix3d Rin){
 

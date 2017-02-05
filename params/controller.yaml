@@ -13,13 +13,13 @@ controller:
   c_tf: 0.0928 # moment constant
   gain:
     att:
-      kp: 0.9
-      kd: 0.3
+      kp: 0.6
+      kd: 0.07
       ki: 0.01
       c: 0.1
     pos:
-      kp: 2.8
-      kd: 1.4
+      kp: 3
+      kd: 2.6
       ki: 0.01
       c: 0.1
   saturation:

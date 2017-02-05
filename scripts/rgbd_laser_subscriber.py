@@ -9,6 +9,7 @@ from std_msgs.msg import String
 from sensor_msgs.msg import Image, LaserScan
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
+import tf
 counter = 0
 # from __future__ import print_function
 class image_converter:
@@ -18,6 +19,7 @@ class image_converter:
     depth_sub = message_filters.Subscriber("/camera/depth/image",Image)
     image_sub = message_filters.Subscriber("/camera/rgb/image_raw",Image)
     laser_sub = message_filters.Subscriber("/scan",LaserScan)
+
     self.ts = message_filters.ApproximateTimeSynchronizer([image_sub, depth_sub, laser_sub], 10, 0.5)
     self.ts.registerCallback(self.callback)
 
@@ -44,12 +46,17 @@ class image_converter:
     # cv2.imshow("Image window", cv_image)
     # cv2.imshow("Image window", image)
     # cv2.waitKey(10)
+    # listener = tf.TransformListener()
+
+    # (trans,rot) = listener.lookupTransform('/world', '/laser', rospy.Time(0))
+    # print(trans)
+
 
     try:
       fname =str(depth_data.header.stamp)
-      cv2.imwrite('rgb/'+fname+'.jpg',image[235:245,:,:])
-      np.save('depth/'+fname, cv_image[235:245,:])
-      np.save('laser/'+fname, laser_data.ranges)
+      # cv2.imwrite('rgb/'+fname+'.jpg',image[235:245,:,:])
+      # np.save('depth/'+fname, cv_image[235:245,:])
+      # np.save('laser/'+fname, laser_data.ranges)
       print('saving data:' + str(counter))
       counter=counter+1
     except CvBridgeError as e:

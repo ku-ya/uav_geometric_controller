@@ -277,17 +277,24 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
   print_imu = config.print_imu;
   print_thr = config.print_thr;
 
-  kR = config.kP;
+  kR = config.kR;
   kW = config.kW;
-  kiR = config.ki;
+  kiR = config.kiR;
 
   if(MOTOR_ON && !MotorWarmup){
-    ros::param::get("/controller/gain/att/ki",kiR);
-    ros::param::get("/controller/gain/pos/ki",kiX);
+    // ros::param::get("/controller/gain/att/ki",kiR);
+    // ros::param::get("/controller/gain/pos/ki",kiX);
+    kiR = config.kiR;
+    kiX = config.kiX;
   }else{
     kiR = 0;
     kiX = 0;
   }
+
+  kx = config.kx;
+  kv = config.kv;
+
+
   mode = config.mode;
   MOTOR_ON = config.Motor;
   MotorWarmup = config.MotorWarmup;

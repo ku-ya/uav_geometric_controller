@@ -60,7 +60,8 @@ public:
     ros::Publisher pub_;
     ros::Publisher vis_pub_0, vis_pub_1, vis_pub_2, vis_pub_3;
 
-    ros::Time vicon_time;
+    ros::Time vicon_time, imu_time;
+    double dt_vicon = 0, dt_imu = 0, dt_vicon_imu;
     //  m = body mass
     //  g = acceleration due to gravity
     //  J = moment of inertial matrix
@@ -166,7 +167,7 @@ public:
     // Output of Control_Nonlinear() and Command Execution
     // VectorXd f;// Force of each motor/propeller/servo
     // int mtr_addr[6] = {41, 42, 43, 44, 45, 46};;// Motor addresses 1-6
-    int thr[4];// i2c motor commands
+    int thr[4] = {0,0,0,0};// i2c motor commands
     // int servo_addr[6] = {0, 1, 2, 3, 4, 5};// Servo addresses 1-6
     // uint16_t servopl[6];// i2c servo pulse length (duty_cycle[i] = servopl[i]/4095 @ ~325 Hz)
     // uint16_t zp[6] = {1300, 1285, 1230, 1280, 1215, 1275};

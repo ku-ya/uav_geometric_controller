@@ -190,8 +190,8 @@ void controller::gazebo_controll(odroid_node& node){
   FMcmds_srv.request.wrench.torque.z = M_out(2);
 
   client_FM.call(FMcmds_srv);
-  if(!FMcmds_srv.response.success)
-      cout << "Fail! Response message:\n" << FMcmds_srv.response.status_message << endl;
+  // if(!FMcmds_srv.response.success)
+  //     cout << "Fail! Response message:\n" << FMcmds_srv.response.status_message << endl;
 }
 
 

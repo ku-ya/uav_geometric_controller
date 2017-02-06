@@ -34,7 +34,7 @@ void publish_error(odroid_node& node){
     e_msg.eW.x = node.eW(0); e_msg.eW.y = node.eW(1);e_msg.eW.z = node.eW(2);
     e_msg.kW_eW.x = kW_eW(0); e_msg.kW_eW.y = kW_eW(1);e_msg.kW_eW.z = kW_eW(2);
     e_msg.M.x = node.M(0); e_msg.M.y = node.M(1);e_msg.M.z = node.M(2);
-    e_msg.dt_vicon_imu = node.dt_vicon_imu;
+    e_msg.dt_vicon_imu = (float)node.dt_vicon_imu;
     node.pub_.publish(e_msg);
 }
 

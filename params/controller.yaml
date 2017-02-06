@@ -1,4 +1,4 @@
-environment: 1 # Gazebo: 0, MOCA: 1
+# environment: 1 # Gazebo: 0, MOCA: 1
 controller:
   g: 9.81
   m: 1.4 #176
@@ -14,14 +14,14 @@ controller:
   gain:
     att:
       kp: 0.5
-      kd: 0.1
+      kd: 0.2
       ki: 0.01
-      c: 0.1
+      c: 0.10
     pos:
-      kp: 2.25
-      kd: 1.5
+      kp: 2.4
+      kd: 2.0
       ki: 0.01
-      c: 0.1
+      c: 0.10
   saturation:
     x: 0.1
     R: 0.01

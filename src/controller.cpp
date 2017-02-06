@@ -35,6 +35,7 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   // Translational Error Functions
   Vector3d ex = x - xd;
   Vector3d ev = v - xd_dot;
+  node.eX = ex; node.eV = ev;
 
   if(node.mode == 0){
     ex = ev = Vector3d::Zero();
@@ -43,9 +44,6 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   node.eiX = node.eiX_last+node.del_t*(ex+node.cX*ev);
   err_sat(-node.eiX_sat, node.eiX_sat, node.eiX);
   node.eiX_last = node.eiX;
-
-  if(node.print_eX){cout<<"eX: "<<ex.transpose()<<endl;}
-  if(node.print_eV){cout<<"eV: "<<ev.transpose()<<endl;}
 
   // Force 'f' along negative b3-axis
   double kx = node.kx;
@@ -62,7 +60,7 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   Vector3d L = R*e3;
   Vector3d Ldot = R*hat_eigen(W)*e3;
   double f = -A.dot(R*e3);
-  node.f_quad = f;
+  node.f_total = f;
 
   // Intermediate Terms for Rotational Errors
   Vector3d ea = g*e3-f/m*L-xd_2dot;
@@ -167,7 +165,7 @@ void controller::gazebo_controll(odroid_node& node){
   ros::ServiceClient client_FM = node.n_.serviceClient<gazebo_msgs::ApplyBodyWrench>("/gazebo/apply_body_wrench");
   gazebo_msgs::ApplyBodyWrench FMcmds_srv;
 
-  Vector3d fvec_GB(0.0, 0.0, node.f_quad), fvec_GI;
+  Vector3d fvec_GB(0.0, 0.0, node.f_total), fvec_GI;
 
 
   fvec_GI = node.R_v*fvec_GB;

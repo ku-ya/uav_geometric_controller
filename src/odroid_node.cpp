@@ -34,6 +34,7 @@ void publish_error(odroid_node& node){
     e_msg.eW.x = node.eW(0); e_msg.eW.y = node.eW(1);e_msg.eW.z = node.eW(2);
     e_msg.kW_eW.x = kW_eW(0); e_msg.kW_eW.y = kW_eW(1);e_msg.kW_eW.z = kW_eW(2);
     e_msg.M.x = node.M(0); e_msg.M.y = node.M(1);e_msg.M.z = node.M(2);
+    e_msg.dt_vicon_imu = node.dt_vicon_imu;
     node.pub_.publish(e_msg);
 }
 
@@ -143,6 +144,7 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   IMU_flag = true;
   dt_imu = (msg->header.stamp - imu_time).toSec();
   imu_time = msg->header.stamp;
+  dt_vicon_imu = (imu_time - vicon_time).toSec();
   boost::mutex::scoped_lock scopedLock(mutex_);
   vector3Transfer(W_b, msg->angular_velocity);
   // if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
@@ -199,14 +201,6 @@ void odroid_node::ctl_callback(hw_interface hw_intf){
   //for attitude testing of position controller
   Vector3d xd_dot, xd_ddot;
   Matrix3d Rd;
-
-  if(MOTOR_ON && !MotorWarmup){
-    ros::param::get("/controller/gain/att/ki",kiR);
-    ros::param::get("/controller/gain/pos/ki",kiX);
-  }else{
-    kiR = 0;
-    kiX = 0;
-  }
 
   xd_dot = VectorXd::Zero(3); xd_ddot = VectorXd::Zero(3);
   Rd = MatrixXd::Identity(3,3);

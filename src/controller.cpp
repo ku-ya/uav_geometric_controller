@@ -109,7 +109,7 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   err_sat(-node.eiR_sat, node.eiR_sat, node.eiR);
   node.eiR_last = node.eiR;
   Matrix3d kR_mat;
-  kR_mat << kR, 0, 0, 0, kR,0, 0, 0, kR*2;
+  kR_mat << kR, 0, 0, 0, kR,0, 0, 0, kR*1.5;
   // 3D Moment
   node.M = -kR_mat*node.eR-kW*node.eW-kiR*node.eiR+hat_eigen(R.transpose()*Rd*Wd)*node.J*R.transpose()*Rd*Wd+node.J*R.transpose()*Rd*Wddot;// LBFF
 

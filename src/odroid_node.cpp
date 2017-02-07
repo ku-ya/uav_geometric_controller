@@ -118,6 +118,7 @@ odroid_node::odroid_node(){
   pub_ = n_.advertise<odroid::error>("/drone_variable",1);
   ROS_INFO("Odroid node initialized");
 }
+
 odroid_node::~odroid_node(){};
 
 void odroid_node::print_J(){
@@ -168,7 +169,6 @@ void odroid_node::get_sensor(){
   ros::Subscriber vicon_sub = nh_sens.subscribe("vicon/Maya/Maya",100, &odroid_node::vicon_callback, this);
   ros::spin();
 }
-
 
 void odroid_node::control(){
   hw_interface hw_intf;  // open communication through I2C

@@ -2,6 +2,7 @@
 ## Odroid node class implementation for ROS
 
 ### Hardware procedure
+Find IP of odroid on the same network: use nmap
 
 1. `roslaunch openni2_launch openni2.launch`
 - `rosrun odroid sense.py`

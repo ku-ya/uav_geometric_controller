@@ -1,5 +1,4 @@
 #include <odroid/odroid_node.hpp>
-// #include <odroid/controllers.h>// robotic control
 // User header files
 #include <odroid/controller.hpp>
 // #include <odroid/sensor.hpp>
@@ -7,11 +6,12 @@
 // #include <odroid/hw_interface.hpp>
 #include <odroid/error.h>
 #include <XmlRpcValue.h>
-#include <boost/thread.hpp>
+
 using namespace std;
 using namespace Eigen;
 using namespace message_filters;
 
+<<<<<<< HEAD
 
 void odroid_node::control(){
   hw_interface hw_intf;  // open communication through I2C
@@ -35,6 +35,29 @@ void publish_error(odroid_node& node){
     e_msg.kW_eW.x = kW_eW(0); e_msg.kW_eW.y = kW_eW(1);e_msg.kW_eW.z = kW_eW(2);
     e_msg.M.x = node.M(0); e_msg.M.y = node.M(1);e_msg.M.z = node.M(2);
     node.pub_.publish(e_msg);
+=======
+void publish_error(odroid_node& node){
+  odroid::error e_msg;
+  e_msg.header.stamp = ros::Time::now();
+  e_msg.header.frame_id = "drone";
+  Vector3d kR_eR = node.kR*node.eR;
+  Vector3d kW_eW = node.kW*node.eW;
+
+  geo3toVec(e_msg.x_v, node.x_v); geo3toVec(e_msg.v_v, node.v_v);
+  geo3toVec(e_msg.eR, node.eR); geo3toVec(e_msg.eW, node.eW);
+  geo3toVec(e_msg.Moment, node.M);  geo3toVec(e_msg.rpy, node.rpy);
+  geo3toVec(e_msg.ex, node.eX); geo3toVec(e_msg.IMU, node.W_b);
+  geo3toVec(e_msg.ev, node.eV); geo3toVec(e_msg.xd, node.xd);
+  e_msg.force = node.f_total;
+  e_msg.dt_vicon_imu = (float)node.dt_vicon_imu;
+  for(int i = 0; i<4;i++){
+    e_msg.throttle[i] = node.thr[i];
+    e_msg.f_motor[i] = (float)node.f_motor(i);
+  }
+  e_msg.gainX = {node.kx, node.kv, node.kiX, node.cX};
+  e_msg.gainR = {node.kR, node.kW, node.kiR, node.cR};
+  node.pub_.publish(e_msg);
+>>>>>>> Kuya
 }
 
 int main(int argc, char **argv){
@@ -54,7 +77,11 @@ int main(int argc, char **argv){
   boost::thread subscribe(&odroid_node::get_sensor, &odnode);
   boost::thread command(&odroid_node::control, &odnode);
 
+<<<<<<< HEAD
   ros::Rate loop_rate(10); // rate for the node loop
+=======
+  ros::Rate loop_rate(5); // rate for the node loop
+>>>>>>> Kuya
   while (ros::ok()){
     ros::spinOnce();
     publish_error(odnode);
@@ -78,7 +105,7 @@ odroid_node::odroid_node(){
   ros::param::get("/controller/c_tf",c_tf); cout<<"c_tf: "<< c_tf<<endl;
   Ainv = getAinv(l, c_tf);
 
-  cout<<"Ainv:\n\n"<<Ainv<<endl;
+  cout<<"Ainv:\n"<<Ainv<<"\n"<<endl;
   ros::param::get("/environment",environment);
   ros::param::get("/controller/mode",mode);
   cout<<"Mode: "<<mode<<" (0: Attitude, 1: Position)\n"<<endl;
@@ -110,20 +137,23 @@ odroid_node::odroid_node(){
   ros::param::get("/controller/gain/att/kp",kR);
   ros::param::get("/controller/gain/att/kd",kW);
   ros::param::get("/controller/gain/att/ki",kiR);
-  ros::param::get("/controller/gain/att/kp",cR);
-
+  ros::param::get("/controller/gain/att/c",cR);
   ros::param::get("/controller/gain/pos/kp",kx);
   ros::param::get("/controller/gain/pos/kd",kv);
   ros::param::get("/controller/gain/pos/ki",kiX);
-  ros::param::get("/controller/gain/pos/kp",cX);
-
+  ros::param::get("/controller/gain/pos/c",cX);
   ros::param::get("/controller/saturation/x",eiX_sat);
   ros::param::get("/controller/saturation/R",eiR_sat);
 
+<<<<<<< HEAD
   pub_ = n_.advertise<odroid::error>("/error_values",1);
 
+=======
+  pub_ = n_.advertise<odroid::error>("/drone_variable",1);
+>>>>>>> Kuya
   ROS_INFO("Odroid node initialized");
 }
+
 odroid_node::~odroid_node(){};
 
 void odroid_node::print_J(){
@@ -131,7 +161,7 @@ void odroid_node::print_J(){
 }
 
 void odroid_node::print_force(){
-  std::cout<<"force: "<<f_quad<<std::endl;
+  std::cout<<"force: "<<f_total<<std::endl;
 }
 
 // callback for IMU sensor det
@@ -143,12 +173,18 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   IMU_flag = true;
   dt_imu = (msg->header.stamp - imu_time).toSec();
   imu_time = msg->header.stamp;
+<<<<<<< HEAD
   boost::mutex::scoped_lock scopedLock(mutex_);
   vector3Transfer(W_b, msg->angular_velocity);
   // if(isnan(W_raw(0)) || isnan(W_raw(1)) || isnan(W_raw(2))){IMU_flag = false;}
   // if(print_imu){
   //  printf("IMU: Psi:[%f], Theta:[%f], Phi:[%f] \n", W_b(0), W_b(1), W_b(2));
   // }
+=======
+  dt_vicon_imu = (imu_time - vicon_time).toSec();
+  boost::mutex::scoped_lock scopedLock(mutex_);
+  vector3Transfer(W_b, msg->angular_velocity);
+>>>>>>> Kuya
 }
 
 void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg){
@@ -166,7 +202,9 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   tf::Quaternion q(quat_vm(0),quat_vm(1),quat_vm(2),quat_vm(3));
   tf::Matrix3x3 m(q);
   m.getRPY(roll, pitch, yaw);
+  rpy <<roll, pitch, yaw;
   quatToMat(R_v, quat_vm);
+<<<<<<< HEAD
 
 	// if(print_vicon){
   //   printf("Vicon: roll:[%f], pitch:[%f], yaw:[%f] \n", roll/M_PI*180, pitch/M_PI*180, yaw/M_PI*180);
@@ -182,6 +220,8 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
 
   // if(!Vicon_flag){ ROS_INFO("Vicon ready");}
   // Vicon_flag = true;
+=======
+>>>>>>> Kuya
 }
 
 void odroid_node::get_sensor(){
@@ -190,6 +230,21 @@ void odroid_node::get_sensor(){
   ros::Subscriber imu_sub = nh_sens.subscribe("imu/imu",100, &odroid_node::imu_callback, this);
   ros::Subscriber vicon_sub = nh_sens.subscribe("vicon/Maya/Maya",100, &odroid_node::vicon_callback, this);
   ros::spin();
+<<<<<<< HEAD
+=======
+}
+
+void odroid_node::control(){
+  hw_interface hw_intf;  // open communication through I2C
+  if(getEnv() == 1) hw_intf.open_I2C();
+  ros::Rate loop_rate(100); // rate for the node loop
+  while (ros::ok()){
+    if(getIMU() or getWarmup()){
+      ctl_callback(hw_intf);
+    }
+    loop_rate.sleep();
+  }
+>>>>>>> Kuya
 }
 
 // Action for controller
@@ -197,113 +252,53 @@ void odroid_node::ctl_callback(hw_interface hw_intf){
   VectorXd Wd, Wd_dot;
   Wd = VectorXd::Zero(3); Wd_dot = VectorXd::Zero(3);
   //for attitude testing of position controller
-  Vector3d xd_dot, xd_ddot;
-  Matrix3d Rd;
-
-  if(MOTOR_ON && !MotorWarmup){
-    ros::param::get("/controller/gain/att/ki",kiR);
-    ros::param::get("/controller/gain/pos/ki",kiX);
-  }else{
-    kiR = 0;
-    kiX = 0;
-  }
+  Vector3d xd_dot, xd_ddot; Matrix3d Rd;
 
   xd_dot = VectorXd::Zero(3); xd_ddot = VectorXd::Zero(3);
   Rd = MatrixXd::Identity(3,3);
-  Vector3d prev_x_e = x_e;
-  // Vector3d prev_x_v = x_v;
-  x_e = R_ev * x_v;
-  v_e = (x_e - prev_x_e)*100;
 
   v_v = ((x_v - prev_x_v)*100)*0.5 + prev_v_v*0.5;
   prev_x_v = x_v;
   prev_v_v = v_v;
 
-  quatToMat(R_vm, quat_vm);
-
-  R_eb = R_ev * R_vm * R_bm;
-  if(print_R_eb){cout<<"R_eb: "<<R_eb<<endl;}
-
-  if(print_xd){
-    cout<<"xd: "<<xd.transpose()<<endl;
-  }
-
-  if(print_gains){
-    printf("Gain values: kx %f kv %f kiX %f kR %f kW %f kiR %f\n",kx,kv,kiX,kR,kW,kiR);
-  }
-
-  // QuadGeometricPositionController(xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
   if(mode == 0){
     controller::GeometricControl_SphericalJoint_3DOF(*this, Wd, Wd_dot, W_b, R_v);
   }else if(mode == 1){
     boost::mutex::scoped_lock scopedLock(mutex_);
     controller::GeometricPositionController(*this, xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
   }
-  // controller::GeometricControl_SphericalJoint_3DOF(*this, Wd, Wd_dot, W_b, R_v);
-
-  if(print_f_motor){
-    cout<<"f_motor: "<<f_motor.transpose()<<endl;
-  }
   for(int k = 0; k < 4; k++){
     thr[k] = floor(1/0.03*(f_motor(k)+0.37)+0.5);
   }
-
-  if(print_thr){
-    cout<<"Throttle motor out: ";
-    for(int i = 0;i<4;i++){
-      cout<<thr[i]<<", ";} cout<<endl;
-  }
-
-  double mean = f_motor.mean();
-  scale = 0.1;
-
-  // TODO: plave visualization command here
-  // viz_pub(*this)
-
   if(environment == 1){
     hw_intf.motor_command(thr, MotorWarmup, MOTOR_ON);
   }else{
     controller::gazebo_controll(*this);
   }
-
 }
 
 void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
   ROS_INFO("Reconfigure Request: Update");
 
   mode = config.mode;
-  print_gains = config.print_gains;
-  print_f = config.print_f;
-  print_imu = config.print_imu;
-  print_thr = config.print_thr;
-
-  kR = config.kP;
-  kW = config.kW;
-  kiR = config.ki;
-
-  if(MOTOR_ON && !MotorWarmup){
-    ros::param::get("/controller/gain/att/ki",kiR);
-    ros::param::get("/controller/gain/pos/ki",kiX);
-  }else{
-    kiR = 0;
-    kiX = 0;
-  }
-  mode = config.mode;
   MOTOR_ON = config.Motor;
   MotorWarmup = config.MotorWarmup;
+
   xd(0) =  config.x;
   xd(1) =  config.y;
   xd(2) =  config.z;
 
-  print_xd = config.print_xd;
-  print_x_v = config.print_x_v;
-  print_eX = config.print_eX;
-  print_eV = config.print_eV;
-  print_eR = config.print_eR;print_Rd = config.print_Rd;
-  print_eW = config.print_eW;
-  print_vicon = config.print_vicon;
-  print_M = config.print_M;
-  print_F = config.print_F;
-  print_f_motor = config.print_f;
-  print_R_eb = config.print_R_eb;
+  kR = config.kR;
+  kW = config.kW;
+
+  kx = config.kx;
+  kv = config.kv;
+
+  if(MOTOR_ON && !MotorWarmup){
+    kiR = config.kiR;
+    kiX = config.kiX;
+  }else{
+    kiR = 0;
+    kiX = 0;
+  }
 }

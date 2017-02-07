@@ -47,6 +47,7 @@ using namespace Eigen;
 #include <odroid/hw_interface.hpp>
 // #include <odroid/visualize.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread.hpp>
 
 class odroid_node
 {
@@ -88,20 +89,17 @@ public:
     //  kR = proportional attitude control gain
     //  kW = derivative attitude control gain
     //  kiR = integral attitude control gain
-    double kx, kv, kiX, cX, kR, kW, kiR, cR;
+    float kx, kv, kiX, cX, kR, kW, kiR, cR;
     float phi, theta, psi;
     double roll, pitch, yaw;
+    Vector3d rpy;
     Matrix2d e; //inertial frame,
     // Measured Values in Vicon Frame
     Vector3d x_v, v_v, prev_x_v,prev_v_v;// position in the Vicon frame
     // VectorXd quat_vm(4);
-    Matrix<double, 4, 1> quat_vm;// attitude of markers measured by Vicon system
+    Vector4d quat_vm;// attitude of markers measured by Vicon system
 
-    bool IMU_flag, Vicon_flag, print_imu, print_f, print_thr, print_test_variable, print_xd, print_x_v, print_Rd,
-      print_eX, print_eV, print_vicon, print_F, print_M, print_R_eb, print_eR,print_eW, print_f_motor, print_gains;
-    // Matrix<double, 6, 1> f;
-
-
+    bool IMU_flag, Vicon_flag;
     // Integral errors begin at zero
     Vector3d eiX, eiR, eiX_last, eiR_last;
     // Eigen::Matrix<double, 6, 6> invFMmat;
@@ -151,8 +149,8 @@ public:
 
     // Error Functions
     Vector3d eX, eV, eR, eW, F, M;
-    double f_quad;
-    Matrix<double,4,1> f_motor;
+    double f_total;
+    Vector4d f_motor;
     // Control_Nonlinear Outputs:
     //  eX = position error in inertial frame
     //  eV = velocity error in inertial frame

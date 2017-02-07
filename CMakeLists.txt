@@ -26,6 +26,7 @@ find_package(catkin REQUIRED COMPONENTS
 # find_package(Boost REQUIRED COMPONENTS system)
 
 find_package(Boost REQUIRED COMPONENTS thread)
+find_package(Boost REQUIRED COMPONENTS python)
 find_package(Eigen3 REQUIRED)
 include_directories(EIGEN3_INCLUDE_DIR)
 

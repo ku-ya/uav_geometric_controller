@@ -6,32 +6,32 @@
 // #include <odroid/hw_interface.hpp>
 #include <odroid/error.h>
 #include <XmlRpcValue.h>
-#include <boost/thread.hpp>
+
 using namespace std;
 using namespace Eigen;
 using namespace message_filters;
 
 void publish_error(odroid_node& node){
-    odroid::error e_msg;
-    e_msg.header.stamp = ros::Time::now();
-    e_msg.header.frame_id = "drone";
-    Vector3d kR_eR = node.kR*node.eR;
-    Vector3d kW_eW = node.kW*node.eW;
+  odroid::error e_msg;
+  e_msg.header.stamp = ros::Time::now();
+  e_msg.header.frame_id = "drone";
+  Vector3d kR_eR = node.kR*node.eR;
+  Vector3d kW_eW = node.kW*node.eW;
 
-    geo3toVec(e_msg.x_v, node.x_v); geo3toVec(e_msg.v_v, node.v_v);
-    geo3toVec(e_msg.eR, node.eR); geo3toVec(e_msg.eW, node.eW);
-    geo3toVec(e_msg.Moment, node.M);  geo3toVec(e_msg.rpy, node.rpy);
-    geo3toVec(e_msg.ex, node.eX); geo3toVec(e_msg.IMU, node.W_b);
-    geo3toVec(e_msg.ev, node.eV); geo3toVec(e_msg.xd, node.xd);
-    e_msg.force = node.f_total;
-    e_msg.dt_vicon_imu = (float)node.dt_vicon_imu;
-    for(int i = 0; i<4;i++){
-      e_msg.throttle[i] = node.thr[i];
-      e_msg.f_motor[i] = (float)node.f_motor(i);
-    }
-    e_msg.gainX = {node.kx, node.kv, node.kiX, node.cX};
-    e_msg.gainR = {node.kR, node.kW, node.kiR, node.cR};
-    node.pub_.publish(e_msg);
+  geo3toVec(e_msg.x_v, node.x_v); geo3toVec(e_msg.v_v, node.v_v);
+  geo3toVec(e_msg.eR, node.eR); geo3toVec(e_msg.eW, node.eW);
+  geo3toVec(e_msg.Moment, node.M);  geo3toVec(e_msg.rpy, node.rpy);
+  geo3toVec(e_msg.ex, node.eX); geo3toVec(e_msg.IMU, node.W_b);
+  geo3toVec(e_msg.ev, node.eV); geo3toVec(e_msg.xd, node.xd);
+  e_msg.force = node.f_total;
+  e_msg.dt_vicon_imu = (float)node.dt_vicon_imu;
+  for(int i = 0; i<4;i++){
+    e_msg.throttle[i] = node.thr[i];
+    e_msg.f_motor[i] = (float)node.f_motor(i);
+  }
+  e_msg.gainX = {node.kx, node.kv, node.kiX, node.cX};
+  e_msg.gainR = {node.kR, node.kW, node.kiR, node.cR};
+  node.pub_.publish(e_msg);
 }
 
 int main(int argc, char **argv){
@@ -108,17 +108,14 @@ odroid_node::odroid_node(){
   ros::param::get("/controller/gain/att/kd",kW);
   ros::param::get("/controller/gain/att/ki",kiR);
   ros::param::get("/controller/gain/att/c",cR);
-
   ros::param::get("/controller/gain/pos/kp",kx);
   ros::param::get("/controller/gain/pos/kd",kv);
   ros::param::get("/controller/gain/pos/ki",kiX);
   ros::param::get("/controller/gain/pos/c",cX);
-
   ros::param::get("/controller/saturation/x",eiX_sat);
   ros::param::get("/controller/saturation/R",eiR_sat);
 
   pub_ = n_.advertise<odroid::error>("/drone_variable",1);
-
   ROS_INFO("Odroid node initialized");
 }
 odroid_node::~odroid_node(){};

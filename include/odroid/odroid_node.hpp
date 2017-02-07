@@ -47,6 +47,7 @@ using namespace Eigen;
 #include <odroid/hw_interface.hpp>
 // #include <odroid/visualize.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread.hpp>
 
 class odroid_node
 {

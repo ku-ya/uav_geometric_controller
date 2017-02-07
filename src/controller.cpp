@@ -3,7 +3,6 @@ using namespace Eigen;
 using namespace std;
 
 void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W_in, Matrix3d R_v){
-
   std::cout.precision(5);
   // Bring to controller frame (and back) with 180 degree rotation about b1
   Matrix3d D = node.R_bm;
@@ -168,7 +167,6 @@ void controller::gazebo_controll(odroid_node& node){
   gazebo_msgs::ApplyBodyWrench FMcmds_srv;
 
   Vector3d fvec_GB(0.0, 0.0, node.f_total), fvec_GI;
-
 
   fvec_GI = node.R_v*fvec_GB;
   Vector3d M_out = node.R_v*node.R_bm*node.M;

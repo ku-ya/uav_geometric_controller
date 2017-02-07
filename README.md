@@ -86,7 +86,11 @@ sudo apt-get install ros-kinetic-rosserial-server
 rosrun rosserial_server serial_node _port:=/dev/ttyACM0 _baud:=115200
 ```
 
-## Update versions  
+## Update versions
+
+tag v0.4
+- First successful flight test
+
 tag v0.3
 - Gazebo simulation quad controller integration complete
 

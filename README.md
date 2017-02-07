@@ -1,7 +1,59 @@
 # ROS_odroid_node
+
+This repository contains all the ROS source code developed for UAV for indooor (MOCA) and simulation (Gazebo) environments.
+
 ## Odroid node class implementation for ROS
 
-### Hardware procedure
+## Indoor testing at MOCA
+
+```
+roslaunch odroid odroid_moca.launch
+```
+
+## Gazebo simulation environment
+
+```
+roslaunch odroid empty_gazebo.launch
+roslaunch odroid odroid_gazebo.launch
+```
+
+## UAV control
+
+## Gazebo models
+
+### Quadrotor
+
+
+## Installation Instructions
+
+```
+export UAV_DIR="${HOME}/uav_ws"
+export SITL_GAZEBO_PATH="${UAV_DIR}/robot_description/urdf"
+
+source /opt/ros/kinetic/setup.bash
+source /usr/share/gazebo/setup.sh
+source "${UAV_DIR}/devel/setup.bash"
+```
+
+### Install
+
+```
+TODO: scripts
+```
+
+### System dependencies
+
+### Networking
+
+To get master rosnode communicate with slaves
+  - `hostname -I`, to check host name for roscore
+  - `export ROS_MASTER_URI=http://<ip_address>:11311`
+  - `export ROS_IP=<ip_address>`
+  - `rosrun urg_node urg_node _ip_address:="192.168.0.10"`
+  - Use nmap command to debug some of the network communication issues
+
+## Hardware procedure
+Find IP of odroid on the same network: use nmap
 
 1. `roslaunch openni2_launch openni2.launch`
 - `rosrun odroid sense.py`
@@ -43,15 +95,6 @@ tag V0.2
 
 tag V0.1
 - Initial working node for attitude control on a spherical joint
-
-
-
-To get master rosnode communicate with slaves
-  - `hostname -I`, to check host name for roscore
-  - `export ROS_MASTER_URI=http://<ip_address>:11311/`, master IP setting
-  - `export ROS_IP=localhost`, set ROS_IP for the remote
-  - `rosrun urg_node urg_node _ip_address:="192.168.0.10"`
-  - Use nmap command to debug some of the network communication issues
 
 ## TODO:
 - set time between odroid and ground station

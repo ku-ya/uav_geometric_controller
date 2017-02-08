@@ -196,12 +196,10 @@ void odroid_node::ctl_callback(hw_interface hw_intf){
   prev_x_v = x_v;
   prev_v_v = v_v;
 
-  if(mode == 0){
-    controller::GeometricControl_SphericalJoint_3DOF(*this, Wd, Wd_dot, W_b, R_v);
-  }else if(mode == 1){
-    boost::mutex::scoped_lock scopedLock(mutex_);
-    controller::GeometricPositionController(*this, xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
-  }
+
+  boost::mutex::scoped_lock scopedLock(mutex_);
+  controller::GeometricPositionController(*this, xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
+  
   for(int k = 0; k < 4; k++){
     thr[k] = floor(1/0.03*(f_motor(k)+0.37)+0.5);
   }

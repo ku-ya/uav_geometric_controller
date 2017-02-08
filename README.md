@@ -2,6 +2,33 @@
 
 This repository contains all the ROS source code developed for UAV for indooor (MOCA) and simulation (Gazebo) environments.
 
+## Installation
+
+1. First you need [ROS](http://wiki.ros.org/indigo/Installation) (use kinetic distro)
+  * This is easy and is simply a `apt-get` call.
+2. Also install `rosserial-arduino` using the below command. 
+Also ensure your Python distribution is setup properly by looking at the end of this guide.
+~~~
+$ sudo apt-get install ros-<distro>-rosserial-arduino
+~~~
+3. Create a workspace in a convienent directory
+~~~
+export UAV_DIR="${HOME}/uav_ws"
+export SITL_GAZEBO_PATH="${UAV_DIR}/robot_description/urdf"
+
+source /opt/ros/kinetic/setup.bash
+source /usr/share/gazebo/setup.sh
+source "${UAV_DIR}/devel/setup.bash"
+~~~
+4. Clone this repository into `${UAV_DIR}/src/` and then build the package
+~~~
+$ cd ${UAV_DIR}/src
+$ git clone https://github.com/fdcl-gwu/ROS_odroid_node.git .
+$ cd ../
+$ catkin_make
+~~~
+5. Source the package path files `$ source devel/setup.bash`
+
 ## Odroid node class implementation for ROS
 
 ## Indoor testing at MOCA
@@ -22,18 +49,6 @@ roslaunch odroid odroid_gazebo.launch
 ## Gazebo models
 
 ### Quadrotor
-
-
-## Installation Instructions
-
-```
-export UAV_DIR="${HOME}/uav_ws"
-export SITL_GAZEBO_PATH="${UAV_DIR}/robot_description/urdf"
-
-source /opt/ros/kinetic/setup.bash
-source /usr/share/gazebo/setup.sh
-source "${UAV_DIR}/devel/setup.bash"
-```
 
 ### Install
 
@@ -126,6 +141,26 @@ sudo date --set="$(ssh user@host date)"
 
 *Make sure to ROSBAG all the test data!!!*
 
+## Some common issues
+
 Check:
 - If the compiling error appear on Odroid, check rospkg, catkin_pkg installation. Python distribution change to conda caused the issue. 01/07/2017
 - compiling with anaconda python https://gist.github.com/mitmul/538315c68c2069f16f11
+
+### Python issues
+
+  * If you have Anaconda installed, you can simply uncomment the path modifcation in your `~/.bashrc` file
+  This will ensure that the system Python is Pin use rather than Anaconda. 
+
+    More explicitly, make sure the following line is commented in `~/.bashrc` and then run `source ~/.bashrc` or open a new terminal window and verify that the system python is running.
+    ~~~
+    # added by Anaconda3 4.3.0 installer
+    # export PATH="/home/shankar/anaconda3/bin:$PATH"
+    ~~~
+  * Install `pip` using the system package manager - `$ sudo apt-get install python-pip python3-pip`  
+  * Ensure you have `catkin_pkg` and `ros_pkg` installed via `pip install --user catkin_pkg ros_pkg`
+  * Check which Python you're using by `$ python --version`. It should not point to Anaconda after you modify the `.bashrc` file. If it still does then you need to open a new terminal window to load the new configuration.
+  
+
+  
+

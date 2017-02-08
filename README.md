@@ -1,32 +1,74 @@
 # ROS_odroid_node
+
+This repository contains all the ROS source code developed for UAV for indooor (MOCA) and simulation (Gazebo) environments.
+
 ## Installation
 
 1. First you need [ROS](http://wiki.ros.org/indigo/Installation) (use kinetic distro)
-  * This is easy and is simply a `apt-get` call. Just follow the instructions like a good engineer
-2. Also install `rosserial-arduino` using
+  * This is easy and is simply a `apt-get` call.
+2. Also install `rosserial-arduino` using the below command. 
+Also ensure your Python distribution is setup properly by looking at the end of this guide.
 ~~~
 $ sudo apt-get install ros-<distro>-rosserial-arduino
 ~~~
-3. Create a `catkin_ws/src` workspace in a convienent directory
+3. Create a workspace in a convienent directory
 ~~~
-$ mkdir -p ~/fdcl_ros/src
-$ cd ~/fdcl_ros
+export UAV_DIR="${HOME}/uav_ws"
+export SITL_GAZEBO_PATH="${UAV_DIR}/robot_description/urdf"
+
+source /opt/ros/kinetic/setup.bash
+source /usr/share/gazebo/setup.sh
+source "${UAV_DIR}/devel/setup.bash"
 ~~~
-4. Clone and then build the package
+4. Clone this repository into `${UAV_DIR}/src/` and then build the package
 ~~~
-$ cd ~/fdcl/src
+$ cd ${UAV_DIR}/src
 $ git clone https://github.com/fdcl-gwu/ROS_odroid_node.git .
 $ cd ../
 $ catkin_make
 ~~~
 5. Source the package path files `$ source devel/setup.bash`
-6. ....
-7. Profit
-
 
 ## Odroid node class implementation for ROS
 
-### Hardware procedure
+## Indoor testing at MOCA
+
+```
+roslaunch odroid odroid_moca.launch
+```
+
+## Gazebo simulation environment
+
+```
+roslaunch odroid empty_gazebo.launch
+roslaunch odroid odroid_gazebo.launch
+```
+
+## UAV control
+
+## Gazebo models
+
+### Quadrotor
+
+### Install
+
+```
+TODO: scripts
+```
+
+### System dependencies
+
+### Networking
+
+To get master rosnode communicate with slaves
+  - `hostname -I`, to check host name for roscore
+  - `export ROS_MASTER_URI=http://<ip_address>:11311`
+  - `export ROS_IP=<ip_address>`
+  - `rosrun urg_node urg_node _ip_address:="192.168.0.10"`
+  - Use nmap command to debug some of the network communication issues
+
+## Hardware procedure
+Find IP of odroid on the same network: use nmap
 
 1. `roslaunch openni2_launch openni2.launch`
 - `rosrun odroid sense.py`
@@ -59,7 +101,11 @@ sudo apt-get install ros-kinetic-rosserial-server
 rosrun rosserial_server serial_node _port:=/dev/ttyACM0 _baud:=115200
 ```
 
-## Update versions  
+## Update versions
+
+tag v0.4
+- First successful flight test
+
 tag v0.3
 - Gazebo simulation quad controller integration complete
 
@@ -68,15 +114,6 @@ tag V0.2
 
 tag V0.1
 - Initial working node for attitude control on a spherical joint
-
-
-
-To get master rosnode communicate with slaves
-  - `hostname -I`, to check host name for roscore
-  - `export ROS_MASTER_URI=http://<ip_address>:11311/`, master IP setting
-  - `export ROS_IP=localhost`, set ROS_IP for the remote
-  - `rosrun urg_node urg_node _ip_address:="192.168.0.10"`
-  - Use nmap command to debug some of the network communication issues
 
 ## TODO:
 - set time between odroid and ground station
@@ -120,7 +157,10 @@ Check:
     # added by Anaconda3 4.3.0 installer
     # export PATH="/home/shankar/anaconda3/bin:$PATH"
     ~~~
-  Ensure you have `catkin_pkg` installed via `pip install --user catkin_pkg`
-  * Check which Python you're using by `$ python --version`
-  * Install `pip` using the system package manager - `$ sudo apt-get install python-pip python3-pip`
+  * Install `pip` using the system package manager - `$ sudo apt-get install python-pip python3-pip`  
+  * Ensure you have `catkin_pkg` and `ros_pkg` installed via `pip install --user catkin_pkg ros_pkg`
+  * Check which Python you're using by `$ python --version`. It should not point to Anaconda after you modify the `.bashrc` file. If it still does then you need to open a new terminal window to load the new configuration.
+  
+
+  
 

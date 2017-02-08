@@ -46,17 +46,23 @@ using namespace Eigen;
 #include <odroid/GainsConfig.h>
 #include <odroid/hw_interface.hpp>
 // #include <odroid/visualize.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread.hpp>
 
 class odroid_node
 {
-
 public:
+    boost::mutex mutex_;
     int environment, mode;
     ros::NodeHandle n_;
+    ros::NodeHandle nhSub_;
+
+
     ros::Publisher pub_;
     ros::Publisher vis_pub_0, vis_pub_1, vis_pub_2, vis_pub_3;
 
-    ros::Time vicon_time;
+    ros::Time vicon_time, imu_time;
+    double dt_vicon = 0, dt_imu = 0, dt_vicon_imu;
     //  m = body mass
     //  g = acceleration due to gravity
     //  J = moment of inertial matrix
@@ -83,30 +89,27 @@ public:
     //  kR = proportional attitude control gain
     //  kW = derivative attitude control gain
     //  kiR = integral attitude control gain
-    double kx, kv, kiX, cX, kR, kW, kiR, cR;
+    float kx, kv, kiX, cX, kR, kW, kiR, cR;
     float phi, theta, psi;
     double roll, pitch, yaw;
+    Vector3d rpy;
     Matrix2d e; //inertial frame,
     // Measured Values in Vicon Frame
     Vector3d x_v, v_v, prev_x_v,prev_v_v;// position in the Vicon frame
     // VectorXd quat_vm(4);
-    Matrix<double, 4, 1> quat_vm;// attitude of markers measured by Vicon system
+    Vector4d quat_vm;// attitude of markers measured by Vicon system
 
-    bool IMU_flag, Vicon_flag, print_imu, print_f, print_thr, print_test_variable, print_xd, print_x_v, print_Rd,
-      print_eX, print_eV, print_vicon, print_F, print_M, print_R_eb, print_eR,print_eW, print_f_motor, print_gains;
-    Matrix<double, 6, 1> f;
-
-
+    bool IMU_flag, Vicon_flag;
     // Integral errors begin at zero
     Vector3d eiX, eiR, eiX_last, eiR_last;
-    Eigen::Matrix<double, 6, 6> invFMmat;
+    // Eigen::Matrix<double, 6, 6> invFMmat;
     // Eigen::Matrix<int, 6, 1> thr;
     // Calibrating and Temporary Saving IMU Data
     double phi_bias, theta_bias, psi_bias, W1_bias, W2_bias, W3_bias;
-    Vector3d W_b_, W_b_noisy;// Angular velocity of previous loop
+    // Vector3d W_b_, W_b_noisy;// Angular velocity of previous loop
     Vector3d EAngles_imu_;// Euler Angles of previous loop
     // double EAngles_imu[3];
-    Vector3d x_e_init[3]; Matrix3d R_eb_init;// Initial position and attitude
+    // Vector3d x_e_init[3]; Matrix3d R_eb_init;// Initial position and attitude
     Vector3d x_ss, x_ss_; // Steady state error used for landing correction
 
     double EAngles_imu[3];
@@ -146,8 +149,8 @@ public:
 
     // Error Functions
     Vector3d eX, eV, eR, eW, F, M;
-    double f_quad;
-    Matrix<double,4,1> f_motor;
+    double f_total;
+    Vector4d f_motor;
     // Control_Nonlinear Outputs:
     //  eX = position error in inertial frame
     //  eV = velocity error in inertial frame
@@ -162,7 +165,7 @@ public:
     // Output of Control_Nonlinear() and Command Execution
     // VectorXd f;// Force of each motor/propeller/servo
     // int mtr_addr[6] = {41, 42, 43, 44, 45, 46};;// Motor addresses 1-6
-    int thr[4];// i2c motor commands
+    int thr[4] = {0,0,0,0};// i2c motor commands
     // int servo_addr[6] = {0, 1, 2, 3, 4, 5};// Servo addresses 1-6
     // uint16_t servopl[6];// i2c servo pulse length (duty_cycle[i] = servopl[i]/4095 @ ~325 Hz)
     // uint16_t zp[6] = {1300, 1285, 1230, 1280, 1215, 1275};
@@ -189,10 +192,12 @@ public:
     //! Callback function for subscriber
     bool getWarmup();
     //! IMU sensor message subscriber
+    void get_sensor();
     void imu_callback(const sensor_msgs::Imu::ConstPtr& msg);
     //! Keyboard input message subscriber
     void key_callback(const std_msgs::String::ConstPtr& msg);
     //! Controller
+    void control();
     void ctl_callback(hw_interface hw_intf);
     //! Vicon sensor message subscriber
     void vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg);

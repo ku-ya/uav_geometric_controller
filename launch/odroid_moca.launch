@@ -1,17 +1,17 @@
 <launch>
 <!-- Based on pysical (MOCA) or simulation (Gazebo) testing choose option -->
     <arg name="MOCA" value="true"/>
+    <rosparam>
+        environment: 1
+    </rosparam>
     <rosparam file="$(find odroid)/params/controller.yaml" />
-
     <param name="simulation" type="bool" value="false"/>
     <arg name="paused" default="false"/>
     <arg name="gui" default="true"/>
     <arg name="debug" default="false"/>
     <arg name="verbose" default="true"/>
     <node pkg="tf" type="static_transform_publisher" name="vicon_earth" args="0 0 0 0 0 3.1415 vicon earth 10" />
-
-    <!-- <node pkg="tf" type="static_transform_publisher" name="baselink_imu" args="0 0 0 0 0 0 base_link imu 10" /> -->
-    <!-- <node pkg="tf" type="static_transform_publisher" name="base_link" args="0 0 0 0 0 0 base_link vicon/Maya/Maya 10" /> -->
+    
     <!-- start odroid node-->
     <node name="odroid_node" type="odroid_node" pkg="odroid" respawn="false" output="screen">
     </node>

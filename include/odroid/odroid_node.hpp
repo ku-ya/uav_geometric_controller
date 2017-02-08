@@ -15,7 +15,7 @@
 
 #include <iostream>
 #include <vector>
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 // ROS includes.
 #include "ros/ros.h"
 #include "ros/time.h"
@@ -48,6 +48,12 @@ using namespace Eigen;
 // #include <odroid/visualize.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread.hpp>
+
+#include <tf_conversions/tf_eigen.h>
+#include <eigen_conversions/eigen_msg.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+// #include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 class odroid_node
 {
@@ -197,6 +203,7 @@ public:
     //! Keyboard input message subscriber
     void key_callback(const std_msgs::String::ConstPtr& msg);
     //! Controller
+    void cmd_callback(const geometry_msgs::PoseStamped::ConstPtr& msg);
     void control();
     void ctl_callback(hw_interface hw_intf);
     //! Vicon sensor message subscriber

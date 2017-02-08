@@ -26,7 +26,7 @@ void publish_error(odroid_node& node){
   e_msg.force = node.f_total;
   e_msg.dt_vicon_imu = (float)node.dt_vicon_imu;
   for(int i = 0; i<4;i++){
-    e_msg.throttle[i] = node.thr[i];
+    e_msg.throttle[i] = (float) node.thr[i];
     e_msg.f_motor[i] = (float)node.f_motor(i);
   }
   e_msg.gainX = {node.kx, node.kv, node.kiX, node.cX};
@@ -51,7 +51,7 @@ int main(int argc, char **argv){
   boost::thread subscribe(&odroid_node::get_sensor, &odnode);
   boost::thread command(&odroid_node::control, &odnode);
 
-  ros::Rate loop_rate(5); // rate for the node loop
+  ros::Rate loop_rate(100); // rate for the node loop
   while (ros::ok()){
     ros::spinOnce();
     publish_error(odnode);
@@ -162,11 +162,34 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   quatToMat(R_v, quat_vm);
 }
 
+void odroid_node::cmd_callback(const geometry_msgs::PoseStamped::ConstPtr& msg){
+  // boost::mutex::scoped_lock scopedLock(mutex_);
+  // tf::poseMsgToEigen(msg->pose,xd);
+  xd(0) = msg->pose.position.x;
+  xd(1) = msg->pose.position.y;
+  xd(2) = msg->pose.position.z;
+  tf2::Quaternion orientation;
+  tf2::fromMsg(msg->pose.orientation, orientation);
+  tf2::Matrix3x3 test;
+  test.setRotation(orientation);
+  // tf::matrixTFToEigen((tf::Matrix3x3)test,Rd);
+  Vector4d quat;
+  quat(0) = msg->pose.orientation.x;
+  quat(1) = msg->pose.orientation.y;
+  quat(2) = msg->pose.orientation.z;
+  quat(3) = msg->pose.orientation.w;
+  quatToMat(Rd, quat);
+
+  // Rd =new tf2::Matrix3x3::getRotation (msg->pose.orientation);
+
+}
+
 void odroid_node::get_sensor(){
   ros::NodeHandle nh_sens;
     // IMU and keyboard input callback
   ros::Subscriber imu_sub = nh_sens.subscribe("imu/imu",100, &odroid_node::imu_callback, this);
   ros::Subscriber vicon_sub = nh_sens.subscribe("vicon/Maya/Maya",100, &odroid_node::vicon_callback, this);
+  ros::Subscriber cmd_sub = nh_sens.subscribe("xd",100, &odroid_node::cmd_callback, this);
   ros::spin();
 }
 
@@ -199,14 +222,17 @@ void odroid_node::ctl_callback(hw_interface hw_intf){
 
   boost::mutex::scoped_lock scopedLock(mutex_);
   controller::GeometricPositionController(*this, xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
-  
+
   for(int k = 0; k < 4; k++){
-    thr[k] = floor(1/0.03*(f_motor(k)+0.37)+0.5);
+    if(f_motor(k) < 0 ){f_motor(k)=0;}
+    else if(f_motor(k) > 6.2){f_motor(k) = 6.2;}
+
+    thr[k] = round(1/0.03*(f_motor(k)+0.37));
   }
   if(environment == 1){
     hw_intf.motor_command(thr, MotorWarmup, MOTOR_ON);
   }else{
-    controller::gazebo_controll(*this);
+    controller::gazebo_control(*this);
   }
 }
 

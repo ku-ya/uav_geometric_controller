@@ -16,10 +16,13 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
   # rosserial_arduino
   tf
+  tf2
 	message_generation
   cv_bridge
   image_transport
   geometry_msgs
+  eigen_conversions
+  tf_conversions
 )
 
 ## System dependencies are found with CMake's conventions

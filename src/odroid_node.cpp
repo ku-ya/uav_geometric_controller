@@ -148,38 +148,18 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   Vicon_flag = true;
   dt_vicon = (msg->header.stamp - vicon_time).toSec();
   vicon_time = msg->header.stamp;
-
+  Eigen::Affine3d pose;
+  tf::transformMsgToEigen(msg->transform,pose);
   boost::mutex::scoped_lock scopedLock(mutex_);
-
-  vicon_time =msg->header.stamp;
-  vector3Transfer(x_v, msg->transform.translation);
-  vector4Transfer(quat_vm, msg->transform.rotation);
-
-  tf::Quaternion q(quat_vm(0),quat_vm(1),quat_vm(2),quat_vm(3));
-  tf::Matrix3x3 m(q);
-  m.getRPY(roll, pitch, yaw);
-  rpy <<roll, pitch, yaw;
-  quatToMat(R_v, quat_vm);
+  x_v  = pose.matrix().block<3,1>(0,3);
+  R_v = pose.matrix().block<3,3>(0,0);
 }
 
 void odroid_node::cmd_callback(const geometry_msgs::PoseStamped::ConstPtr& msg){
-  // boost::mutex::scoped_lock scopedLock(mutex_);
   Eigen::Affine3d pose;
   tf::poseMsgToEigen(msg->pose,pose);
   xd  = pose.matrix().block<3,1>(0,3);
   Rd = pose.matrix().block<3,3>(0,0);
-
-  // tf2::Quaternion orientation;
-  // tf2::fromMsg(msg->pose.orientation, orientation);
-  // tf2::Matrix3x3 tfMat;
-  // tfMat.setRotation(orientation);
-  // tf::matrixTFToEigen((tf::Matrix3x3)test,Rd);
-  // Rd.block<1,3>(0, 0)  = (Vector3d) tfMat.getRow(0);
-  // Rd.block<1,3>(1, 0)  = (Vector3d) tfMat.getRow(1);
-  // Rd.block<1,3>(2, 0)  = (Vector3d) tfMat.getRow(2);
-
-  // cout<<"Rd:\n"<<Rd<<endl;
-
 }
 
 void odroid_node::get_sensor(){

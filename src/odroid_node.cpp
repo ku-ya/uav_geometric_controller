@@ -155,11 +155,11 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   R_v = pose.matrix().block<3,3>(0,0);
 }
 
-void odroid_node::cmd_callback(const geometry_msgs::PoseStamped::ConstPtr& msg){
-  Eigen::Affine3d pose;
-  tf::poseMsgToEigen(msg->pose,pose);
-  xd  = pose.matrix().block<3,1>(0,3);
-  Rd = pose.matrix().block<3,3>(0,0);
+void odroid_node::cmd_callback(const geometry_msgs::TwistStamped::ConstPtr& msg){
+  Matrix< double, 6, 1 >  pose;
+  tf::twistMsgToEigen(msg->twist,pose);
+  xd  = pose.block<3,1>(0,0);
+  xd_dot = pose.block<3,1>(3,0);
 }
 
 void odroid_node::get_sensor(){
@@ -188,19 +188,21 @@ void odroid_node::ctl_callback(hw_interface hw_intf){
   VectorXd Wd, Wd_dot;
   Wd = VectorXd::Zero(3); Wd_dot = VectorXd::Zero(3);
   //for attitude testing of position controller
-  Vector3d xd_dot, xd_ddot; Matrix3d Rd;
+  Vector3d xd_ddot;
 
-  xd_dot = VectorXd::Zero(3); xd_ddot = VectorXd::Zero(3);
-  Rd = MatrixXd::Identity(3,3);
+  // xd_dot = VectorXd::Zero(3);
+  xd_ddot = VectorXd::Zero(3);
+  // Matrix3d Rd;
+  // Rd = MatrixXd::Identity(3,3);
 
   v_v = ((x_v - prev_x_v)*100)*0.5 + prev_v_v*0.5;
   prev_x_v = x_v;
   prev_v_v = v_v;
 
-
-  boost::mutex::scoped_lock scopedLock(mutex_);
-  controller::GeometricPositionController(*this, xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
-
+  {
+    boost::mutex::scoped_lock scopedLock(mutex_);
+    controller::GeometricPositionController(*this, xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
+  }
   for(int k = 0; k < 4; k++){
     if(f_motor(k) < 0 ){f_motor(k)=0;}
     else if(f_motor(k) > 6.2){f_motor(k) = 6.2;}

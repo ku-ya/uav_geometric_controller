@@ -1,25 +1,35 @@
 #!/usr/bin/env python
 # license removed for brevity
 import rospy
-from geometry_msgs.msg import PoseStamped, Quaternion
+from geometry_msgs.msg import TwistStamped, Quaternion
 import tf
+import numpy as np
 
 def cmd():
-    pub = rospy.Publisher('xd', PoseStamped, queue_size=10)
+    pub = rospy.Publisher('xd', TwistStamped, queue_size=10)
     rospy.init_node('d_pose', anonymous=True)
     rate = rospy.Rate(100) # 10hz
-    t_init = rospy.get_rostime()
+    t_init = (rospy.get_rostime()).to_sec()
 
-    pose = PoseStamped()
+    pose = TwistStamped()
+    dt = 0.01
     while not rospy.is_shutdown():
         # hello_str = "hello world %s" % rospy.get_time()
         pose.header.stamp = rospy.get_rostime()
-        pose.pose.position.x = 2
-        pose.pose.position.y = 1
-        pose.pose.position.z = 1
-        th = 0.5
-        q = tf.transformations.quaternion_from_euler(0, 0, th)
-        pose.pose.orientation = Quaternion(*q)
+        t_last = pose.header.stamp.to_sec()
+        a = 2.0
+        t = (t_last - t_init)*0.2
+        pose.twist.linear.x = a*np.cos(t)/(1+np.sin(t)**2)
+        pose.twist.linear.y = a*np.sin(t)*np.cos(t)/(1+np.sin(t)**2)
+        pose.twist.linear.z = 1
+
+        pose.twist.angular.x = (- a*np.sin(t)/(np.sin(t)**2 + 1) - 2*a*np.sin(t)*np.cos(t)**2/(np.sin(t)**2+1)**2)*dt
+        pose.twist.angular.y = (- a*np.sin(t)**2/(np.sin(t)**2 + 1) + a*np.cos(t)**2/(np.sin(t)**2+1) - 2*a*np.sin(t)**2*np.cos(t)**2/(np.sin(t)**2+1)**2)*dt
+        pose.twist.angular.z = 0
+
+        # th = 1
+        # q = tf.transformations.quaternion_from_euler(0, 0, th)
+        # pose.pose.orientation = Quaternion(*q)
 
         rospy.get_time();
         pub.publish(pose)

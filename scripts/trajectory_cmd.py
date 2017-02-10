@@ -18,13 +18,13 @@ def cmd():
         pose.header.stamp = rospy.get_rostime()
         t_last = pose.header.stamp.to_sec()
         a = 2.0
-        t = (t_last - t_init)*0.2
+        t = (t_last - t_init)*0.5
         pose.twist.linear.x = a*np.cos(t)/(1+np.sin(t)**2)
         pose.twist.linear.y = a*np.sin(t)*np.cos(t)/(1+np.sin(t)**2)
-        pose.twist.linear.z = 1
+        pose.twist.linear.z = 2
 
-        pose.twist.angular.x = (- a*np.sin(t)/(np.sin(t)**2 + 1) - 2*a*np.sin(t)*np.cos(t)**2/(np.sin(t)**2+1)**2)*dt
-        pose.twist.angular.y = (- a*np.sin(t)**2/(np.sin(t)**2 + 1) + a*np.cos(t)**2/(np.sin(t)**2+1) - 2*a*np.sin(t)**2*np.cos(t)**2/(np.sin(t)**2+1)**2)*dt
+        pose.twist.angular.x = 0#(- a*np.sin(t)/(np.sin(t)**2 + 1) - 2*a*np.sin(t)*np.cos(t)**2/(np.sin(t)**2+1)**2)*dt
+        pose.twist.angular.y = 0#(- a*np.sin(t)**2/(np.sin(t)**2 + 1) + a*np.cos(t)**2/(np.sin(t)**2+1) - 2*a*np.sin(t)**2*np.cos(t)**2/(np.sin(t)**2+1)**2)*dt
         pose.twist.angular.z = 0
 
         # th = 1

@@ -10,7 +10,7 @@ controller:
         0.0, -1.0, 0.0,
         0.0, 0.0, -1.0] # Markers frame (m) to the body frame (b) (fixed)
   l: 0.305 # arm length
-  c_tf: 0.0928 # moment constant
+  c_tf: 0.1 # moment constant
   gain:
     att:
       kp: 0.5

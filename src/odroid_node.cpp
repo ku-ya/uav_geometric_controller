@@ -220,7 +220,7 @@ void odroid_node::ctl_callback(hw_interface hw_intf){
     if(f_motor(k) < 0 ){f_motor(k)=0;}
     else if(f_motor(k) > 6.2){f_motor(k) = 6.2;}
 
-    thr[k] = round(1/0.03*(f_motor(k)+0.37));
+    thr[k] = floor(1/0.03*(f_motor(k)+0.37)+0.5);
   }
   if(environment == 1){
     hw_intf.motor_command(thr, MotorWarmup, MOTOR_ON);
@@ -235,7 +235,7 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
   mode = config.mode;
   MOTOR_ON = config.Motor;
   MotorWarmup = config.MotorWarmup;
-
+  m =  config.m;
   xd(0) =  config.x;
   xd(1) =  config.y;
   xd(2) =  config.z;

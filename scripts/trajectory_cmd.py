@@ -30,7 +30,7 @@ def cmd():
         # th = 1
         # q = tf.transformations.quaternion_from_euler(0, 0, th)
         # pose.pose.orientation = Quaternion(*q)
-
+        print(pose)
         rospy.get_time();
         pub.publish(pose)
         rate.sleep()

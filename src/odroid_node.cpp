@@ -93,7 +93,7 @@ odroid_node::odroid_node(){
   ros::param::get("/controller/mode",mode);
   cout<<"Mode: "<<mode<<" (0: Attitude, 1: Position)\n"<<endl;
   ros::param::param<std::vector<double>>("/controller/R_bm", J_vec, J_vec);
-  R_bm=Matrix3d(J_vec.data());  std::cout<<"R_bm: \n"<<R_bm<<std::endl;
+  R_bm=Matrix3d(J_vec.data());  cout<<"R_bm: \n"<<R_bm<<"\n"<<endl;
 
   IMU_flag = false; // IMU sensor reading check
   Vicon_flag = false; // IMU sensor reading check

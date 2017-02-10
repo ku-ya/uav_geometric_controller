@@ -11,8 +11,8 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   Vector3d xd_3dot = xd_2dot;
   Vector3d xd_4dot = xd_2dot;
   Vector3d b1d;
-  b1d = node.xd_dot.normalized();
-  // b1d<< 1, 0, 0;
+  // b1d = node.xd_dot.normalized();
+  b1d<< 1, 0, 0;
   Vector3d b1d_dot = xd_2dot;
   Vector3d b1d_ddot = xd_2dot;
 

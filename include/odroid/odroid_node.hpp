@@ -203,7 +203,7 @@ public:
     //! Keyboard input message subscriber
     void key_callback(const std_msgs::String::ConstPtr& msg);
     //! Controller
-    void cmd_callback(const geometry_msgs::PoseStamped::ConstPtr& msg);
+    void cmd_callback(const geometry_msgs::TwistStamped::ConstPtr& msg);
     void control();
     void ctl_callback(hw_interface hw_intf);
     //! Vicon sensor message subscriber

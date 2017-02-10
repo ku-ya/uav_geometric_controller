@@ -10,7 +10,9 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   Vector3d xd_2dot = Vector3d::Zero();
   Vector3d xd_3dot = xd_2dot;
   Vector3d xd_4dot = xd_2dot;
-  Vector3d b1d(1,0,0);
+  Vector3d b1d;
+  b1d = node.xd_dot.normalized();
+  // b1d<< 1, 0, 0;
   Vector3d b1d_dot = xd_2dot;
   Vector3d b1d_ddot = xd_2dot;
 
@@ -107,10 +109,8 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   node.eiR = node.del_t*(node.eR+node.cR*node.eW) + node.eiR_last;
   err_sat(-node.eiR_sat, node.eiR_sat, node.eiR);
   node.eiR_last = node.eiR;
-  Matrix3d kR_mat;
-  kR_mat << kR, 0, 0, 0, kR,0, 0, 0, kR*1.5;
   // 3D Moment
-  node.M = -kR_mat*node.eR-kW*node.eW-kiR*node.eiR+hat_eigen(R.transpose()*Rd*Wd)*node.J*R.transpose()*Rd*Wd+node.J*R.transpose()*Rd*Wddot;// LBFF
+  node.M = -kR*node.eR-kW*node.eW-kiR*node.eiR+hat_eigen(R.transpose()*Rd*Wd)*node.J*R.transpose()*Rd*Wd+node.J*R.transpose()*Rd*Wddot;// LBFF
 
   Matrix<double, 4, 1> FM;
   FM[0] = f;

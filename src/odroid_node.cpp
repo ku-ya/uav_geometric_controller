@@ -4,7 +4,6 @@
 // #include <odroid/sensor.hpp>
 // #include <odroid/visualize.hpp>
 // #include <odroid/hw_interface.hpp>
-#include <odroid/error.h>
 #include <XmlRpcValue.h>
 
 using namespace std;
@@ -168,11 +167,9 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   R_v = pose.matrix().block<3,3>(0,0);
 }
 
-void odroid_node::cmd_callback(const geometry_msgs::TwistStamped::ConstPtr& msg){
-  Matrix< double, 6, 1 >  pose;
-  tf::twistMsgToEigen(msg->twist,pose);
-  xd  = pose.block<3,1>(0,0);
-  xd_dot = pose.block<3,1>(3,0);
+void odroid_node::cmd_callback(const odroid::trajectory_cmd::ConstPtr& msg){
+  tf::vectorMsgToEigen(msg->xd,xd);
+  tf::vectorMsgToEigen(msg->xd,xd_dot);
 }
 
 void odroid_node::get_sensor(){

@@ -74,7 +74,7 @@ add_message_files(
   FILES
   DAQ.msg
 	error.msg
-  # Message2.msg
+	trajectory_cmd.msg
 )
 
 ## Generate services in the 'srv' folder

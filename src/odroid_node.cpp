@@ -18,11 +18,17 @@ void publish_error(odroid_node& node){
   Vector3d kR_eR = node.kR*node.eR;
   Vector3d kW_eW = node.kW*node.eW;
 
-  geo3toVec(e_msg.x_v, node.x_v); geo3toVec(e_msg.v_v, node.v_v);
-  geo3toVec(e_msg.eR, node.eR); geo3toVec(e_msg.eW, node.eW);
-  geo3toVec(e_msg.Moment, node.M);  geo3toVec(e_msg.rpy, node.rpy);
-  geo3toVec(e_msg.ex, node.eX); geo3toVec(e_msg.IMU, node.W_b);
-  geo3toVec(e_msg.ev, node.eV); geo3toVec(e_msg.xd, node.xd);
+  tf::vectorEigenToMsg(node.x_v, e_msg.x_v);
+  tf::vectorEigenToMsg(node.v_v, e_msg.v_v);
+  tf::vectorEigenToMsg(node.eR, e_msg.eR);
+  tf::vectorEigenToMsg(node.eW, e_msg.eW);
+  tf::vectorEigenToMsg(node.M, e_msg.Moment);
+  tf::vectorEigenToMsg(node.rpy, e_msg.rpy);
+  tf::vectorEigenToMsg(node.eX, e_msg.ex);
+  tf::vectorEigenToMsg(node.W_b, e_msg.IMU);
+  tf::vectorEigenToMsg(node.eV, e_msg.ev);
+  tf::vectorEigenToMsg(node.xd, e_msg.xd);
+
   e_msg.force = node.f_total;
   e_msg.dt_vicon_imu = (float)node.dt_vicon_imu;
   for(int i = 0; i<4;i++){
@@ -73,7 +79,14 @@ odroid_node::odroid_node(){
 
   ros::param::get("/controller/l",l); cout<<"l: "<< l<<endl;
   ros::param::get("/controller/c_tf",c_tf); cout<<"c_tf: "<< c_tf<<endl;
-  Ainv = getAinv(l, c_tf);
+
+  Matrix4d A;
+  A << 1.0,   1.0,  1.0,   1.0,
+       0.0,   -l,   0.0,   l,
+       l,     0.0,  -l,    0.0,
+       c_tf, -c_tf, c_tf, -c_tf;
+
+  Ainv = A.inverse();
 
   cout<<"Ainv:\n"<<Ainv<<"\n"<<endl;
   ros::param::get("/environment",environment);
@@ -140,7 +153,7 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   imu_time = msg->header.stamp;
   dt_vicon_imu = (imu_time - vicon_time).toSec();
   boost::mutex::scoped_lock scopedLock(mutex_);
-  vector3Transfer(W_b, msg->angular_velocity);
+  tf::vectorMsgToEigen(msg->angular_velocity, W_b);
 }
 
 void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg){
@@ -195,7 +208,7 @@ void odroid_node::ctl_callback(hw_interface hw_intf){
   // Matrix3d Rd;
   // Rd = MatrixXd::Identity(3,3);
 
-  v_v = ((x_v - prev_x_v)*100)*0.5 + prev_v_v*0.5;
+  v_v = ((x_v - prev_x_v)*100)*0.7 + prev_v_v*0.3;
   prev_x_v = x_v;
   prev_v_v = v_v;
 

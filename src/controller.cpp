@@ -167,8 +167,8 @@ void controller::gazebo_control(odroid_node& node){
 
   Vector3d fvec_GB(0.0, 0.0, node.f_total), fvec_GI;
 
-  fvec_GI = node.R_v*fvec_GB;
-  Vector3d M_out = node.R_v*node.R_conv*node.M;
+  fvec_GI = node.R_b*fvec_GB;
+  Vector3d M_out = node.R_b*node.R_conv*node.M;
 
   FMcmds_srv.request.body_name = "quadrotor::base_link";
   FMcmds_srv.request.reference_frame = "world";
@@ -176,7 +176,7 @@ void controller::gazebo_control(odroid_node& node){
   FMcmds_srv.request.reference_point.y = 0.0;
   FMcmds_srv.request.reference_point.z = 0.0;
   FMcmds_srv.request.start_time = ros::Time(0.0);
-  FMcmds_srv.request.duration = ros::Duration(0.01);// apply continuously until new command
+  FMcmds_srv.request.duration = ros::Duration(node.del_t);// apply continuously until new command
 
   FMcmds_srv.request.wrench.force.x = fvec_GI(0);
   FMcmds_srv.request.wrench.force.y = fvec_GI(1);

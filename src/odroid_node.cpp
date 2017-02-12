@@ -97,13 +97,13 @@ odroid_node::odroid_node(){
   IMU_flag = false; // IMU sensor reading check
   Vicon_flag = false; // IMU sensor reading check
 
-  R_v = Matrix3d::Zero();
+  R_b = Matrix3d::Zero();
 
   prev_x_v= prev_v_v = eiX =  eiX_last = eiR_last = Vector3d::Zero();
 	x_e = v_e = eiR = eiX = Vector3d::Zero();
   xd = xd_dot = xd_ddot= Wd = Wd_dot = W_b = W_raw = Vector3d::Zero();
   x_v = v_v = prev_x_v = prev_v_v = Vector3d::Zero();
-  quat_vm = f_motor =  Vector4d::Zero();
+  f_motor =  Vector4d::Zero();
 
   double wnx = 4, zetax = 0.7;
   kx = wnx*wnx*m;
@@ -163,7 +163,7 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   tf::transformMsgToEigen(msg->transform,pose);
   boost::mutex::scoped_lock scopedLock(mutex_);
   x_v  = pose.matrix().block<3,1>(0,3);
-  R_v = pose.matrix().block<3,3>(0,0);
+  R_b = pose.matrix().block<3,3>(0,0);
 }
 
 void odroid_node::cmd_callback(const odroid::trajectory_cmd::ConstPtr& msg){
@@ -210,7 +210,7 @@ void odroid_node::ctl_callback(hw_interface hw_intf){
 
   {
     boost::mutex::scoped_lock scopedLock(mutex_);
-    controller::GeometricPositionController(*this, xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
+    controller::GeometricPositionController(*this, xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_b);
   }
   for(int k = 0; k < 4; k++){
     if(f_motor(k) < 0 ){f_motor(k)=0;}

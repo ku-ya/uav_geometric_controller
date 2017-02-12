@@ -10,7 +10,7 @@ geometry_msgs/Vector3 eR
 geometry_msgs/Vector3 eW
 float32 force
 float32[4] f_motor
-uint8[4] throttle
+float32[4] throttle
 geometry_msgs/Vector3 Moment
 float32[4] gainX
 float32[4] gainR

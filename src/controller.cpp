@@ -10,7 +10,9 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   Vector3d xd_2dot = Vector3d::Zero();
   Vector3d xd_3dot = xd_2dot;
   Vector3d xd_4dot = xd_2dot;
-  Vector3d b1d(1,0,0);
+  Vector3d b1d;
+  // b1d = node.xd_dot.normalized();
+  b1d<< 1, 0, 0;
   Vector3d b1d_dot = xd_2dot;
   Vector3d b1d_ddot = xd_2dot;
 
@@ -107,10 +109,8 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   node.eiR = node.del_t*(node.eR+node.cR*node.eW) + node.eiR_last;
   err_sat(-node.eiR_sat, node.eiR_sat, node.eiR);
   node.eiR_last = node.eiR;
-  Matrix3d kR_mat;
-  kR_mat << kR, 0, 0, 0, kR,0, 0, 0, kR*1.5;
   // 3D Moment
-  node.M = -kR_mat*node.eR-kW*node.eW-kiR*node.eiR+hat_eigen(R.transpose()*Rd*Wd)*node.J*R.transpose()*Rd*Wd+node.J*R.transpose()*Rd*Wddot;// LBFF
+  node.M = -kR*node.eR-kW*node.eW-kiR*node.eiR+hat_eigen(R.transpose()*Rd*Wd)*node.J*R.transpose()*Rd*Wd+node.J*R.transpose()*Rd*Wddot;// LBFF
 
   Matrix<double, 4, 1> FM;
   FM[0] = f;
@@ -128,6 +128,7 @@ void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3
   Vector3d W = Win;// LBFF
 
   Matrix3d Rd = MatrixXd::Identity(3,3);
+
   Vector3d e3(0,0,1), b3(0,0,1), vee_3by1;
   double l = 0;//.05;// length of rod connecting to the spherical joint
   Vector3d r = -l * b3;
@@ -148,13 +149,11 @@ void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3
   // MATLAB: M = -kR*eR-kW*eW-kRi*eiR+cross(W,J*W)+J*(R'*Rd*Wddot-hat(W)*R'*Rd*Wd);
   Matrix3d What;
   eigen_skew(W, What);
-  // Vector3d What_J_W = What * node.J * W;
-  // Vector3d Jmult = R.transpose() * Rd * Wddot - What * R.transpose() * Rd * Wd;
-  // Vector3d J_Jmult = node.J * Jmult;
-  Vector3d M = -node.kR * node.eR - node.kW * eW + W.cross(node.J*W) - node.J*(What*R.transpose()*Rd*Wd - R.transpose()*Rd*Wddot);
-  // - node.kiR * node.eiR + What_J_W + J_Jmult - M_g;
+
+  Vector3d M = -node.kR * node.eR - node.kW * eW - node.kiR * node.eiR + W.cross(node.J*W) + node.J*(- R.transpose()*Rd*Wddot - What*R.transpose()*Rd*Wd) - M_g;
   // To try different motor speeds, choose a force in the radial direction
-  double f = - node.m*node.g;// N
+  double f = node.m*node.g;// N
+  node.f_total = f;
   // Convert forces & moments to f_i for i = 1:6 (forces of i-th prop)
   VectorXd FM(4);
   FM << f, M(0), M(1), M(2);
@@ -162,7 +161,7 @@ void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3
   node.f_motor = node.Ainv * FM;
 }
 
-void controller::gazebo_controll(odroid_node& node){
+void controller::gazebo_control(odroid_node& node){
   ros::ServiceClient client_FM = node.n_.serviceClient<gazebo_msgs::ApplyBodyWrench>("/gazebo/apply_body_wrench");
   gazebo_msgs::ApplyBodyWrench FMcmds_srv;
 

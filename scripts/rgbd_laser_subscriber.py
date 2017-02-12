@@ -51,7 +51,6 @@ class image_converter:
     # (trans,rot) = listener.lookupTransform('/world', '/laser', rospy.Time(0))
     # print(trans)
 
-
     try:
       fname =str(depth_data.header.stamp)
       # cv2.imwrite('rgb/'+fname+'.jpg',image[235:245,:,:])

@@ -5,7 +5,7 @@ using namespace std;
 void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W_in, Matrix3d R_v){
   std::cout.precision(5);
   // Bring to controller frame (and back) with 180 degree rotation about b1
-  Matrix3d D = node.R_bm;
+  Matrix3d D = node.R_conv;
 
   Vector3d xd_2dot = Vector3d::Zero();
   Vector3d xd_3dot = xd_2dot;
@@ -123,7 +123,7 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
 
 void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3d Wd, Vector3d Wddot, Vector3d Win, Matrix3d Rin){
 
-  Matrix3d D = node.R_bm;
+  Matrix3d D = node.R_conv;
   Matrix3d R = D*Rin;// LI<-LBFF
   Vector3d W = Win;// LBFF
 
@@ -169,7 +169,7 @@ void controller::gazebo_controll(odroid_node& node){
   Vector3d fvec_GB(0.0, 0.0, node.f_total), fvec_GI;
 
   fvec_GI = node.R_v*fvec_GB;
-  Vector3d M_out = node.R_v*node.R_bm*node.M;
+  Vector3d M_out = node.R_v*node.R_conv*node.M;
 
   FMcmds_srv.request.body_name = "quadrotor::base_link";
   FMcmds_srv.request.reference_frame = "world";

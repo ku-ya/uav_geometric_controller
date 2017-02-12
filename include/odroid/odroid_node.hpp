@@ -60,7 +60,7 @@ public:
 
     ros::Publisher pub_;
     ros::Publisher vis_pub_0, vis_pub_1, vis_pub_2, vis_pub_3;
-
+public:
     ros::Time vicon_time, imu_time;
     double dt_vicon = 0, dt_imu = 0, dt_vicon_imu;
     //  m = body mass
@@ -135,16 +135,8 @@ public:
     double RC_vel = 0.0139 , RC_IMU = 0.0054;
     double scale;
 
-    // Intermediate Variables (V  // Integral errors begin at zero
-    // VectorXd eiX, eiR;
-    Matrix3d R_s0b;// Body (b) to initial sensor attitude (s0)
-    Matrix3d R_eb_s;// Body (b) to inertial (e) calculated by IMU
-    Matrix3d R_vm;// Markers (m) to Vicon (v)
-    Matrix3d R_em;// Markers (m) to inertial (e)
-    Matrix3d R_ev; // Measured Values for Controller
-    Matrix3d R_v;
+    Matrix3d R_v, R_conv;
     Vector3d x_e, v_e;// Position and Velocity in inertial (e) frame
-    Matrix3d R_eb;// Body (b) to inertial (e) frame
     Vector3d E_angles_save;
 
     // Error Functions
@@ -163,22 +155,8 @@ public:
     double eiX_sat, eiR_sat;
 
     // Output of Control_Nonlinear() and Command Execution
-    // VectorXd f;// Force of each motor/propeller/servo
-    // int mtr_addr[6] = {41, 42, 43, 44, 45, 46};;// Motor addresses 1-6
     int thr[4] = {0,0,0,0};// i2c motor commands
-    // int servo_addr[6] = {0, 1, 2, 3, 4, 5};// Servo addresses 1-6
-    // uint16_t servopl[6];// i2c servo pulse length (duty_cycle[i] = servopl[i]/4095 @ ~325 Hz)
-    // uint16_t zp[6] = {1300, 1285, 1230, 1280, 1215, 1275};
 
-    //TCP Communication
-    // int sockfd, newsockfd, port_number, n;
-    // socklen_t client_ln;
-    // char buffer[1000], buffer_[1000];
-    // struct sockaddr_in serv_addr, cli_addr;
-
-    Matrix3d R_bm;
-
-    bool simulation;
     //! Constructor.
     odroid_node();
     //! Destructor.

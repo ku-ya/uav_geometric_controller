@@ -100,10 +100,10 @@ def cmd(msg):
                 y_dot = - a*np.sin(t)**2/(np.sin(t)**2 + 1) + a*np.cos(t)**2/(np.sin(t)**2+1) - 2*a*np.sin(t)**2*np.cos(t)**2/(np.sin(t)**2+1)**2
                 z_dot = 0
                 if loop > N:
-                    print('figure8 complete')
+                    print('Lemniscate figure 8 complete')
                     break
             elif mission=='lissajous':
-#                t = pi_speed * loop + np.pi/2
+                # using above speed
                 a = pi_speed
                 b = 2*pi_speed
                 start_rad_x = np.pi/2

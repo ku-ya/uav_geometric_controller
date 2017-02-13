@@ -191,6 +191,7 @@ def cmd(msg):
             pub.publish(cmd)
             rate.sleep()
 
+
 def get_key():
     rospy.init_node('d_pose', anonymous=True)
     rospy.Subscriber('cmd_key', String, cmd)

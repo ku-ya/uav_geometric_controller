@@ -1,9 +1,9 @@
 <launch>
 <!-- Based on pysical (MOCA) or simulation (Gazebo) testing choose option -->
     <arg name="MOCA" value="false"/>
-    <rosparam>
+    <!-- <rosparam>
         environment: 0
-    </rosparam>
+    </rosparam> -->
     <rosparam file="$(find odroid)/params/controller.yaml" />
     <group unless="$(arg MOCA)">
         <arg name="use_sim_time" default="true"/>
@@ -21,6 +21,6 @@
         <remap from="imu/imu" to="raw_imu"/>
     </node>
     <node name="key_cmd" type="key_direct.py" pkg="odroid" respawn="false" output="screen" />
-    <!-- <node name="cmd_traj" type="trajectory_cmd.py" pkg="odroid" respawn="false" output="screen" /> -->
+    <node name="cmd_traj" type="trajectory_cmd.py" pkg="odroid" respawn="false" output="screen" />
     <!-- <node name="rviz" pkg="rviz" type="rviz" output="screen" /> -->
 </launch>

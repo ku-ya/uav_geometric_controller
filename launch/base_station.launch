@@ -1,0 +1,7 @@
+<launch>
+<!-- Based on pysical (MOCA) testing choose option -->
+    <include file="$(find vicon_bridge)/launch/vicon.launch"/>
+    <node name="key_cmd" type="key_direct.py" pkg="odroid" respawn="false" output="screen" />
+    <node name="cmd_traj" type="trajectory_cmd.py" pkg="odroid" respawn="false" output="screen" />
+    <!-- <node name="rviz" pkg="rviz" type="rviz" output="screen" /> -->
+</launch>

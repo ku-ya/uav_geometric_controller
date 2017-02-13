@@ -167,8 +167,11 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
 }
 
 void odroid_node::cmd_callback(const odroid::trajectory_cmd::ConstPtr& msg){
+  ros::param::get("/odroid_node/Motor", MOTOR_ON);
+  ros::param::get("/odroid_node/MotorWarmup", MotorWarmup);
+  boost::mutex::scoped_lock scopedLock(mutex_);
   tf::vectorMsgToEigen(msg->xd,xd);
-  tf::vectorMsgToEigen(msg->xd,xd_dot);
+  tf::vectorMsgToEigen(msg->xd_dot,xd_dot);
 }
 
 void odroid_node::get_sensor(){

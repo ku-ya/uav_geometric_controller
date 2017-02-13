@@ -12,6 +12,7 @@ def char_to_mission(argument):
         't': 'takeoff',
         'l': 'land',
         'f': 'figure8',
+        'e': 'lissajous',
         'p': 'p2p',
         'h': 'hover',
         'm': 'motor',
@@ -24,6 +25,7 @@ def char_to_speed(argument):
         't': 4,
         'l': 4,
         'f': 15,
+        'e': 15,
         'p': 10,
         'h': 4,
     }
@@ -100,6 +102,28 @@ def cmd(msg):
                 if loop > N:
                     print('figure8 complete')
                     break
+            elif mission=='lissajous':
+#                t = pi_speed * loop + np.pi/2
+                a = pi_speed
+                b = 2*pi_speed
+                start_rad_x = np.pi/2
+                start_rad_y = b/a*start_rad_x
+                A = 2.0
+                B = 1.0
+                delta = np.pi/2
+                x = A*sin(a*t+delta+start_rad_x)
+                x_dot = a*A*cos(a*t*delta+start_rad_x)
+                x_ddot = -a**2*A*sin(a*t*delta+start_rad_x)
+                y = B*sin(b*t+start_rad_y)
+                y_dot = b*B*cos(b*t+start_rad_y)
+                y_ddot = -b**2*B*sin(b*t+start_rad_y)
+                z = 1.5
+                z_dot = 0.0
+                z_ddot = 0.0
+                
+                if loop > N:
+                    print('Lissajous figure 8 complete')
+                    break
             elif mission=='p2p':
                 t = pi_speed * loop
                 x = np.sin(t)
@@ -151,6 +175,17 @@ def cmd(msg):
             cmd.xd_dot.x = speed * x_dot
             cmd.xd_dot.y = speed * y_dot
             cmd.xd_dot.z = speed * z_dot
+
+            if mission == 'lissajous':
+                cmd.xd_dot.x = x_dot
+                cmd.xd_dot.y = y_dot
+                cmd.xd_dot.z = z_dot
+                
+                cmd.xd_ddot.x = x_ddot
+                cmd.xd_ddot.y = y_ddot
+                cmd.xd_ddot.z = z_ddot
+
+
 
             loop = loop + 1.0
             pub.publish(cmd)

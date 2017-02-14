@@ -28,17 +28,18 @@ def load_bag_file(filename):
 
 def read_bag_file(filename):
     
-    bag, info_dict, topics, types = load_bag_file(filename)
+    bag, info_dict, all_topics, all_types = load_bag_file(filename)
+    
+    vicon_topic = '/vicon/Maya/Maya'
+    xd_topic = '/xd'
 
-    num_vicon_msg = info_dict['topics'][-3]['messages']
-    vicon_topic = info_dict['topics'][-3]['topic']
-    vicon_msg_type = info_dict['topics'][-3]['type']
-    vicon_msg_freq = info_dict['topics'][-3]['frequency']
+    vicon_msg_type = bag.get_type_and_topic_info()[1].get(vicon_topic)[0]
+    num_vicon_msg = bag.get_type_and_topic_info()[1].get(vicon_topic)[1]
+    vicon_msg_freq = bag.get_type_and_topic_info()[1].get(vicon_topic)[2]
 
-    num_xd_msg = info_dict['topics'][-1]['messages']
-    xd_topic = info_dict['topics'][-1]['topic']
-    xd_msg_type = info_dict['topics'][-1]['type']
-    xd_msg_freq = info_dict['topics'][-1]['frequency']
+    xd_msg_type = bag.get_type_and_topic_info()[1].get(xd_topic)[0]
+    num_xd_msg = bag.get_type_and_topic_info()[1].get(xd_topic)[1]
+    xd_msg_freq = bag.get_type_and_topic_info()[1].get(xd_topic)[2]
 
     print("Printing topic - %s " % vicon_topic)
     print("Message type - %s" % vicon_msg_type)
@@ -69,7 +70,7 @@ def read_bag_file(filename):
     vicon_index = 0
     xd_index = 0
     for topic, msg, t in bag.read_messages(topics=[vicon_topic,xd_topic]):
-        
+        # pdb.set_trace()
         if topic == vicon_topic:
             vicon_time_array[vicon_index,0] = t.to_sec()
             vicon_pos_array[vicon_index,:] = np.array([msg.transform.translation.x, msg.transform.translation.y, msg.transform.translation.z])
@@ -77,15 +78,17 @@ def read_bag_file(filename):
 
             vicon_index += 1
         elif topic == xd_topic:
-
+            # pdb.set_trace()
             xd_time_array[xd_index] = t.to_sec()
-            xd_pos_array[xd_index,:] = np.array([msg.twist.linear.x, msg.twist.linear.y, msg.twist.linear.z])
+            xd_pos_array[xd_index,:] = np.array([msg.xd.x, msg.xd.y, msg.xd.z])
             xd_index += 1
 
 
+    bag.close()
+
     # Time shift the time_array by the starting epoch
-    vicon_time_array = (vicon_time_array - vicon_time_array[0])
-    xd_time_array = (xd_time_array - xd_time_array[0])
+    # vicon_time_array = (vicon_time_array - vicon_time_array[0])
+    # xd_time_array = (xd_time_array - xd_time_array[0])
 
     # create some figures
     mpl.rcParams['legend.fontsize'] = 10

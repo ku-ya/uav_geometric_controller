@@ -24,3 +24,12 @@ pip install --user numpy scipy matplotlib ipython jupyter pandas sympy nose
 
 echo "Adding local Python to path"
 export PATH="$PATH:$HOME/.local/bin"
+
+echo "ALL DONE!!"
+cd ../../..
+
+
+echo "Now we'll build!"
+echo "If the make fails then just restart the terminal and run catkin_make in this directory!"
+
+catkin_make

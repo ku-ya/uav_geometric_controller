@@ -5,7 +5,7 @@ from geometry_msgs.msg import TwistStamped, Quaternion, AccelStamped
 from std_msgs.msg import Float32MultiArray, String
 import tf
 import numpy as np
-from odroid.msg import trajectory_cmd
+from odroid.msg import trajectory
 
 def char_to_mission(argument):
     switcher = {
@@ -37,10 +37,10 @@ def cmd(msg):
     mission = char_to_mission(msg.data)
     t_total = char_to_speed(msg.data)
 
-    pub = rospy.Publisher('xd', trajectory_cmd, queue_size=10)
+    pub = rospy.Publisher('xd', trajectory, queue_size=10)
     rate = rospy.Rate(100) # 10hz
 
-    cmd = trajectory_cmd()
+    cmd = trajectory()
     cmd.header.frame_id = 'Quad'
     # rospy.set_param('/odroid_node/Motor', True)
     pub.publish(cmd)
@@ -89,7 +89,6 @@ def cmd(msg):
             # t = (t_last - t_init)*speed
             x = y = z = x_dot = y_dot = z_dot = 0
             t = speed * loop
-            print t
 
             if mission=='figure8':
                 t = pi_speed * loop + np.pi/2

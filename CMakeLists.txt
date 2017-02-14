@@ -14,7 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   dynamic_reconfigure
-  # rosserial_arduino
+  rosserial_arduino
   tf
   tf2
 	message_generation
@@ -23,7 +23,6 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   eigen_conversions
   tf_conversions
-  genmsg
 )
 
 ## System dependencies are found with CMake's conventions
@@ -33,7 +32,6 @@ find_package(Boost REQUIRED COMPONENTS thread)
 find_package(Boost REQUIRED COMPONENTS python)
 find_package(Eigen3 REQUIRED)
 include_directories(EIGEN3_INCLUDE_DIR)
-
 
 # find_package(OpenCV 3 REQUIRED)
 # include_directories(${OpenCV_INCLUDE_DIRS})
@@ -116,7 +114,6 @@ generate_messages(
 generate_dynamic_reconfigure_options(
   config/reconfigure.cfg
 	config/calibration.cfg
-#   cfg/DynReconf2.cfg
 )
 
 

@@ -39,14 +39,14 @@ m=0.755;
   </link> -->
   <link name="world"/>
 
-	<joint name="spherical_joint" type="revolute">
-	 <origin xyz="0 0 1" rpy="1 0 0"/>
+	<joint name="spherical_joint" type="continuous">
+	 <origin xyz="0 0 1" rpy="0 0 0"/>
 	 <parent link="world"/>
 	 <child link="my_link"/>
-	 <calibration rising="0.0"/>
-	 <dynamics damping="0.0" friction="0.0"/>
-	 <limit effort="30" velocity="1.0" lower="-2.2" upper="0.7" />
-	 <safety_controller k_velocity="10" k_position="15" soft_lower_limit="-2.0" soft_upper_limit="0.5" />
+	 <!-- <calibration rising="0.0"/> -->
+	 <!-- <dynamics damping="0.0" friction="0.0"/> -->
+	 <!-- <limit effort="30" velocity="1.0" lower="-2.2" upper="0.7" /> -->
+	 <!-- <safety_controller k_velocity="10" k_position="15" soft_lower_limit="-2.0" soft_upper_limit="0.5" /> -->
   </joint>
 
  <link name="my_link">
@@ -74,15 +74,49 @@ m=0.755;
    </collision>
  </link>
 
-
- 	<joint name="spherical_joint2" type="revolute">
-	 <origin xyz="0 0 0" rpy="0 1.5 0"/>
+	<joint name="spherical_z" type="continuous">
+	 <origin xyz="0 0 0" rpy="0 0 0"/>
 	 <parent link="my_link"/>
+	 <child link="my2_link"/>
+   <axis xyz="0 1 0"/>
+  </joint>
+
+
+   <link name="my2_link">
+   <inertial>
+     <origin xyz="0 0 0" rpy="0 0 0"/>
+     <mass value="0.1"/>
+     <inertia ixx="0"  ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+   </inertial>
+
+   <visual>
+     <origin xyz="0 0 0" rpy="0 0 0" />
+     <geometry>
+       <box size="0.001 0.001 0.001" />
+     </geometry>
+     <material name="Cyan">
+       <color rgba="0 1.0 1.0 1.0"/>
+     </material>
+   </visual>
+
+   <collision>
+     <origin xyz="0 0 0" rpy="0 0 0"/>
+     <geometry>
+       <cylinder radius="0.1" length="0.1"/>
+     </geometry>
+   </collision>
+ </link>
+
+
+
+ 	<joint name="spherical_joint2" type="continuous">
+	 <origin xyz="0 0 0" rpy="0 0 0"/>
+	 <parent link="my2_link"/>
 	 <child link="base_link"/>
-	 <calibration rising="0.0"/>
-	 <dynamics damping="0.0" friction="0.0"/>
-	 <limit effort="30" velocity="1.0" lower="-2.2" upper="0.7" />
-	 <safety_controller k_velocity="10" k_position="15" soft_lower_limit="-2.0" soft_upper_limit="0.5" />
+    <axis xyz="0 0 1"/>
+	 <!-- <calibration rising="0.0"/> -->
+	 <!-- <dynamics damping="0.0" friction="0.0"/> -->
+	 <!-- <limit effort="30" velocity="1.0" lower="-2.2" upper="0.7" /> -->
  </joint>
 
 

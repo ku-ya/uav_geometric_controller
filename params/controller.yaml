@@ -1,27 +1,27 @@
-environment: 0 # Gazebo: 0, MOCA: 1
 controller:
+  mode: 1
   g: 9.81
-  m: 1.176
+  m: 1.374 # 176
   J: [9.773E-3, 0.0, 0.0,
     0.0, 9.773E-3, 0.0,
     0.0,  0.0,  1.749E-2]
   del_t: 0.01
-  R_bm: [1.0, 0.0, 0.0,
+  R_conv: [1.0, 0.0, 0.0,
         0.0, -1.0, 0.0,
-        0.0, 0.0, -1.0] # Markers frame (m) to the body frame (b) (fixed)
+        0.0, 0.0, -1.0] # Convention conversion (NEU->NED)
   l: 0.305 # arm length
-  c_tf: 0.0928 # moment constant
+  c_tf: 0.1 # moment constant
   gain:
     att:
-      kp: 0.975
-      kd: 0.3
-      ki: 0.15
-      c: 0.1
+      kp: 0.5
+      kd: 0.2
+      ki: 0.01
+      c: 0.10
     pos:
-      kp: 4
-      kd: 3
-      ki: 0.001
-      c: 0.1
+      kp: 7.5
+      kd: 3.0
+      ki: 0.01
+      c: 0.10
   saturation:
     x: 0.1
     R: 0.01

@@ -1,8 +1,8 @@
 #!/bin/bash
 # time synchronization
 echo "Starting to install ROS and associated stuff"
-sudo apt-get install chrony
-sudo apt-get install ntpdate
+sudo apt-get -y install chrony
+sudo apt-get -y install ntpdate
 
 # ROS install
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'

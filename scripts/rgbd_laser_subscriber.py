@@ -8,8 +8,10 @@ import message_filters
 from std_msgs.msg import String
 from sensor_msgs.msg import Image, LaserScan
 from cv_bridge import CvBridge, CvBridgeError
+from geometry_msgs.msg import Pose2D
 import numpy as np
 import tf
+import os
 counter = 0
 # from __future__ import print_function
 class image_converter:
@@ -19,12 +21,13 @@ class image_converter:
     depth_sub = message_filters.Subscriber("/camera/depth/image",Image)
     image_sub = message_filters.Subscriber("/camera/rgb/image_raw",Image)
     laser_sub = message_filters.Subscriber("/scan",LaserScan)
+    pose_sub = message_filters.Subscriber("/pose2D",Pose2D)
 
-    self.ts = message_filters.ApproximateTimeSynchronizer([image_sub, depth_sub, laser_sub], 10, 0.5)
+    self.ts = message_filters.ApproximateTimeSynchronizer([image_sub, depth_sub, laser_sub, pose_sub], 10, 0.5, allow_headerless=True)
     self.ts.registerCallback(self.callback)
 
 
-  def callback(self,rgb_data, depth_data, laser_data):
+  def callback(self,rgb_data, depth_data, laser_data, pose_data):
     global counter
     try:
       image = self.bridge.imgmsg_to_cv2(rgb_data, "bgr8")
@@ -49,13 +52,17 @@ class image_converter:
     # listener = tf.TransformListener()
 
     # (trans,rot) = listener.lookupTransform('/world', '/laser', rospy.Time(0))
-    # print(trans)
+    pose = np.array([pose_data.x,pose_data.y,pose_data.theta])
+    # print(pose_data
+    print pose
+
 
     try:
       fname =str(depth_data.header.stamp)
-      # cv2.imwrite('rgb/'+fname+'.jpg',image[235:245,:,:])
-      # np.save('depth/'+fname, cv_image[235:245,:])
-      # np.save('laser/'+fname, laser_data.ranges)
+      cv2.imwrite('rgb/'+fname+'.jpg',image[235:245,:,:])
+      np.save('depth/'+fname, cv_image[235:245,:])
+      np.save('laser/'+fname, laser_data.ranges)
+      np.save('pose/'+fname,pose)
       print('saving data:' + str(counter))
       counter=counter+1
     except CvBridgeError as e:
@@ -69,11 +76,25 @@ class image_converter:
 def main(args):
   ic = image_converter()
   rospy.init_node('image_resize', anonymous=True)
+  cwd = os.getcwd()
+  print cwd
+  directory = cwd+'/rgb'
+  if not os.path.exists(directory):
+    os.makedirs(directory)
+  directory = cwd+'/laser'
+  if not os.path.exists(directory):
+    os.makedirs(directory)
+  directory = cwd+'/depth'
+  if not os.path.exists(directory):
+    os.makedirs(directory)
+  directory = cwd+'/pose'
+  if not os.path.exists(directory):
+    os.makedirs(directory)
   try:
     rospy.spin()
   except KeyboardInterrupt:
     print("Shutting down")
-  cv2.destroyAllWindows()
+    cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main(sys.argv)

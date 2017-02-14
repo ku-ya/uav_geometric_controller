@@ -88,7 +88,7 @@ def cmd(msg):
             cmd.header.stamp = rospy.get_rostime()
             # t_last = cmd.header.stamp.to_sec()
 
-            x = y = z = x_dot = y_dot = z_dot = 0
+            x = y = z = x_dot = y_dot = z_dot = x_ddot = y_ddot = z_ddot = 0
             
 
             if mission=='lissajous':

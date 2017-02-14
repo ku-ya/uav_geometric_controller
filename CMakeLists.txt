@@ -23,6 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   eigen_conversions
   tf_conversions
+  genmsg
 )
 
 ## System dependencies are found with CMake's conventions
@@ -74,7 +75,7 @@ add_message_files(
   FILES
   DAQ.msg
 	error.msg
-  # Message2.msg
+	trajectory.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -97,7 +98,6 @@ generate_messages(
   std_msgs
 	geometry_msgs
 )
-
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
 ################################################
@@ -114,8 +114,8 @@ generate_messages(
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
-  cfg/DynConf.cfg
-	cfg/calibration.cfg
+  config/reconfigure.cfg
+	config/calibration.cfg
 #   cfg/DynReconf2.cfg
 )
 
@@ -163,7 +163,7 @@ add_executable(odroid_node src/odroid_node.cpp)
 add_executable(calibration src/calibration.cpp)
 add_executable(sim_vicon src/sim_vicon.cpp)
 # add_executable(visualize src/visualize.cpp)
-
+add_dependencies(odroid_node ${catkin_EXPORTED_TARGETS})
 add_dependencies(odroid_node ${PROJECT_NAME}_gencfg)
 add_dependencies(calibration ${PROJECT_NAME}_gencfg)
 ## Add cmake target dependencies of the executable

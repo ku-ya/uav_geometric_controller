@@ -4,7 +4,6 @@
 // #include <odroid/sensor.hpp>
 // #include <odroid/visualize.hpp>
 // #include <odroid/hw_interface.hpp>
-#include <odroid/error.h>
 #include <XmlRpcValue.h>
 
 using namespace std;
@@ -92,20 +91,19 @@ odroid_node::odroid_node(){
   ros::param::get("/environment",environment);
   ros::param::get("/controller/mode",mode);
   cout<<"Mode: "<<mode<<" (0: Attitude, 1: Position)\n"<<endl;
-  ros::param::param<std::vector<double>>("/controller/R_bm", J_vec, J_vec);
-  R_bm=Matrix3d(J_vec.data());  cout<<"R_bm: \n"<<R_bm<<"\n"<<endl;
+  ros::param::param<std::vector<double>>("/controller/R_conv", J_vec, J_vec);
+  R_conv=Matrix3d(J_vec.data());  std::cout<<"R_conv: \n"<<R_conv<<std::endl;
 
   IMU_flag = false; // IMU sensor reading check
   Vicon_flag = false; // IMU sensor reading check
 
-  R_ev = R_bm;
-  R_v = Matrix3d::Zero();
+  R_b = Matrix3d::Zero();
 
   prev_x_v= prev_v_v = eiX =  eiX_last = eiR_last = Vector3d::Zero();
 	x_e = v_e = eiR = eiX = Vector3d::Zero();
   xd = xd_dot = xd_ddot= Wd = Wd_dot = W_b = W_raw = Vector3d::Zero();
   x_v = v_v = prev_x_v = prev_v_v = Vector3d::Zero();
-  quat_vm = f_motor =  Vector4d::Zero();
+  f_motor =  Vector4d::Zero();
 
   double wnx = 4, zetax = 0.7;
   kx = wnx*wnx*m;
@@ -165,14 +163,16 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   tf::transformMsgToEigen(msg->transform,pose);
   boost::mutex::scoped_lock scopedLock(mutex_);
   x_v  = pose.matrix().block<3,1>(0,3);
-  R_v = pose.matrix().block<3,3>(0,0);
+  R_b = pose.matrix().block<3,3>(0,0);
 }
 
-void odroid_node::cmd_callback(const geometry_msgs::TwistStamped::ConstPtr& msg){
-  Matrix< double, 6, 1 >  pose;
-  tf::twistMsgToEigen(msg->twist,pose);
-  xd  = pose.block<3,1>(0,0);
-  xd_dot = pose.block<3,1>(3,0);
+void odroid_node::cmd_callback(const odroid::trajectory_cmd::ConstPtr& msg){
+  ros::param::get("/odroid_node/Motor", MOTOR_ON);
+  ros::param::get("/odroid_node/MotorWarmup", MotorWarmup);
+  boost::mutex::scoped_lock scopedLock(mutex_);
+  tf::vectorMsgToEigen(msg->xd,xd);
+  tf::vectorMsgToEigen(msg->xd_dot,xd_dot);
+  tf::vectorMsgToEigen(msg->xd_ddot,xd_ddot);
 }
 
 void odroid_node::get_sensor(){
@@ -214,7 +214,7 @@ void odroid_node::ctl_callback(hw_interface hw_intf){
 
   {
     boost::mutex::scoped_lock scopedLock(mutex_);
-    controller::GeometricPositionController(*this, xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_v);
+    controller::GeometricPositionController(*this, xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_b);
   }
   for(int k = 0; k < 4; k++){
     if(f_motor(k) < 0 ){f_motor(k)=0;}

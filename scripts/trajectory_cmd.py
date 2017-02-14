@@ -75,6 +75,7 @@ def cmd(msg):
         N = round(t_total / dt)
         pi_speed = np.pi * 2 / N
         speed = 1./N
+        
 
         print mission
 
@@ -104,7 +105,8 @@ def cmd(msg):
                     print('Lemniscate figure 8 complete')
                     break
             elif mission=='lissajous':
-                # using above speed
+                t_now = (rospy.get_rostime()).to_sec()
+                t = t_now-t_init
                 a = pi_speed
                 b = 2*pi_speed
                 start_rad_x = np.pi/2
@@ -164,6 +166,8 @@ def cmd(msg):
                     print('hover complete')
                     break
             elif mission == 'land':
+                t_now = (rospy.get_rostime()).to_sec()
+                t = t_now-t_init
                 x = 0
                 y = 0
                 z = 1.5 - t*0.5 if 1.5 - t*0.5 > 0.2 else 0

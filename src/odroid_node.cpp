@@ -172,6 +172,7 @@ void odroid_node::cmd_callback(const odroid::trajectory_cmd::ConstPtr& msg){
   boost::mutex::scoped_lock scopedLock(mutex_);
   tf::vectorMsgToEigen(msg->xd,xd);
   tf::vectorMsgToEigen(msg->xd_dot,xd_dot);
+  tf::vectorMsgToEigen(msg->xd_ddot,xd_ddot);
 }
 
 void odroid_node::get_sensor(){

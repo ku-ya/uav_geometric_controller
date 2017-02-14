@@ -120,7 +120,7 @@ def cmd(msg):
                 z = 1.5
                 z_dot = 0.0
                 z_ddot = 0.0
-                
+
                 if loop > N:
                     print('Lissajous figure 8 complete')
                     break
@@ -132,6 +132,10 @@ def cmd(msg):
                 x_dot = np.cos(t)
                 y_dot = np.cos(t)
                 z_dot = np.cos(t)/2
+                x_ddot = -np.sin(t)
+                y_ddot = -np.sin(t)
+                z_ddot = -np.sin(t)/2
+
                 if loop > N:
                     print('p2p complete')
                     break
@@ -175,12 +179,15 @@ def cmd(msg):
             cmd.xd_dot.x = speed * x_dot
             cmd.xd_dot.y = speed * y_dot
             cmd.xd_dot.z = speed * z_dot
+            cmd.xd_ddot.x = speed**2 * x_ddot
+            cmd.xd_ddot.y = speed**2 * y_ddot
+            cmd.xd_ddot.z = speed**2 * z_ddot
 
             if mission == 'lissajous':
                 cmd.xd_dot.x = x_dot
                 cmd.xd_dot.y = y_dot
                 cmd.xd_dot.z = z_dot
-                
+
                 cmd.xd_ddot.x = x_ddot
                 cmd.xd_ddot.y = y_ddot
                 cmd.xd_ddot.z = z_ddot

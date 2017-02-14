@@ -40,7 +40,7 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <odroid/error.h>
-#include <odroid/trajectory_cmd.h>
+#include <odroid/trajectory.h>
 
 using namespace Eigen;
 

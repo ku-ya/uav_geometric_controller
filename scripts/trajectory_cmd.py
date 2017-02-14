@@ -34,7 +34,6 @@ def char_to_speed(argument):
 
 def cmd(msg):
     mission = ''
-    speed = 0
     mission = char_to_mission(msg.data)
     t_total = char_to_speed(msg.data)
 
@@ -72,46 +71,26 @@ def cmd(msg):
             rospy.sleep(3)
             rospy.set_param('/odroid_node/MotorWarmup', False)
 
-        dt = 0.01
-        N = round(t_total / dt)
-        pi_speed = np.pi * 2 / N
-        speed = 1./N
         reset_height = 1.5
         min_flight_height = 0.2
         vel_up = 0.5
         vel_dn = -0.5
+        a = 2*np.pi/t_total# maps t = 0:t_total to 0:2*pi
+        b = 2*a# maps t = 0:t_total to 0:4*pi (Lissajous figure 8 double rotation in y)
         
 
         print mission
 
         t_init = (rospy.get_rostime()).to_sec()
-        loop = 0.0
 
         while not rospy.is_shutdown():
             # hello_str = "hello world %s" % rospy.get_time()
             cmd.header.stamp = rospy.get_rostime()
             # t_last = cmd.header.stamp.to_sec()
 
-            # t = (t_last - t_init)*speed
             x = y = z = x_dot = y_dot = z_dot = 0
-            a = 2*np.pi/t_total# maps t = 0:t_total to 0:2*pi
-            b = 2*a# maps t = 0:t_total to 0:4*pi (Lissajous figure 8)
-#            t = speed * loop
-#            print t
+            
 
-#            if mission=='figure8':
-#                t = pi_speed * loop + np.pi/2
-#                a = 2.0
-#                x = a*np.cos(t)/(1+np.sin(t)**2)
-#                y = a*np.sin(t)*np.cos(t)/(1+np.sin(t)**2)
-#                z = 1.5 # 2 + np.sin(t*np.pi/2)
-#                x_dot = - a*np.sin(t)/(np.sin(t)**2 + 1) - 2*a*np.sin(t)*np.cos(t)**2/(np.sin(t)**2+1)**2
-#                y_dot = - a*np.sin(t)**2/(np.sin(t)**2 + 1) + a*np.cos(t)**2/(np.sin(t)**2+1) - 2*a*np.sin(t)**2*np.cos(t)**2/(np.sin(t)**2+1)**2
-#                z_dot = 0
-#                if loop > N:
-#                    print('Lemniscate figure 8 complete')
-#                    break
-#            el
             if mission=='lissajous':
                 t_now = (rospy.get_rostime()).to_sec()
                 t = t_now-t_init
@@ -205,7 +184,6 @@ def cmd(msg):
             cmd.xd_ddot.y = y_ddot
             cmd.xd_ddot.z = z_ddot
 
-            loop = loop + 1.0
             pub.publish(cmd)
             rate.sleep()
 

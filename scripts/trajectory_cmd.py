@@ -14,7 +14,7 @@ def char_to_mission(argument):
         'f': 'figure8',
         'e': 'lissajous',
         'p': 'p2p',
-        'r': 'reset'
+        'r': 'reset',
         'h': 'hover',
         'm': 'motor',
         'w': 'warmup'

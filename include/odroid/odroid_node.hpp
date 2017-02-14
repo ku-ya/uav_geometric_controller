@@ -39,7 +39,6 @@
 #include <eigen_conversions/eigen_msg.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <odroid/error.h>
 #include <odroid/trajectory.h>
 
 using namespace Eigen;
@@ -136,7 +135,7 @@ public:
     //! Keyboard input message subscriber
     void key_callback(const std_msgs::String::ConstPtr& msg);
     //! Controller
-    void cmd_callback(const odroid::trajectory_cmd::ConstPtr& msg);
+    void cmd_callback(const odroid::trajectory::ConstPtr& msg);
     void control();
     //! Controller function
     void ctl_callback(hw_interface hw_intf);

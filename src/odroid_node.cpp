@@ -4,6 +4,8 @@
 // #include <odroid/sensor.hpp>
 // #include <odroid/visualize.hpp>
 // #include <odroid/hw_interface.hpp>
+#include <odroid/error.h>
+
 #include <XmlRpcValue.h>
 
 using namespace std;
@@ -166,7 +168,7 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   R_b = pose.matrix().block<3,3>(0,0);
 }
 
-void odroid_node::cmd_callback(const odroid::trajectory_cmd::ConstPtr& msg){
+void odroid_node::cmd_callback(const odroid::trajectory::ConstPtr& msg){
   ros::param::get("/odroid_node/Motor", MOTOR_ON);
   ros::param::get("/odroid_node/MotorWarmup", MotorWarmup);
   boost::mutex::scoped_lock scopedLock(mutex_);

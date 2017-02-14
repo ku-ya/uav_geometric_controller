@@ -89,6 +89,7 @@ def cmd(msg):
             # t = (t_last - t_init)*speed
             x = y = z = x_dot = y_dot = z_dot = 0
             t = speed * loop
+            print t
 
             if mission=='figure8':
                 t = pi_speed * loop + np.pi/2
@@ -111,12 +112,12 @@ def cmd(msg):
                 A = 2.0
                 B = 1.0
                 delta = np.pi/2
-                x = A*sin(a*t+delta+start_rad_x)
-                x_dot = a*A*cos(a*t*delta+start_rad_x)
-                x_ddot = -a**2*A*sin(a*t*delta+start_rad_x)
-                y = B*sin(b*t+start_rad_y)
-                y_dot = b*B*cos(b*t+start_rad_y)
-                y_ddot = -b**2*B*sin(b*t+start_rad_y)
+                x = A*np.sin(a*t+delta+start_rad_x)
+                x_dot = a*A*np.cos(a*t*delta+start_rad_x)
+                x_ddot = -a**2*A*np.sin(a*t*delta+start_rad_x)
+                y = B*np.sin(b*t+start_rad_y)
+                y_dot = b*B*np.cos(b*t+start_rad_y)
+                y_ddot = -b**2*B*np.sin(b*t+start_rad_y)
                 z = 1.5
                 z_dot = 0.0
                 z_ddot = 0.0
@@ -142,7 +143,7 @@ def cmd(msg):
             elif mission == 'takeoff':
                 x = 0
                 y = 0
-                z = 1.5*speed*loop if 1.5*speed*loop < 1.5 else 1.5
+                z = 0.2 + 1.5*speed*loop if 1.5*speed*loop < 1.5 else 1.5
                 x_dot = 0
                 y_dot = 0
                 z_dot = 0
@@ -156,16 +157,22 @@ def cmd(msg):
                 x_dot = 0
                 y_dot = 0
                 z_dot = 0
+                x_ddot = 0
+                y_ddot = 0
+                z_ddot = 0
                 if loop > N:
                     print('hover complete')
                     break
             elif mission == 'land':
                 x = 0
                 y = 0
-                z = 1.5 - loop/300. if 1.5 - loop/300. > 0.2 else 0
+                z = 1.5 - t*0.5 if 1.5 - t*0.5 > 0.2 else 0
                 x_dot = 0
                 y_dot = 0
-                z_dot = 0
+                z_dot = - 0.5
+                x_ddot = 0
+                y_ddot = 0
+                z_ddot = 0
                 if z <= 0.2:
                     rospy.set_param('/odroid_node/Motor', False)
                     pub.publish(cmd)
@@ -179,11 +186,11 @@ def cmd(msg):
             cmd.xd_dot.x = speed * x_dot
             cmd.xd_dot.y = speed * y_dot
             cmd.xd_dot.z = speed * z_dot
-            cmd.xd_ddot.x = speed**2 * x_ddot
-            cmd.xd_ddot.y = speed**2 * y_ddot
-            cmd.xd_ddot.z = speed**2 * z_ddot
+            cmd.xd_ddot.x = 0#speed**2 * x_ddot
+            cmd.xd_ddot.y = 0#speed**2 * y_ddot
+            cmd.xd_ddot.z = 0#speed**2 * z_ddot
 
-            if mission == 'lissajous':
+            if mission == 'lissajous' or mission == "land":
                 cmd.xd_dot.x = x_dot
                 cmd.xd_dot.y = y_dot
                 cmd.xd_dot.z = z_dot

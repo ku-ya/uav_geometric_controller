@@ -10,6 +10,7 @@ sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 421C
 sudo apt-get -y update
 sudo apt-get -y install ros-kinetic-desktop-full
 sudo apt-get -y install ros-kinetic-rosserial-arduino
+sudo apt-get install ros-kinetic-teleop-twist-keyboard
 sudo rosdep init
 rosdep update
 echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc

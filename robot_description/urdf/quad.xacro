@@ -26,7 +26,7 @@ m=0.755;
   <gravity>true</gravity>
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="1.4"/>
+      <mass value="1.374"/>
       <inertia
         ixx="0.009773" ixy="0.0" ixz="0.0"
         iyy="0.009773" iyz="0.0"

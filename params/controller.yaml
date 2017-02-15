@@ -1,15 +1,16 @@
 controller:
+  mode: 1
   g: 9.81
-  m: 1.4 # 176
+  m: 1.374 # 176
   J: [9.773E-3, 0.0, 0.0,
     0.0, 9.773E-3, 0.0,
     0.0,  0.0,  1.749E-2]
   del_t: 0.01
-  R_bm: [1.0, 0.0, 0.0,
+  R_conv: [1.0, 0.0, 0.0,
         0.0, -1.0, 0.0,
-        0.0, 0.0, -1.0] # Markers frame (m) to the body frame (b) (fixed)
+        0.0, 0.0, -1.0] # Convention conversion (NEU->NED)
   l: 0.305 # arm length
-  c_tf: 0.0928 # moment constant
+  c_tf: 0.1 # moment constant
   gain:
     att:
       kp: 0.5

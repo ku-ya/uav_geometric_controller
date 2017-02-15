@@ -1,9 +1,11 @@
 Header header
 geometry_msgs/Vector3 xd
+geometry_msgs/Vector3 xd_dot
+geometry_msgs/Vector3 xd_ddot
 geometry_msgs/Vector3 x_v
+geometry_msgs/Vector3 v_v
 geometry_msgs/Vector3 IMU
 geometry_msgs/Vector3 rpy
-geometry_msgs/Vector3 v_v
 geometry_msgs/Vector3 ex
 geometry_msgs/Vector3 ev
 geometry_msgs/Vector3 eR

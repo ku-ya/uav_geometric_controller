@@ -88,7 +88,7 @@ def cmd(msg):
             cmd.header.stamp = rospy.get_rostime()
             # t_last = cmd.header.stamp.to_sec()
 
-            x = y = z = x_dot = y_dot = z_dot = x_ddot = y_ddot = z_ddot = 0
+            x = y = z = x_dot = y_dot = z_dot = x_ddot = y_ddot = z_ddot = 0.0
             
 
             if mission=='lissajous':
@@ -100,19 +100,29 @@ def cmd(msg):
                 A = 2.0
                 B = 1.0
                 delta = np.pi/2
-                x = A*np.sin(a*t+delta+start_radians_x)
-                x_dot = a*A*np.cos(a*t*delta+start_radians_x)
-                x_ddot = -a**2*A*np.sin(a*t*delta+start_radians_x)
-                y = B*np.sin(b*t+start_radians_y)
-                y_dot = b*B*np.cos(b*t+start_radians_y)
-                y_ddot = -b**2*B*np.sin(b*t+start_radians_y)
-                z = reset_height
-                z_dot = 0.0
-                z_ddot = 0.0
+		if t < t_total:
+		    x = A*np.sin(a*t+delta+start_radians_x)
+	            x_dot = a*A*np.cos(a*t+delta+start_radians_x)
+	            x_ddot = -a*a*A*np.sin(a*t+delta+start_radians_x)
+	            y = B*np.sin(b*t+start_radians_y)
+	            y_dot = b*B*np.cos(b*t+start_radians_y)
+	            y_ddot = -b*b*B*np.sin(b*t+start_radians_y)
+	            z = reset_height
+	            z_dot = 0.0
+	            z_ddot = 0.0
+		else:
+		    x = 0.0
+                    y = 0.0
+                    z = reset_height
+                    x_dot = 0.0
+                    y_dot = 0.0
+                    z_dot = 0.0
+                    x_ddot = 0.0
+                    y_ddot = 0.0
+                    z_ddot = 0.0
+		    print(x_dot)
+                    print('Lissajous figure 8 complete.')
 
-                if t > t_total:
-                    print('Lissajous figure 8 complete')
-                    break
             elif mission=='p2p':
                 t_now = (rospy.get_rostime()).to_sec()
                 t = t_now-t_init
@@ -127,8 +137,17 @@ def cmd(msg):
                 z_ddot = -(np.sin(t)/2)*a**2
 
                 if t > t_total:
+		    x = 0.0
+                    y = 0.0
+                    z = reset_height
+                    x_dot = 0.0
+                    y_dot = 0.0
+                    z_dot = 0.0
+                    x_ddot = 0.0
+                    y_ddot = 0.0
+                    z_ddot = 0.0
                     print('p2p complete')
-                    break
+
             elif mission == 'takeoff':
                 t_now = (rospy.get_rostime()).to_sec()
                 t = t_now-t_init
@@ -140,7 +159,7 @@ def cmd(msg):
                 z_dot = vel_up
                 if t > t_total:
                     print('takeoff complete')
-                    break
+
             elif mission == 'reset':
                 x = 0
                 y = 0
@@ -153,7 +172,7 @@ def cmd(msg):
                 z_ddot = 0
 
                 print('resetting...')
-                break
+
             elif mission == 'land':
                 t_now = (rospy.get_rostime()).to_sec()
                 t = t_now-t_init
@@ -170,7 +189,7 @@ def cmd(msg):
                     rospy.set_param('/odroid_node/Motor', False)
                     pub.publish(cmd)
                     print('landing complete')
-                    break
+
 
             cmd.xd.x = x
             cmd.xd.y = y
@@ -186,6 +205,9 @@ def cmd(msg):
 
             pub.publish(cmd)
             rate.sleep()
+	    if t > t_total or mission == 'reset':
+		print('Trajectory complete. Ready for another command.')
+		break
 
 
 def get_key():

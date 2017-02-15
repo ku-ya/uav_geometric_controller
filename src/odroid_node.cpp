@@ -3,9 +3,7 @@
 #include <odroid/controller.hpp>
 // #include <odroid/sensor.hpp>
 // #include <odroid/visualize.hpp>
-// #include <odroid/hw_interface.hpp>
 #include <odroid/error.h>
-
 #include <XmlRpcValue.h>
 
 using namespace std;
@@ -29,7 +27,8 @@ void publish_error(odroid_node& node){
   tf::vectorEigenToMsg(node.W_b, e_msg.IMU);
   tf::vectorEigenToMsg(node.eV, e_msg.ev);
   tf::vectorEigenToMsg(node.xd, e_msg.xd);
-
+  tf::vectorEigenToMsg(node.xd_dot, e_msg.xd_dot);
+  tf::vectorEigenToMsg(node.xd_ddot, e_msg.xd_ddot);
   e_msg.force = node.f_total;
   e_msg.dt_vicon_imu = (float)node.dt_vicon_imu;
   for(int i = 0; i<4;i++){
@@ -162,8 +161,8 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   dt_vicon = (msg->header.stamp - vicon_time).toSec();
   vicon_time = msg->header.stamp;
   Eigen::Affine3d pose;
-  tf::transformMsgToEigen(msg->transform,pose);
   boost::mutex::scoped_lock scopedLock(mutex_);
+  tf::transformMsgToEigen(msg->transform,pose);
   x_v  = pose.matrix().block<3,1>(0,3);
   R_b = pose.matrix().block<3,3>(0,0);
 }
@@ -202,13 +201,6 @@ void odroid_node::control(){
 void odroid_node::ctl_callback(hw_interface hw_intf){
   VectorXd Wd, Wd_dot;
   Wd = VectorXd::Zero(3); Wd_dot = VectorXd::Zero(3);
-  //for attitude testing of position controller
-  Vector3d xd_ddot;
-
-  // xd_dot = VectorXd::Zero(3);
-  xd_ddot = VectorXd::Zero(3);
-  // Matrix3d Rd;
-  // Rd = MatrixXd::Identity(3,3);
 
   v_v = ((x_v - prev_x_v)*100)*0.7 + prev_v_v*0.3;
   prev_x_v = x_v;

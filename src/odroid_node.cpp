@@ -227,8 +227,8 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
   ROS_INFO("Reconfigure Request: Update");
 
   mode = config.mode;
-  MOTOR_ON = config.Motor;
-  MotorWarmup = config.MotorWarmup;
+  // MOTOR_ON = config.Motor;
+  // MotorWarmup = config.MotorWarmup;
   m =  config.m;
   xd(0) =  config.x;
   xd(1) =  config.y;

@@ -77,7 +77,7 @@ def cmd(msg):
         vel_dn = -0.5
         a = 2*np.pi/t_total# maps t = 0:t_total to 0:2*pi
         b = 2*a# maps t = 0:t_total to 0:4*pi (Lissajous figure 8 double rotation in y)
-        
+
 
         print mission
 
@@ -89,7 +89,7 @@ def cmd(msg):
             # t_last = cmd.header.stamp.to_sec()
 
             x = y = z = x_dot = y_dot = z_dot = x_ddot = y_ddot = z_ddot = 0.0
-            
+
 
             if mission=='lissajous':
                 t_now = (rospy.get_rostime()).to_sec()

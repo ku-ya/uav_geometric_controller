@@ -1,3 +1,6 @@
+odroid_node:
+  Motor: 0
+  MotorWarmup: 0
 controller:
   mode: 1
   g: 9.81

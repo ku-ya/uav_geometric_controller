@@ -81,6 +81,11 @@ def read_bag_file(filename):
         ev_array[drone_var_index,:] = np.array([msg.ev.x, msg.ev.y, msg.ev.z])
         eW_array[drone_var_index,:] = np.array([msg.eW.x, msg.eW.y, msg.eW.z])
         f_array[drone_var_index,:] = np.array([msg.force])
+        f_motor_array[drone_var_index,:] = np.array([msg.f_motor[0], msg.f_motor[1], msg.f_motor[2], msg.f_motor[3]])
+        thr_array[drone_var_index,:] = np.array([msg.throttle[0], msg.throttle[1], msg.throttle[2], msg.throttle[3]])
+        M_array[drone_var_index,:] = np.array([msg.Moment.x, msg.Moment.y, msg.Moment.z])
+        gainX_array[drone_var_index,:] = np.array([msg.gainX[0], msg.gainX[1], msg.gainX[2], msg.gainX[3]])
+        gainX_array[drone_var_index,:] = np.array([msg.gainR[0], msg.gainR[1], msg.gainR[2], msg.gainR[3]])
         dt_vicon_imu_array[drone_var_index,:] = np.array([msg.dt_vicon_imu])
 
         drone_var_index += 1

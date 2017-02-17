@@ -109,7 +109,7 @@ def read_bag_file(filename):
 
 
 def plot_31_2(t, x, y, x_label, y_label, title):
-    print('Plotting ' + title + ' data ...')
+    print('Plotting ' + title + ' ...')
 
     mpl.rcParams['legend.fontsize'] = 10
 
@@ -142,7 +142,7 @@ def plot_31_2(t, x, y, x_label, y_label, title):
 
 
 def plot_31_1(t, x, title, y_label_1, y_label_2, y_label_3):
-    print('Plotting ' + title + ' data ...')
+    print('Plotting ' + title + ' ...')
 
     mpl.rcParams['legend.fontsize'] = 10
 
@@ -153,47 +153,64 @@ def plot_31_1(t, x, title, y_label_1, y_label_2, y_label_3):
     plt.plot(t[:], x[:,0],'b')
     plt.xlabel('Time (sec since epoch) ')
     plt.ylabel(y_label_1)
-    plt.legend()
 
     plt.subplot(312)
     plt.plot(t[:], x[:,1],'b')
     plt.xlabel('Time (sec since epoch) ')
     plt.ylabel(y_label_2)
-    plt.legend()
 
     plt.subplot(313)
     plt.plot(t[:], x[:,2],'b')
     plt.xlabel('Time (sec since epoch) ')
     plt.ylabel(y_label_3)
-    plt.legend()
 
     return
 
-def plot_41_1(t, x, title, y_label_1, y_label_2, y_label_3):
-    print('Plotting ' + title + ' data ...')
+
+
+def plot_41_1(t, x, title, y_label_1, y_label_2, y_label_3, y_label_4):
+    print('Plotting ' + title + ' ...')
 
     mpl.rcParams['legend.fontsize'] = 10
 
     fig = plt.figure()
     fig.suptitle(title, fontsize=12)
 
-    plt.subplot(311)
+    plt.subplot(411)
     plt.plot(t[:], x[:,0],'b')
     plt.xlabel('Time (sec since epoch) ')
     plt.ylabel(y_label_1)
-    plt.legend()
 
-    plt.subplot(312)
+    plt.subplot(412)
     plt.plot(t[:], x[:,1],'b')
     plt.xlabel('Time (sec since epoch) ')
     plt.ylabel(y_label_2)
-    plt.legend()
 
-    plt.subplot(313)
+    plt.subplot(413)
     plt.plot(t[:], x[:,2],'b')
     plt.xlabel('Time (sec since epoch) ')
     plt.ylabel(y_label_3)
-    plt.legend()
+
+    plt.subplot(414)
+    plt.plot(t[:], x[:,3],'b')
+    plt.xlabel('Time (sec since epoch) ')
+    plt.ylabel(y_label_4)
+
+    return
+
+
+
+def plot_1(t, x, title, y_label):
+    print('Plotting ' + title + ' ...')
+
+    mpl.rcParams['legend.fontsize'] = 10
+
+    fig = plt.figure()
+    fig.suptitle(title, fontsize=12)
+
+    plt.plot(t[:], x[:,0],'b')
+    plt.xlabel('Time (sec since epoch) ')
+    plt.ylabel(y_label)
 
     return
 
@@ -225,7 +242,7 @@ if __name__ == "__main__":
         f_motor_array, thr_array, M_array, gainX_array, gainR_array, \
         dt_vicon_array = read_bag_file(args.input_file)
 
-    # plot_trajectory(x_v_array)
+    plot_trajectory(x_v_array)
     # plot_31_2(time_array, x_v_array, xd_array, 'vicon', 'desired', 'position')
     # plot_31_2(time_array, v_v_array, xd_dot_array, 'vicon', 'desired', 'velocity')
     # plot_31_1(time_array, IMU_array, 'IMU data', 'Phi', 'Theta', 'Psi')
@@ -234,9 +251,14 @@ if __name__ == "__main__":
     # plot_31_1(time_array, ev_array, 'eV', 'V_x', 'V_y', 'V_z')
     # plot_31_1(time_array, eR_array, 'eR', 'X', 'Y', 'Z')
     # plot_31_1(time_array, eW_array, 'eW', 'X', 'Y', 'Z')
+    # plot_41_1(time_array, f_motor_array, 'Motor Forces', 'Motor 1', 'Motor 2', 'Motor 3', 'Motor 4')
+    # plot_41_1(time_array, thr_array, 'Throttle Values', 'Motor 1', 'Motor 2', 'Motor 3', 'Motor 4')
+    # plot_41_1(time_array, gainR_array, 'Attitude Gains', 'kR', 'kW', 'kiR', 'cR')
+    # plot_41_1(time_array, gainX_array, 'Position Gains', 'kX', 'kV', 'kiX', 'cX')
+    # plot_1(time_array, f_array, 'Force', 'Force (N)')
+    # plot_1(time_array, dt_vicon_array, 'Delta T from Vicon', 'dt')
 
-
-    print("")
-    print("Plotting completed!")
+    print('')
+    print('Plotting completed!')
 
     plt.show()

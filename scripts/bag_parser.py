@@ -6,7 +6,6 @@ import numpy as np
 import pdb
 import yaml
 import argparse
-import bcolz
 
 import matplotlib as mpl
 from mpl_toolkits.mplot3d import Axes3D
@@ -106,6 +105,7 @@ def read_bag_file(filename):
             rpy_array, x_v_array, v_v_array, ex_array, ev_array, eR_array, \
             eW_array, f_array, f_motor_array, thr_array, M_array, gainX_array, \
             gainR_array, dt_vicon_array
+
 
 
 def plot_31_2(t, x, y, x_label, y_label, title):
@@ -228,6 +228,7 @@ def plot_trajectory(x_v_array):
     ax.set_zlim(0, 3)
 
     return
+
 
 
 

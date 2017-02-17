@@ -65,7 +65,7 @@ def read_bag_file(filename):
     M_array = np.zeros((num_drone_var_msg,3))
     gainX_array = np.zeros((num_drone_var_msg,4))
     gainR_array = np.zeros((num_drone_var_msg,4))
-    dt_vicon_imu_array = np.zeros((num_drone_var_msg,1))
+    dt_vicon_array = np.zeros((num_drone_var_msg,1))
 
     drone_var_index = 0
 
@@ -85,13 +85,29 @@ def read_bag_file(filename):
         thr_array[drone_var_index,:] = np.array([msg.throttle[0], msg.throttle[1], msg.throttle[2], msg.throttle[3]])
         M_array[drone_var_index,:] = np.array([msg.Moment.x, msg.Moment.y, msg.Moment.z])
         gainX_array[drone_var_index,:] = np.array([msg.gainX[0], msg.gainX[1], msg.gainX[2], msg.gainX[3]])
-        gainX_array[drone_var_index,:] = np.array([msg.gainR[0], msg.gainR[1], msg.gainR[2], msg.gainR[3]])
-        dt_vicon_imu_array[drone_var_index,:] = np.array([msg.dt_vicon_imu])
+        gainR_array[drone_var_index,:] = np.array([msg.gainR[0], msg.gainR[1], msg.gainR[2], msg.gainR[3]])
+        dt_vicon_array[drone_var_index,:] = np.array([msg.dt_vicon_imu])
 
         drone_var_index += 1
 
-
     bag.close()
+
+    return time_array, xd_array, IMU_array, rpy_array, x_v_array, v_v_array, ex_array, \
+            ev_array, eW_array, f_array, f_motor_array, thr_array, M_array, \
+            gainX_array, gainR_array, dt_vicon_array
+
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Parse a ROS Bag file and plot.')
+    parser.add_argument('input_file', help='Input ROS Bag file')
+    args = parser.parse_args()
+
+    # read_bag_file(args.input_file)
+
+    time_array, xd_array, IMU_array, rpy_array, x_v_array, v_v_array, ex_array, \
+            ev_array, eW_array, f_array, f_motor_array, thr_array, M_array, \
+            gainX_array, gainR_array, dt_vicon_array = read_bag_file(args.input_file)
 
     # Time shift the time_array by the starting epoch
     # vicon_time_array = (vicon_time_array - vicon_time_array[0])
@@ -129,10 +145,3 @@ def read_bag_file(filename):
     plt.legend()
 
     plt.show()
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Parse a ROS Bag file and plot.')
-    parser.add_argument('input_file', help='Input ROS Bag file')
-    args = parser.parse_args()
-
-    read_bag_file(args.input_file)

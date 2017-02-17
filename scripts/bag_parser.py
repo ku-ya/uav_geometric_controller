@@ -45,7 +45,7 @@ def read_bag_file(filename):
     print("Number of messages - %g" % num_drone_var_msg)
 
     print("")
-    print("Now reading the data")
+    print("Reading the data ...")
 
     # setup arrays for data
     time_array = np.zeros((num_drone_var_msg,1))
@@ -76,6 +76,8 @@ def read_bag_file(filename):
         # pdb.set_trace()
         time_array[drone_var_index,0] = t.to_sec()
         xd_array[drone_var_index,:] = np.array([msg.xd.x, msg.xd.y, msg.xd.z])
+        xd_dot_array[drone_var_index,:] = np.array([msg.xd_dot.x, msg.xd_dot.y, msg.xd_dot.z])
+        xd_ddot_array[drone_var_index,:] = np.array([msg.xd_ddot.x, msg.xd_ddot.y, msg.xd_ddot.z])
         x_v_array[drone_var_index,:] = np.array([msg.x_v.x, msg.x_v.y, msg.x_v.z])
         IMU_array[drone_var_index,:] = np.array([msg.IMU.x, msg.IMU.y, msg.IMU.z])
         rpy_array[drone_var_index,:] = np.array([msg.rpy.x, msg.rpy.y, msg.rpy.z])
@@ -95,44 +97,44 @@ def read_bag_file(filename):
 
     bag.close()
 
-    return time_array, xd_array, IMU_array, rpy_array, x_v_array, v_v_array, ex_array, \
-            ev_array, eW_array, f_array, f_motor_array, thr_array, M_array, \
-            gainX_array, gainR_array, dt_vicon_array
+    return time_array, xd_array, xd_dot_array, xd_ddot_array, IMU_array, \
+            rpy_array, x_v_array, v_v_array, ex_array, ev_array, eW_array, \
+            f_array, f_motor_array, thr_array, M_array, gainX_array, \
+            gainR_array, dt_vicon_array
 
 
+def plot_313_2(t, x, y, x_label, y_label, title):
+    print('Plotting ' + title + ' data ...')
 
-def plot_x(x_v_array, xd_array):
     mpl.rcParams['legend.fontsize'] = 10
-
-    fig_comp = plt.figure()
+    fig = plt.figure()
     plt.subplot(311)
-    plt.plot(time_array[:],x_v_array[:,0],'b', label='Vicon')
-    plt.plot(time_array[:], xd_array[:,0],'r', label='Desired')
+    plt.plot(t[:],x[:,0],'b', label = x_label)
+    plt.plot(t[:], y[:,0],'r', label = y_label)
     plt.xlabel('Time (sec since epoch) ')
-    plt.ylabel('X Position (m)')
+    plt.ylabel('X ' + title + ' (m)')
     plt.legend()
 
     plt.subplot(312)
-    plt.plot(time_array[:],x_v_array[:,1],'b', label='Vicon')
-    plt.plot(time_array[:], xd_array[:,1],'r', label='Desired')
+    plt.plot(t[:],x[:,1],'b', label = x_label)
+    plt.plot(t[:], y[:,1],'r', label = y_label)
     plt.xlabel('Time (sec since epoch) ')
-    plt.ylabel('Y Position (m)')
+    plt.ylabel('Y ' + title + ' (m)')
     plt.legend()
 
     plt.subplot(313)
-    plt.plot(time_array[:],x_v_array[:,2],'b', label='Vicon')
-    plt.plot(time_array[:], xd_array[:,2],'r', label='Desired')
+    plt.plot(t[:],x[:,2],'b', label = x_label)
+    plt.plot(t[:], y[:,2],'r', label = y_label)
     plt.xlabel('Time (sec since epoch) ')
-    plt.ylabel('Z Position (m)')
+    plt.ylabel('Z ' + title + ' (m)')
     plt.legend()
-
-    plt.show()
 
     return
 
 
-
 def plot_trajectory(x_v_array):
+    print("Plotting 3d trajectory ...")
+
     mpl.rcParams['legend.fontsize'] = 10
 
     fig_traj = plt.figure()
@@ -140,8 +142,6 @@ def plot_trajectory(x_v_array):
 
     ax.plot(x_v_array[:,0],x_v_array[:,1],x_v_array[:,2])
     ax.set_zlim(0, 3)
-
-    plt.show()
 
     return
 
@@ -153,9 +153,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # read bag file and output variables
-    time_array, xd_array, IMU_array, rpy_array, x_v_array, v_v_array, ex_array, \
-            ev_array, eW_array, f_array, f_motor_array, thr_array, M_array, \
-            gainX_array, gainR_array, dt_vicon_array = read_bag_file(args.input_file)
+    time_array, xd_array, xd_dot_array, xd_ddot_array, IMU_array, rpy_array, \
+        x_v_array, v_v_array, ex_array, ev_array, eW_array, f_array, \
+        f_motor_array, thr_array, M_array, gainX_array, gainR_array, \
+        dt_vicon_array = read_bag_file(args.input_file)
 
-    plot_x(x_v_array, xd_array)
     plot_trajectory(x_v_array)
+    plot_313_2(time_array, x_v_array, xd_array, 'vicon', 'desired', 'position')
+    plot_313_2(time_array, v_v_array, xd_dot_array, 'vicon', 'desired', 'velocity')
+
+    print("")
+    print("Plotting completed!")
+
+    plt.show()

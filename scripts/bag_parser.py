@@ -6,6 +6,7 @@ import numpy as np
 import pdb
 import yaml
 import argparse
+import bcolz
 
 import matplotlib as mpl
 from mpl_toolkits.mplot3d import Axes3D
@@ -14,6 +15,8 @@ import matplotlib.pyplot as plt
 
 
 def load_bag_file(filename):
+    print('')
+    print('Loading bag file ...')
 
     bag = rosbag.Bag(filename, 'r')
 
@@ -25,6 +28,7 @@ def load_bag_file(filename):
     for ii in range(0, len(bag.get_type_and_topic_info()[1].values())):
         types.append(bag.get_type_and_topic_info()[1].values()[ii][0])
 
+    print('Bag file loaded...!')
     return bag, info_dict, topics, types
 
 
@@ -39,13 +43,13 @@ def read_bag_file(filename):
     num_drone_var_msg = bag.get_type_and_topic_info()[1].get(drone_var_topic)[1]
     drone_var_msg_freq = bag.get_type_and_topic_info()[1].get(drone_var_topic)[2]
 
-    print("Printing topic - %s " % drone_var_topic)
-    print("Message type - %s" % drone_var_msg_type)
-    print("Message frequency - %s" % drone_var_msg_freq)
-    print("Number of messages - %g" % num_drone_var_msg)
+    print('Printing topic - %s ' % drone_var_topic)
+    print('Message type - %s' % drone_var_msg_type)
+    print('Message frequency - %s' % drone_var_msg_freq)
+    print('Number of messages - %g' % num_drone_var_msg)
 
-    print("")
-    print("Reading the data ...")
+    print('')
+    print('Reading the data ...')
 
     # setup arrays for data
     time_array = np.zeros((num_drone_var_msg,1))
@@ -84,6 +88,7 @@ def read_bag_file(filename):
         v_v_array[drone_var_index,:] = np.array([msg.v_v.x, msg.v_v.y, msg.v_v.z])
         ex_array[drone_var_index,:] = np.array([msg.ex.x, msg.ex.y, msg.ex.z])
         ev_array[drone_var_index,:] = np.array([msg.ev.x, msg.ev.y, msg.ev.z])
+        eR_array[drone_var_index,:] = np.array([msg.eR.x, msg.eR.y, msg.eR.z])
         eW_array[drone_var_index,:] = np.array([msg.eW.x, msg.eW.y, msg.eW.z])
         f_array[drone_var_index,:] = np.array([msg.force])
         f_motor_array[drone_var_index,:] = np.array([msg.f_motor[0], msg.f_motor[1], msg.f_motor[2], msg.f_motor[3]])
@@ -98,42 +103,104 @@ def read_bag_file(filename):
     bag.close()
 
     return time_array, xd_array, xd_dot_array, xd_ddot_array, IMU_array, \
-            rpy_array, x_v_array, v_v_array, ex_array, ev_array, eW_array, \
-            f_array, f_motor_array, thr_array, M_array, gainX_array, \
+            rpy_array, x_v_array, v_v_array, ex_array, ev_array, eR_array, \
+            eW_array, f_array, f_motor_array, thr_array, M_array, gainX_array, \
             gainR_array, dt_vicon_array
 
 
-def plot_313_2(t, x, y, x_label, y_label, title):
+def plot_31_2(t, x, y, x_label, y_label, title):
     print('Plotting ' + title + ' data ...')
 
     mpl.rcParams['legend.fontsize'] = 10
+
     fig = plt.figure()
+    fig.suptitle(title, fontsize=12)
+
     plt.subplot(311)
-    plt.plot(t[:],x[:,0],'b', label = x_label)
+    plt.plot(t[:], x[:,0],'b', label = x_label)
     plt.plot(t[:], y[:,0],'r', label = y_label)
     plt.xlabel('Time (sec since epoch) ')
-    plt.ylabel('X ' + title + ' (m)')
+    plt.ylabel('X')
     plt.legend()
 
     plt.subplot(312)
-    plt.plot(t[:],x[:,1],'b', label = x_label)
+    plt.plot(t[:], x[:,1],'b', label = x_label)
     plt.plot(t[:], y[:,1],'r', label = y_label)
     plt.xlabel('Time (sec since epoch) ')
-    plt.ylabel('Y ' + title + ' (m)')
+    plt.ylabel('Y')
     plt.legend()
 
     plt.subplot(313)
-    plt.plot(t[:],x[:,2],'b', label = x_label)
+    plt.plot(t[:], x[:,2],'b', label = x_label)
     plt.plot(t[:], y[:,2],'r', label = y_label)
     plt.xlabel('Time (sec since epoch) ')
-    plt.ylabel('Z ' + title + ' (m)')
+    plt.ylabel('Z')
     plt.legend()
 
     return
 
 
+
+def plot_31_1(t, x, title, y_label_1, y_label_2, y_label_3):
+    print('Plotting ' + title + ' data ...')
+
+    mpl.rcParams['legend.fontsize'] = 10
+
+    fig = plt.figure()
+    fig.suptitle(title, fontsize=12)
+
+    plt.subplot(311)
+    plt.plot(t[:], x[:,0],'b')
+    plt.xlabel('Time (sec since epoch) ')
+    plt.ylabel(y_label_1)
+    plt.legend()
+
+    plt.subplot(312)
+    plt.plot(t[:], x[:,1],'b')
+    plt.xlabel('Time (sec since epoch) ')
+    plt.ylabel(y_label_2)
+    plt.legend()
+
+    plt.subplot(313)
+    plt.plot(t[:], x[:,2],'b')
+    plt.xlabel('Time (sec since epoch) ')
+    plt.ylabel(y_label_3)
+    plt.legend()
+
+    return
+
+def plot_41_1(t, x, title, y_label_1, y_label_2, y_label_3):
+    print('Plotting ' + title + ' data ...')
+
+    mpl.rcParams['legend.fontsize'] = 10
+
+    fig = plt.figure()
+    fig.suptitle(title, fontsize=12)
+
+    plt.subplot(311)
+    plt.plot(t[:], x[:,0],'b')
+    plt.xlabel('Time (sec since epoch) ')
+    plt.ylabel(y_label_1)
+    plt.legend()
+
+    plt.subplot(312)
+    plt.plot(t[:], x[:,1],'b')
+    plt.xlabel('Time (sec since epoch) ')
+    plt.ylabel(y_label_2)
+    plt.legend()
+
+    plt.subplot(313)
+    plt.plot(t[:], x[:,2],'b')
+    plt.xlabel('Time (sec since epoch) ')
+    plt.ylabel(y_label_3)
+    plt.legend()
+
+    return
+
+
+
 def plot_trajectory(x_v_array):
-    print("Plotting 3d trajectory ...")
+    print('Plotting 3d trajectory ...')
 
     mpl.rcParams['legend.fontsize'] = 10
 
@@ -154,13 +221,20 @@ if __name__ == "__main__":
 
     # read bag file and output variables
     time_array, xd_array, xd_dot_array, xd_ddot_array, IMU_array, rpy_array, \
-        x_v_array, v_v_array, ex_array, ev_array, eW_array, f_array, \
+        x_v_array, v_v_array, ex_array, ev_array, eR_array, eW_array, f_array, \
         f_motor_array, thr_array, M_array, gainX_array, gainR_array, \
         dt_vicon_array = read_bag_file(args.input_file)
 
-    plot_trajectory(x_v_array)
-    plot_313_2(time_array, x_v_array, xd_array, 'vicon', 'desired', 'position')
-    plot_313_2(time_array, v_v_array, xd_dot_array, 'vicon', 'desired', 'velocity')
+    # plot_trajectory(x_v_array)
+    # plot_31_2(time_array, x_v_array, xd_array, 'vicon', 'desired', 'position')
+    # plot_31_2(time_array, v_v_array, xd_dot_array, 'vicon', 'desired', 'velocity')
+    # plot_31_1(time_array, IMU_array, 'IMU data', 'Phi', 'Theta', 'Psi')
+    # plot_31_1(time_array, rpy_array, 'RPY data', 'Roll', 'Pitch', 'Yaw')
+    # plot_31_1(time_array, ex_array, 'eX', 'X', 'Y', 'Z')
+    # plot_31_1(time_array, ev_array, 'eV', 'V_x', 'V_y', 'V_z')
+    # plot_31_1(time_array, eR_array, 'eR', 'X', 'Y', 'Z')
+    # plot_31_1(time_array, eW_array, 'eW', 'X', 'Y', 'Z')
+
 
     print("")
     print("Plotting completed!")

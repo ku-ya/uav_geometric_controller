@@ -11,6 +11,8 @@ import matplotlib as mpl
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
+
+
 def load_bag_file(filename):
 
     bag = rosbag.Bag(filename, 'r')
@@ -24,6 +26,7 @@ def load_bag_file(filename):
         types.append(bag.get_type_and_topic_info()[1].values()[ii][0])
 
     return bag, info_dict, topics, types
+
 
 
 def read_bag_file(filename):
@@ -98,29 +101,8 @@ def read_bag_file(filename):
 
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Parse a ROS Bag file and plot.')
-    parser.add_argument('input_file', help='Input ROS Bag file')
-    args = parser.parse_args()
-
-    # read_bag_file(args.input_file)
-
-    time_array, xd_array, IMU_array, rpy_array, x_v_array, v_v_array, ex_array, \
-            ev_array, eW_array, f_array, f_motor_array, thr_array, M_array, \
-            gainX_array, gainR_array, dt_vicon_array = read_bag_file(args.input_file)
-
-    # Time shift the time_array by the starting epoch
-    # vicon_time_array = (vicon_time_array - vicon_time_array[0])
-    # xd_time_array = (xd_time_array - xd_time_array[0])
-
-    # create some figures
+def plot_x(x_v_array, xd_array):
     mpl.rcParams['legend.fontsize'] = 10
-
-    fig_traj = plt.figure()
-    ax = fig_traj.gca(projection='3d')
-
-    ax.plot(x_v_array[:,0],x_v_array[:,1],x_v_array[:,2])
-    ax.set_zlim(0, 3)
 
     fig_comp = plt.figure()
     plt.subplot(311)
@@ -145,3 +127,35 @@ if __name__ == "__main__":
     plt.legend()
 
     plt.show()
+
+    return
+
+
+
+def plot_trajectory(x_v_array):
+    mpl.rcParams['legend.fontsize'] = 10
+
+    fig_traj = plt.figure()
+    ax = fig_traj.gca(projection='3d')
+
+    ax.plot(x_v_array[:,0],x_v_array[:,1],x_v_array[:,2])
+    ax.set_zlim(0, 3)
+
+    plt.show()
+
+    return
+
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Parse a ROS Bag file and plot.')
+    parser.add_argument('input_file', help='Input ROS Bag file')
+    args = parser.parse_args()
+
+    # read bag file and output variables
+    time_array, xd_array, IMU_array, rpy_array, x_v_array, v_v_array, ex_array, \
+            ev_array, eW_array, f_array, f_motor_array, thr_array, M_array, \
+            gainX_array, gainR_array, dt_vicon_array = read_bag_file(args.input_file)
+
+    plot_x(x_v_array, xd_array)
+    plot_trajectory(x_v_array)

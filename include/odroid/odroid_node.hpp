@@ -40,6 +40,7 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <odroid/trajectory.h>
+#include <list>
 
 using namespace Eigen;
 
@@ -77,6 +78,7 @@ public:
     Matrix2d e; //inertial frame,
     // Measured Values in Vicon inettial frame
     Vector3d x_v, v_v, prev_x_v,prev_v_v;
+    MatrixXd v_ave;
     bool IMU_flag, Vicon_flag, controller_flag;
     // Integral errors begin at zero
     Vector3d eiX, eiR, eiX_last, eiR_last;

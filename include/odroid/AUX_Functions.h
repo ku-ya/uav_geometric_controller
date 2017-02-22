@@ -8,6 +8,14 @@
 #include <geometry_msgs/Quaternion.h>
 using namespace Eigen;
 
+void vec_average(MatrixXd& M_in, Vector3d& v_in){
+  MatrixXd temp(M_in.rows(), M_in.cols());
+  temp.block(0,1,3,M_in.cols()-1) = M_in.block(0,0,3,M_in.cols()-1);
+  temp.block(0,0,3,1) = v_in;
+  M_in = temp;
+  return;
+}
+
 void vee_eigen(Matrix3d xhat, Vector3d& x){
     x << xhat(2,1), xhat(0,2), xhat(1,0);
 }

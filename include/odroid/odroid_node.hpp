@@ -77,7 +77,7 @@ public:
     Matrix2d e; //inertial frame,
     // Measured Values in Vicon inettial frame
     Vector3d x_v, v_v, prev_x_v,prev_v_v;
-    bool IMU_flag, Vicon_flag;
+    bool IMU_flag, Vicon_flag, controller_flag;
     // Integral errors begin at zero
     Vector3d eiX, eiR, eiX_last, eiR_last;
     // Threads (except command key) ON/OFF

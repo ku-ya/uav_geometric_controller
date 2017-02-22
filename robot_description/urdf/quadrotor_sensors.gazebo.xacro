@@ -6,7 +6,7 @@
   <xacro:macro name="quadrotor_sensors">
         <gazebo>
           <plugin name="quadrotor_groundtruth_sim" filename="libgazebo_ros_p3d.so">
-            <updateRate>0.0</updateRate>
+            <updateRate>100.0</updateRate>
             <bodyName>base_link</bodyName>
             <topicName>ground_truth/state</topicName>
             <gaussianNoise>0.0</gaussianNoise>

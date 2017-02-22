@@ -158,7 +158,8 @@ def cmd(msg):
                 y_dot = 0
                 z_dot = vel_up
                 if t > t_total:
-                    print('takeoff complete')
+                  z_dot = 0
+                  print('takeoff complete')
 
             elif mission == 'reset':
                 x = 0

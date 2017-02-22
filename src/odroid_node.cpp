@@ -133,14 +133,6 @@ odroid_node::odroid_node(){
 
 odroid_node::~odroid_node(){};
 
-void odroid_node::print_J(){
-  std::cout<<"J: \n"<<J<<std::endl;
-}
-
-void odroid_node::print_force(){
-  std::cout<<"force: "<<f_total<<std::endl;
-}
-
 // callback for IMU sensor det
 bool odroid_node::getIMU(){return IMU_flag;}
 bool odroid_node::getWarmup(){return MotorWarmup;}
@@ -156,13 +148,14 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
 }
 
 void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg){
+  // controller_flag = true;
   if(!Vicon_flag){ ROS_INFO("Vicon ready");}
   Vicon_flag = true;
   dt_vicon = (msg->header.stamp - vicon_time).toSec();
   vicon_time = msg->header.stamp;
   Eigen::Affine3d pose;
-  boost::mutex::scoped_lock scopedLock(mutex_);
   tf::transformMsgToEigen(msg->transform,pose);
+  boost::mutex::scoped_lock scopedLock(mutex_);
   x_v  = pose.matrix().block<3,1>(0,3);
   R_b = pose.matrix().block<3,3>(0,0);
 }
@@ -202,18 +195,17 @@ void odroid_node::ctl_callback(hw_interface hw_intf){
   VectorXd Wd, Wd_dot;
   Wd = VectorXd::Zero(3); Wd_dot = VectorXd::Zero(3);
 
-  v_v = ((x_v - prev_x_v)*100)*0.7 + prev_v_v*0.3;
+  v_v = ((x_v - prev_x_v)*100)*0.5 + prev_v_v*0.5;
   prev_x_v = x_v;
   prev_v_v = v_v;
 
-  {
+  if(Vicon_flag){
     boost::mutex::scoped_lock scopedLock(mutex_);
     controller::GeometricPositionController(*this, xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_b);
   }
   for(int k = 0; k < 4; k++){
     if(f_motor(k) < 0 ){f_motor(k)=0;}
     else if(f_motor(k) > 6.2){f_motor(k) = 6.2;}
-
     thr[k] = floor(1/0.03*(f_motor(k)+0.37)+0.5);
   }
   if(environment == 1){

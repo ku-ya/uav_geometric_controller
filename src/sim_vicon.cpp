@@ -38,7 +38,8 @@ int main(int argc, char **argv){
   ros::init(argc,argv,"sim_vicon");
 
   Converter gazebo_to_vicon;
-    ros::spin();
+  ros::spin();
+
 
   return 0;
 }

@@ -5,32 +5,33 @@ This repository contains all the ROS source code developed for UAV for indooor (
 ## Installation
 
 1. First you need [ROS](http://wiki.ros.org/indigo/Installation) (use kinetic distro)
-  * This is easy and is simply a `apt-get` call.
-2. Also install `rosserial-arduino` using the below command. 
-Also ensure your Python distribution is setup properly by looking at the end of this guide.
-  
-  ~~~
-  $ sudo apt-get install ros-<distro>-rosserial-arduino
-  ~~~
-3. Create a workspace in a convienent directory
-  
-  ~~~
-  export UAV_DIR="${HOME}/uav_ws"
-  export SITL_GAZEBO_PATH="${UAV_DIR}/robot_description/urdf"
+      * This is super easy now.
+        We've created a setup script that will install all the necessary packages.
+2. Create a workspace in a convienent directory and clone the repo. 
+This is creating the `catkin_ws`
 
-  source /opt/ros/kinetic/setup.bash
-  source /usr/share/gazebo/setup.sh
-  source "${UAV_DIR}/devel/setup.bash"
-  ~~~
-4. Clone this repository into `${UAV_DIR}/src/` and then build the package
-  
-  ~~~
-  $ cd ${UAV_DIR}/src
-  $ git clone https://github.com/fdcl-gwu/ROS_odroid_node.git .
-  $ cd ../
-  $ catkin_make
-  ~~~
-5. Source the package path files `$ source devel/setup.bash`
+      ~~~
+      $ cd
+      $ mkdir -p catkin_ws/src
+      $ cd catkin_ws/src
+      $ git clone https://github.com/fdcl-gwu/ROS_odroid_node.git
+      ~~~
+
+3. Run the comprehensive setup script
+
+    ~~~
+    $ cd ROS_odroid_node/setup
+    $ ./ros_install.bash
+    ~~~
+    
+4. The script will install ROS and all necessary packages. 
+You can then go to your `catkin_ws` and build as necessary
+5. Modify the path 
+    ~~~
+    $ cd ~/catkin_ws
+    $ source devel/setup.bash
+    ~~~
+6. Now you can run the code
 
 ## Running the code
 

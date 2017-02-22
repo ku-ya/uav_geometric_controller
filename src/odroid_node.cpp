@@ -161,13 +161,9 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   x_v  = pose.matrix().block<3,1>(0,3);
   R_b = pose.matrix().block<3,3>(0,0);
   v_v = (x_v - prev_x_v)/dt_vicon;
-  cout<<"col: "<<v_ave.cols()<<" rows: "<<v_ave.rows()<<endl;
-  cout<<"v_v before: \n"<<v_v<<endl;
-  cout<<"v_ave prev: \n"<<v_ave<<endl;
   vec_average(v_ave, v_v);
-  cout<<"v_ave after: \n"<<v_ave<<endl;
+  // TODO: change to weighted or whatever
   v_v = v_ave.rowwise().mean();
-  cout<<"v_v after: \n"<<v_v<<endl;
   prev_x_v = x_v;
   // prev_v_v = v_v;
 

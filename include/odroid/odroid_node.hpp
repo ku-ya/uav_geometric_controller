@@ -151,8 +151,6 @@ public:
     int getEnv(){return environment;}
     // void motor_command();
     // void open_I2C();
-    void print_J();
-    void print_force();
     bool getIMU();
 };
 

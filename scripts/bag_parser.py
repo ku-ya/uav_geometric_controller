@@ -6,6 +6,7 @@ import numpy as np
 import pdb
 import yaml
 import argparse
+import sys
 
 import matplotlib as mpl
 from mpl_toolkits.mplot3d import Axes3D
@@ -237,11 +238,16 @@ if __name__ == "__main__":
     parser.add_argument('input_file', help='Input ROS Bag file')
     args = parser.parse_args()
 
-    # read bag file and output variables
-    time_array, xd_array, xd_dot_array, xd_ddot_array, IMU_array, rpy_array, \
-        x_v_array, v_v_array, ex_array, ev_array, eR_array, eW_array, f_array, \
-        f_motor_array, thr_array, M_array, gainX_array, gainR_array, \
-        dt_vicon_array = read_bag_file(args.input_file)
+    try:
+        # read bag file and output variables
+        time_array, xd_array, xd_dot_array, xd_ddot_array, IMU_array, rpy_array, \
+            x_v_array, v_v_array, ex_array, ev_array, eR_array, eW_array, f_array, \
+            f_motor_array, thr_array, M_array, gainX_array, gainR_array, \
+            dt_vicon_array = read_bag_file(args.input_file)
+    except (AttributeError):
+        print("Error in reading the bag file. Most likely there was a change in the message format.")
+        print("Skipping the plotting commands!")
+        sys.exit()
 
     plot_trajectory(x_v_array)
     # plot_31_2(time_array, x_v_array, xd_array, 'vicon', 'desired', 'position')

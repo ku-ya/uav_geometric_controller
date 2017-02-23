@@ -144,8 +144,14 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   dt_imu = (msg->header.stamp - imu_time).toSec();
   imu_time = msg->header.stamp;
   dt_vicon_imu = (imu_time - vicon_time).toSec();
+  tf::Quaternion temp;
+  tf::quaternionMsgToTF(msg->orientation,temp);
+  tf::Matrix3x3 m(temp);
+  double roll, pitch, yaw;
+  m.getRPY(roll, pitch, yaw);
   boost::mutex::scoped_lock scopedLock(mutex_);
   tf::vectorMsgToEigen(msg->angular_velocity, W_b);
+  rpy << roll, pitch, yaw;
 }
 
 void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg){

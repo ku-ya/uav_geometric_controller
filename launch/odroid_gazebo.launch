@@ -18,7 +18,7 @@
     <node pkg="tf" type="static_transform_publisher" name="vicon_earth" args="0 0 0 0 0 3.1415 vicon earth 10" />
     <!-- start odroid node-->
     <node name="odroid_node" type="odroid_node" pkg="odroid" respawn="false" output="screen">
-        <!-- <remap from="imu/imu" to="raw_imu"/> -->
+        <remap from="imu/imu" to="raw_imu"/>
     </node>
     <node name="key_cmd" type="key_direct.py" pkg="odroid" respawn="false" output="screen" />
     <node name="cmd_traj" type="trajectory_cmd.py" pkg="odroid" respawn="false" output="screen" />

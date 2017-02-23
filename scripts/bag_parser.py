@@ -13,7 +13,6 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
 
-
 def load_bag_file(filename):
     print('')
     print('Loading bag file ...')
@@ -30,7 +29,6 @@ def load_bag_file(filename):
 
     print('Bag file loaded...!')
     return bag, info_dict, topics, types
-
 
 
 def read_bag_file(filename):
@@ -102,109 +100,106 @@ def read_bag_file(filename):
 
     bag.close()
 
+    # shift the time array to the starting epoch
+    time_array = time_array - time_array[0]
+
     return time_array, xd_array, xd_dot_array, xd_ddot_array, IMU_array, \
             rpy_array, x_v_array, v_v_array, ex_array, ev_array, eR_array, \
             eW_array, f_array, f_motor_array, thr_array, M_array, gainX_array, \
             gainR_array, dt_vicon_array
 
 
-
 def plot_31_2(t, x, y, x_label, y_label, title):
     print('Plotting ' + title + ' ...')
 
     mpl.rcParams['legend.fontsize'] = 10
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='serif')
 
-    fig = plt.figure()
+    fig, axarr = plt.subplots(3,1)
     fig.suptitle(title, fontsize=12)
 
-    plt.subplot(311)
-    plt.plot(t[:], x[:,0],'b', label = x_label)
-    plt.plot(t[:], y[:,0],'r', label = y_label)
-    plt.xlabel('Time (sec since epoch) ')
-    plt.ylabel('X')
-    plt.legend()
+    axarr[0].plot(t[:], x[:,0],'b', label = x_label)
+    axarr[0].plot(t[:], y[:,0],'r', label = y_label)
+    axarr[0].set_xlabel('Time (sec since epoch) ')
+    axarr[0].set_ylabel(r'$X$')
+    axarr[0].legend()
 
-    plt.subplot(312)
-    plt.plot(t[:], x[:,1],'b', label = x_label)
-    plt.plot(t[:], y[:,1],'r', label = y_label)
-    plt.xlabel('Time (sec since epoch) ')
-    plt.ylabel('Y')
-    plt.legend()
+    axarr[1].plot(t[:], x[:,1],'b', label = x_label)
+    axarr[1].plot(t[:], y[:,1],'r', label = y_label)
+    axarr[1].set_xlabel('Time (sec since epoch) ')
+    axarr[1].set_ylabel(r'$Y$')
+    axarr[1].legend()
 
-    plt.subplot(313)
-    plt.plot(t[:], x[:,2],'b', label = x_label)
-    plt.plot(t[:], y[:,2],'r', label = y_label)
-    plt.xlabel('Time (sec since epoch) ')
-    plt.ylabel('Z')
-    plt.legend()
+    axarr[2].plot(t[:], x[:,2],'b', label = x_label)
+    axarr[2].plot(t[:], y[:,2],'r', label = y_label)
+    axarr[2].set_xlabel('Time (sec since epoch) ')
+    axarr[2].set_ylabel(r'$Z$')
+    axarr[2].legend()
 
     return
-
 
 
 def plot_31_1(t, x, title, y_label_1, y_label_2, y_label_3):
     print('Plotting ' + title + ' ...')
 
     mpl.rcParams['legend.fontsize'] = 10
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='serif')
 
-    fig = plt.figure()
+    fig, axarr = plt.subplots(3,1)
     fig.suptitle(title, fontsize=12)
 
-    plt.subplot(311)
-    plt.plot(t[:], x[:,0],'b')
-    plt.xlabel('Time (sec since epoch) ')
-    plt.ylabel(y_label_1)
+    axarr[0].plot(t[:], x[:,0],'b')
+    axarr[0].set_xlabel('Time (sec since epoch) ')
+    axarr[0].set_ylabel(y_label_1)
 
-    plt.subplot(312)
-    plt.plot(t[:], x[:,1],'b')
-    plt.xlabel('Time (sec since epoch) ')
-    plt.ylabel(y_label_2)
+    axarr[1].plot(t[:], x[:,1],'b')
+    axarr[1].set_xlabel('Time (sec since epoch) ')
+    axarr[1].set_ylabel(y_label_2)
 
-    plt.subplot(313)
-    plt.plot(t[:], x[:,2],'b')
-    plt.xlabel('Time (sec since epoch) ')
-    plt.ylabel(y_label_3)
+    axarr[2].plot(t[:], x[:,2],'b')
+    axarr[2].set_xlabel('Time (sec since epoch) ')
+    axarr[2].set_ylabel(y_label_3)
 
     return
-
 
 
 def plot_41_1(t, x, title, y_label_1, y_label_2, y_label_3, y_label_4):
     print('Plotting ' + title + ' ...')
 
     mpl.rcParams['legend.fontsize'] = 10
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='serif')
 
-    fig = plt.figure()
+    fig, axarr = plt.subplots(4,1)
     fig.suptitle(title, fontsize=12)
 
-    plt.subplot(411)
-    plt.plot(t[:], x[:,0],'b')
-    plt.xlabel('Time (sec since epoch) ')
-    plt.ylabel(y_label_1)
+    axarr[0].plot(t[:], x[:,0],'b')
+    axarr[0].set_xlabel('Time (sec since epoch) ')
+    axarr[0].set_ylabel(y_label_1)
 
-    plt.subplot(412)
-    plt.plot(t[:], x[:,1],'b')
-    plt.xlabel('Time (sec since epoch) ')
-    plt.ylabel(y_label_2)
+    axarr[1].plot(t[:], x[:,1],'b')
+    axarr[1].set_xlabel('Time (sec since epoch) ')
+    axarr[1].set_ylabel(y_label_2)
 
-    plt.subplot(413)
-    plt.plot(t[:], x[:,2],'b')
-    plt.xlabel('Time (sec since epoch) ')
-    plt.ylabel(y_label_3)
+    axarr[2].plot(t[:], x[:,2],'b')
+    axarr[2].set_xlabel('Time (sec since epoch) ')
+    axarr[2].set_ylabel(y_label_3)
 
-    plt.subplot(414)
-    plt.plot(t[:], x[:,3],'b')
-    plt.xlabel('Time (sec since epoch) ')
-    plt.ylabel(y_label_4)
+    axarr[3].plot(t[:], x[:,3],'b')
+    axarr[3].set_xlabel('Time (sec since epoch) ')
+    axarr[3].set_ylabel(y_label_4)
 
     return
-
 
 
 def plot_1(t, x, title, y_label):
     print('Plotting ' + title + ' ...')
 
     mpl.rcParams['legend.fontsize'] = 10
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='serif')
 
     fig = plt.figure()
     fig.suptitle(title, fontsize=12)
@@ -216,26 +211,31 @@ def plot_1(t, x, title, y_label):
     return
 
 
-
 def plot_trajectory(x_v_array):
     print('Plotting 3d trajectory ...')
 
     mpl.rcParams['legend.fontsize'] = 10
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='serif')
 
     fig_traj = plt.figure()
     ax = fig_traj.gca(projection='3d')
 
     ax.plot(x_v_array[:,0],x_v_array[:,1],x_v_array[:,2])
+    ax.set_xlabel(r'$X$')
+    ax.set_ylabel(r'$Y$')
+    ax.set_zlabel(r'$Z$')
     ax.set_zlim(0, 3)
 
     return
 
 
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Parse a ROS Bag file and plot.')
     parser.add_argument('input_file', help='Input ROS Bag file')
+    parser.add_argument('-s', '--sensor', help='Plot sensor data - Vicon and IMU data.', action='store_true')
+    parser.add_argument('-c', '--controller', help='Plot controller data - Gains and error varialbes.', action='store_true')
+    parser.add_argument('-m', '--motor', help='Plot motor data - Throttle commands and forces.', action='store_true')
     args = parser.parse_args()
 
     try:
@@ -250,20 +250,26 @@ if __name__ == "__main__":
         sys.exit()
 
     plot_trajectory(x_v_array)
-    # plot_31_2(time_array, x_v_array, xd_array, 'vicon', 'desired', 'position')
-    # plot_31_2(time_array, v_v_array, xd_dot_array, 'vicon', 'desired', 'velocity')
-    # plot_31_1(time_array, IMU_array, 'IMU data', 'Phi', 'Theta', 'Psi')
-    # plot_31_1(time_array, rpy_array, 'RPY data', 'Roll', 'Pitch', 'Yaw')
-    # plot_31_1(time_array, ex_array, 'eX', 'X', 'Y', 'Z')
-    # plot_31_1(time_array, ev_array, 'eV', 'V_x', 'V_y', 'V_z')
-    # plot_31_1(time_array, eR_array, 'eR', 'X', 'Y', 'Z')
-    # plot_31_1(time_array, eW_array, 'eW', 'X', 'Y', 'Z')
-    # plot_41_1(time_array, f_motor_array, 'Motor Forces', 'Motor 1', 'Motor 2', 'Motor 3', 'Motor 4')
-    # plot_41_1(time_array, thr_array, 'Throttle Values', 'Motor 1', 'Motor 2', 'Motor 3', 'Motor 4')
-    # plot_41_1(time_array, gainR_array, 'Attitude Gains', 'kR', 'kW', 'kiR', 'cR')
-    # plot_41_1(time_array, gainX_array, 'Position Gains', 'kX', 'kV', 'kiX', 'cX')
-    # plot_1(time_array, f_array, 'Force', 'Force (N)')
-    # plot_1(time_array, dt_vicon_array, 'Delta T from Vicon', 'dt')
+
+    if args.sensor:
+        plot_31_2(time_array, x_v_array, xd_array, 'vicon', 'desired', 'position')
+        plot_31_2(time_array, v_v_array, xd_dot_array, 'vicon', 'desired', 'velocity')
+        plot_31_1(time_array, IMU_array, 'IMU data', r'$\Phi$', r'$\Theta$', r'$\Psi$')
+        plot_31_1(time_array, rpy_array, 'RPY data', 'Roll', 'Pitch', 'Yaw')
+        plot_1(time_array, dt_vicon_array, r'$\Delta T$ from Vicon', r'$dt$')
+
+    if args.controller:
+        plot_31_1(time_array, ex_array, r'$e_X$', r'$X$', r'$Y$', r'$Z$')
+        plot_31_1(time_array, ev_array, r'$e_V$', r'$V_x$', r'$V_y$', r'$V_z$')
+        plot_31_1(time_array, eR_array, r'$eR$', r'$X$', r'$Y$', r'$Z$')
+        plot_31_1(time_array, eW_array, r'$eW$', r'$X$', r'$Y$', r'$Z$')
+        plot_41_1(time_array, gainR_array, 'Attitude Gains', r'$kR$', r'$kW$', r'$kiR$', r'$cR$')
+        plot_41_1(time_array, gainX_array, 'Position Gains', r'$kX$', r'$kV$', r'$kiX$', r'$cX$')
+
+    if args.motor:
+        plot_41_1(time_array, f_motor_array, 'Motor Forces', 'Motor 1', 'Motor 2', 'Motor 3', 'Motor 4')
+        plot_41_1(time_array, thr_array, 'Throttle Values', 'Motor 1', 'Motor 2', 'Motor 3', 'Motor 4')
+        plot_1(time_array, f_array, 'Force', 'Force (N)')
 
     print('')
     print('Plotting completed!')

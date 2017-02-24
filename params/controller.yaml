@@ -4,7 +4,7 @@ odroid_node:
 controller:
   mode: 1
   g: 9.81
-  m: 1.374 # 176
+  m: 1.7 #1.374 # 176
   J: [9.773E-3, 0.0, 0.0,
     0.0, 9.773E-3, 0.0,
     0.0,  0.0,  1.749E-2]
@@ -21,8 +21,8 @@ controller:
       ki: 0.01
       c: 0.10
     pos:
-      kp: 7.5
-      kd: 3.0
+      kp: 6.5
+      kd: 4.0
       ki: 0.01
       c: 0.10
   saturation:

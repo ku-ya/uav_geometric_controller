@@ -232,7 +232,6 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
   mode = config.mode;
   // MOTOR_ON = config.Motor;
   // MotorWarmup = config.MotorWarmup;
-  m =  config.m;
   xd(0) =  config.x;
   xd(1) =  config.y;
   xd(2) =  config.z;

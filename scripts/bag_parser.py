@@ -326,7 +326,7 @@ if __name__ == "__main__":
     plot_trajectory(x_v_array, latex)
     # plot_41_1(time_array, thr_array, 'Throttle Values', 'Motor 1', 'Motor 2', 'Motor 3', 'Motor 4', latex)
     # plot_31_2(time_array, IMU_W_array, x_v_array, 'IMU', 'Vicon', 'IMU + Vicon', latex)
-    plot_41_2(time_array, q_v_array, q_imu_array, 'Quaternion Comparison', 'w', 'q1', 'q2', 'q3', 'Vicon', 'IMU', latex)
+    # plot_41_2(time_array, q_v_array, q_imu_array, 'Quaternion Comparison', 'w', 'q1', 'q2', 'q3', 'Vicon', 'IMU', latex)
 
     if args.latex:
         plot_31_2(time_array, x_v_array, xd_array, 'vicon', 'desired', 'position', latex)

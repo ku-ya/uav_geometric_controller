@@ -57,8 +57,8 @@ def read_bag_file(filename):
     xd_array = np.zeros((num_drone_var_msg,3))
     x_v_array = np.zeros((num_drone_var_msg,3))
     v_v_array = np.zeros((num_drone_var_msg,3))
-    IMU_array = np.zeros((num_drone_var_msg,3))
-    rpy_array = np.zeros((num_drone_var_msg,3))
+    IMU_W_array = np.zeros((num_drone_var_msg,3))
+    IMU_RPY_array = np.zeros((num_drone_var_msg,3))
     xd_array = np.zeros((num_drone_var_msg,3))
     ex_array = np.zeros((num_drone_var_msg,3))
     ev_array = np.zeros((num_drone_var_msg,3))
@@ -81,8 +81,8 @@ def read_bag_file(filename):
         xd_dot_array[drone_var_index,:] = np.array([msg.xd_dot.x, msg.xd_dot.y, msg.xd_dot.z])
         xd_ddot_array[drone_var_index,:] = np.array([msg.xd_ddot.x, msg.xd_ddot.y, msg.xd_ddot.z])
         x_v_array[drone_var_index,:] = np.array([msg.x_v.x, msg.x_v.y, msg.x_v.z])
-        IMU_array[drone_var_index,:] = np.array([msg.IMU.x, msg.IMU.y, msg.IMU.z])
-        rpy_array[drone_var_index,:] = np.array([msg.rpy.x, msg.rpy.y, msg.rpy.z])
+        IMU_W_array[drone_var_index,:] = np.array([msg.IMU.x, msg.IMU.y, msg.IMU.z])
+        IMU_RPY_array[drone_var_index,:] = np.array([msg.rpy.x, msg.rpy.y, msg.rpy.z])
         v_v_array[drone_var_index,:] = np.array([msg.v_v.x, msg.v_v.y, msg.v_v.z])
         ex_array[drone_var_index,:] = np.array([msg.ex.x, msg.ex.y, msg.ex.z])
         ev_array[drone_var_index,:] = np.array([msg.ev.x, msg.ev.y, msg.ev.z])
@@ -103,14 +103,17 @@ def read_bag_file(filename):
     # shift the time array to the starting epoch
     time_array = time_array - time_array[0]
 
-    return time_array, xd_array, xd_dot_array, xd_ddot_array, IMU_array, \
-            rpy_array, x_v_array, v_v_array, ex_array, ev_array, eR_array, \
+    return time_array, xd_array, xd_dot_array, xd_ddot_array, IMU_W_array, \
+            IMU_RPY_array, x_v_array, v_v_array, ex_array, ev_array, eR_array, \
             eW_array, f_array, f_motor_array, thr_array, M_array, gainX_array, \
             gainR_array, dt_vicon_array
 
 
 def plot_31_2(t, x, y, x_label, y_label, title, latex):
     print('Plotting ' + title + ' ...')
+
+    # for plotting normalized data
+
 
     mpl.rcParams['legend.fontsize'] = 10
     if latex:
@@ -120,8 +123,8 @@ def plot_31_2(t, x, y, x_label, y_label, title, latex):
     fig, axarr = plt.subplots(3,1)
     fig.suptitle(title, fontsize=12)
 
-    axarr[0].plot(t[:], x[:,0],'b', label = x_label)
-    axarr[0].plot(t[:], y[:,0],'r', label = y_label)
+    axarr[0].plot(t[:], x[:,0]/x[:,0].max(),'b', label = x_label)
+    axarr[0].plot(t[:], y[:,0]/y[:,0].max(),'r', label = y_label)
     axarr[0].set_xlabel('Time (sec since epoch) ')
     if latex:
         axarr[0].set_ylabel(r'$X$')
@@ -129,8 +132,8 @@ def plot_31_2(t, x, y, x_label, y_label, title, latex):
         axarr[0].set_ylabel('X')
     axarr[0].legend()
 
-    axarr[1].plot(t[:], x[:,1],'b', label = x_label)
-    axarr[1].plot(t[:], y[:,1],'r', label = y_label)
+    axarr[1].plot(t[:], x[:,1]/x[:,1].max(),'b', label = x_label)
+    axarr[1].plot(t[:], y[:,1]/y[:,1].max(),'r', label = y_label)
     axarr[1].set_xlabel('Time (sec since epoch) ')
     if latex:
         axarr[1].set_ylabel(r'$Y$')
@@ -138,8 +141,8 @@ def plot_31_2(t, x, y, x_label, y_label, title, latex):
         axarr[1].set_ylabel('Y')
     axarr[1].legend()
 
-    axarr[2].plot(t[:], x[:,2],'b', label = x_label)
-    axarr[2].plot(t[:], y[:,2],'r', label = y_label)
+    axarr[2].plot(t[:], x[:,2]/x[:,2].max(),'b', label = x_label)
+    axarr[2].plot(t[:], y[:,2]/y[:,2].max(),'r', label = y_label)
     axarr[2].set_xlabel('Time (sec since epoch) ')
     if latex:
         axarr[2].set_ylabel(r'$Z$')
@@ -262,7 +265,7 @@ if __name__ == "__main__":
 
     try:
         # read bag file and output variables
-        time_array, xd_array, xd_dot_array, xd_ddot_array, IMU_array, rpy_array, \
+        time_array, xd_array, xd_dot_array, xd_ddot_array, IMU_W_array, IMU_RPY_array, \
             x_v_array, v_v_array, ex_array, ev_array, eR_array, eW_array, f_array, \
             f_motor_array, thr_array, M_array, gainX_array, gainR_array, \
             dt_vicon_array = read_bag_file(args.input_file)
@@ -273,12 +276,14 @@ if __name__ == "__main__":
 
 
     plot_trajectory(x_v_array, latex)
+    # plot_41_1(time_array, thr_array, 'Throttle Values', 'Motor 1', 'Motor 2', 'Motor 3', 'Motor 4', latex)
+    plot_31_2(time_array, IMU_W_array, x_v_array, 'IMU', 'Vicon', 'IMU + Vicon', latex)
 
     if args.latex:
         plot_31_2(time_array, x_v_array, xd_array, 'vicon', 'desired', 'position', latex)
         plot_31_2(time_array, v_v_array, xd_dot_array, 'vicon', 'desired', 'velocity', latex)
-        plot_31_1(time_array, IMU_array, 'IMU data', r'$\Phi$', r'$\Theta$', r'$\Psi$', latex)
-        plot_31_1(time_array, rpy_array, 'RPY data', 'Roll', 'Pitch', 'Yaw', latex)
+        plot_31_1(time_array, IMU_W_array, 'IMU data', r'$\Phi$', r'$\Theta$', r'$\Psi$', latex)
+        plot_31_1(time_array, IMU_RPY_array, 'RPY data', 'Roll', 'Pitch', 'Yaw', latex)
         plot_1(time_array, dt_vicon_array, r'$\Delta T$ from Vicon', r'$dt$', latex)
 
         plot_31_1(time_array, ex_array, r'$e_X$', r'$X$', r'$Y$', r'$Z$', latex)
@@ -295,12 +300,12 @@ if __name__ == "__main__":
         args.sensor = False
         args.controller = False
         args.motor = False
-        
+
     if args.sensor:
         plot_31_2(time_array, x_v_array, xd_array, 'vicon', 'desired', 'position', latex)
         plot_31_2(time_array, v_v_array, xd_dot_array, 'vicon', 'desired', 'velocity', latex)
-        plot_31_1(time_array, IMU_array, 'IMU data', 'Phi', 'Theta', 'Psi', latex)
-        plot_31_1(time_array, rpy_array, 'RPY data', 'Roll', 'Pitch', 'Yaw', latex)
+        plot_31_1(time_array, IMU_W_array, 'IMU data', 'Phi', 'Theta', 'Psi', latex)
+        plot_31_1(time_array, IMU_RPY_array, 'RPY data', 'Roll', 'Pitch', 'Yaw', latex)
         plot_1(time_array, dt_vicon_array, 'Delta T from Vicon', 'dt', latex)
 
     if args.controller:
@@ -316,7 +321,7 @@ if __name__ == "__main__":
         plot_41_1(time_array, thr_array, 'Throttle Values', 'Motor 1', 'Motor 2', 'Motor 3', 'Motor 4', latex)
         plot_1(time_array, f_array, 'Force', 'Force (N)', latex)
 
-    
+
 
     print('')
     print('Plotting completed!')

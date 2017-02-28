@@ -275,39 +275,16 @@ def plot_41_2(t, x, y, title, y_label_1, y_label_2, y_label_3, y_label_4, legend
 
 
 def vicon_imu_comaprison(t_sent, t_received, vicon_sent, vicon_received, latex):
-    print('Plotting IMU and Vicon quaternion comparison')
-
-    # R_imu_0 = quattodcm(imu[0,:])
-    # R_vicon_0 = quattodcm(vicon[0,:])
-    # R_iv = np.dot( R_imu_0.T, R_vicon_0 )   # IMU to Vicon
-    #
-    # q_iv = np.zeros( (len(vicon[:,0]), 4))
-    # for i in range( len(vicon[:,0]) ):
-    #
-    #     R_imu = quattodcm(imu[i,:])
-    #     R_vicon = quattodcm(vicon[i,:])
-    #     R_iv = np.dot( R_iv.T, R_imu )
-    #
-    #     # R_i_in_v = np.dot(R_iv, R_imu)
-    #     # pdb.set_trace()
-    #     q_iv[i, :] = dcmtoquat(R_iv)
-
-
+    print('Plotting Sent and Received quaternion comparison')
 
     mpl.rcParams['legend.fontsize'] = 10
     if latex:
         plt.rc('text', usetex=True)
         plt.rc('font', family='serif')
 
-    fig_t = plt.figure()
-    fig_t.suptitle('IMU and Vicon Time Comparison', fontsize=12)
-    plt.plot(t_received[:],'b', label = 'Received')
-    plt.plot(t_sent[:],'r', label = 'Sent')
-
-
 
     fig = plt.figure()
-    fig.suptitle('IMU and Vicon Quaternion Comparison', fontsize=12)
+    fig.suptitle('Sent and Received Quaternion Comparison', fontsize=12)
 
     plt.subplot(411)
     plt.plot(t_received[:], vicon_received[:,0],'b', label = 'Received')

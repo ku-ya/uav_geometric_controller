@@ -176,7 +176,6 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   v_v = v_ave.rowwise().mean();
   prev_x_v = x_v;
   // prev_v_v = v_v;
-
 }
 
 void odroid_node::cmd_callback(const odroid::trajectory::ConstPtr& msg){

@@ -17,6 +17,10 @@ int val = 0, count = 0;
 int send_cmd, sensorValue;
 String str_out,str_out2;
 
+int interruptPin = 53;
+volatile float timeold;
+volatile float rpm= 0;
+volatile float dt= 0;
 
 
 // the setup routine runs once when you press reset:
@@ -28,6 +32,11 @@ void setup() {
   pinMode(inPin0, INPUT);
   pinMode(inPin1, INPUT);
   pinMode(inPin2, INPUT);
+  
+  rpm = 0;
+  timeold = 0;
+  pinMode(interruptPin, INPUT);
+  attachInterrupt(interruptPin, rpm_count, RISING);
 }
 
 //We average the analog reading to elminate some of the noise
@@ -52,42 +61,55 @@ void send_serial(int msg0){
 
 // the loop routine runs over and over again forever:
 void loop() {
-  on_flag = (digitalRead(inPin0)==LOW);
-  mode = (digitalRead(inPin1)==LOW);
-  s_mode = digitalRead(inPin2);
- 
-  if(on_flag){
-    if(mode){
-      double sec = 20;
-      while(!digitalRead(inPin0) && cmd < 180){
-        cmd_out = (int)cmd;
-        send_command(cmd_out);
-        send_serial(cmd_out);
-        cmd = cmd + 180.0/(sec/0.01);
-        delay(10);
-      }
-      cmd = 20;
-      delay(2000);
-    }else{
-      if(digitalRead(inPin2)){k = 5;}else{k = 1;}
-      for(int i = 0; i<k;i++){
-      while(!digitalRead(inPin0) && count < 300){
-        send_command(cmd_out);
-        send_serial(cmd_out);
-        delay(10);
-        count = count + 1;
-       }
-       count = 0;
-       delay(2000);
-      }
-      cmd_out = cmd_out + 10;
-      
-    }
+//  Serial.println(digitalRead(interruptPin));
+  Serial.println(rpm);
+  Serial.print("dt:");
+  Serial.println(dt);
 
-  }else{
-    cmd_out = 20;
-    send_command(0);
-    Serial.println("Motor off, Mode: "+(String)mode+", Repeat: "+(String)s_mode);
-    delay(100);
-  }
+  send_command(100);
+  delay(100);
+  
+//  on_flag = (digitalRead(inPin0)==LOW);
+//  mode = (digitalRead(inPin1)==LOW);
+//  s_mode = digitalRead(inPin2);
+// 
+//  if(on_flag){
+//    if(mode){
+//      double sec = 20;
+//      while(!digitalRead(inPin0) && cmd < 180){
+//        cmd_out = (int)cmd;
+//        send_command(cmd_out);
+//        send_serial(cmd_out);
+//        cmd = cmd + 180.0/(sec/0.01);
+//        delay(10);
+//      }
+//      cmd = 20;
+//      delay(2000);
+//    }else{
+//      if(digitalRead(inPin2)){k = 5;}else{k = 1;}
+//      for(int i = 0; i<k;i++){
+//      while(!digitalRead(inPin0) && count < 300){
+//        send_command(cmd_out);
+//        send_serial(cmd_out);
+//        delay(10);
+//        count = count + 1;
+//       }
+//       count = 0;
+//       delay(2000);
+//      }
+//      cmd_out = cmd_out + 10;
+//      
+//    }
+//
+//  }else{
+//    cmd_out = 20;
+//    send_command(0);
+//    Serial.println("Motor off, Mode: "+(String)mode+", Repeat: "+(String)s_mode);
+//    delay(100);
+//  }
+}
+void rpm_count() {
+  dt = millis() - timeold;
+  rpm = 30/dt;
+  timeold = millis();
 }

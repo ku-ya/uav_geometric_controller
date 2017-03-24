@@ -2,11 +2,12 @@
 import rospy
 from std_msgs.msg import String
 from nav_msgs.msg import OccupancyGrid
-import tf
+import tf, sys
 import csv
 import numpy as np
 from rospy.numpy_msg import numpy_msg
 from std_msgs.msg import Float64MultiArray, MultiArrayDimension
+from math import floor
 
 def callback(data):
     # tempolary hardcode the parameter
@@ -65,7 +66,25 @@ def callback(data):
                  "world")
     # rospy.loginfo(rospy.get_caller_id() + "shape %s", a.data.shape)
 def cmd_callback(msg):
-    print(msg)
+    trajectory = msg.data
+    N = len(trajectory)
+    # print(N)
+    n_seg = int(trajectory[1])
+    # print(n_seg)
+    t_step = trajectory[2:int(n_seg+3)]
+    # print(t_step)
+    dim = 2
+    # n = floor((N-2-len(t_step))/(dim*n_seg)+0.5)
+    # n = (N-2-len(t_step))/2/n_seg+1
+    # print(n)
+    trajectory = trajectory[int(n_seg+3):]
+
+    a_x = trajectory[:len(trajectory)/2]
+    a_y = trajectory[len(trajectory)/2:]
+    # print(a_x)
+    # print(a_y)
+
+    print(len(a_x), len(a_y))
 
 def map_listener():
 

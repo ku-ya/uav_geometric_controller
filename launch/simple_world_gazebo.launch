@@ -25,7 +25,7 @@
 <!--<node pkg="ogm_ae" name="move_quad" type="model_state.py" />-->
 
   <include file="$(find octomap_server)/launch/octomap_mapping.launch"/>
-  <node pkg='odroid' name='grid2array' type='OccGrid_to_array.py'/> 
+  <node pkg='odroid' name='grid2array' type='OccGrid_to_array.py' output='screen'/> 
   <!-- Start SLAM system -->
   <!-- <include file="$(find hector_mapping)/launch/mapping_default.launch">
     <arg name="odom_frame" value="world"/>

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <vector>
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
 
 // ROS includes.
 #include "ros/ros.h"
@@ -78,6 +79,8 @@ public:
     Matrix2d e; //inertial frame,
     // Measured Values in Vicon inettial frame
     Vector3d x_v, v_v, prev_x_v,prev_v_v;
+
+    Quaterniond q_imu, q_v;
     MatrixXd v_ave;
     bool IMU_flag, Vicon_flag, controller_flag;
     // Integral errors begin at zero

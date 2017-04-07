@@ -29,6 +29,8 @@ void publish_error(odroid_node& node){
   tf::vectorEigenToMsg(node.xd, e_msg.xd);
   tf::vectorEigenToMsg(node.xd_dot, e_msg.xd_dot);
   tf::vectorEigenToMsg(node.xd_ddot, e_msg.xd_ddot);
+  tf::quaternionEigenToMsg(node.q_v, e_msg.q_v);
+  tf::quaternionEigenToMsg(node.q_imu, e_msg.q_imu);
   e_msg.force = node.f_total;
   e_msg.dt_vicon_imu = (float)node.dt_vicon_imu;
   for(int i = 0; i<4;i++){
@@ -106,6 +108,7 @@ odroid_node::odroid_node(){
   x_v = v_v = prev_x_v = prev_v_v = Vector3d::Zero();
   f_motor =  Vector4d::Zero();
   v_ave = MatrixXd::Zero(3,10);
+  q_v=q_imu=Quaterniond(0,0,0,1);
 
   double wnx = 4, zetax = 0.7;
   kx = wnx*wnx*m;
@@ -146,6 +149,7 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   dt_vicon_imu = (imu_time - vicon_time).toSec();
   tf::Quaternion temp;
   tf::quaternionMsgToTF(msg->orientation,temp);
+  tf::quaternionMsgToEigen(msg->orientation,q_imu);
   tf::Matrix3x3 m(temp);
   double roll, pitch, yaw;
   m.getRPY(roll, pitch, yaw);
@@ -161,7 +165,7 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   dt_vicon = (msg->header.stamp - vicon_time).toSec();
   vicon_time = msg->header.stamp;
   Eigen::Affine3d pose;
-
+  tf::quaternionMsgToEigen(msg->transform.rotation, q_v);
   tf::transformMsgToEigen(msg->transform,pose);
   boost::mutex::scoped_lock scopedLock(mutex_);
   x_v  = pose.matrix().block<3,1>(0,3);
@@ -172,7 +176,6 @@ void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr
   v_v = v_ave.rowwise().mean();
   prev_x_v = x_v;
   // prev_v_v = v_v;
-
 }
 
 void odroid_node::cmd_callback(const odroid::trajectory::ConstPtr& msg){
@@ -232,7 +235,6 @@ void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
   mode = config.mode;
   // MOTOR_ON = config.Motor;
   // MotorWarmup = config.MotorWarmup;
-  m =  config.m;
   xd(0) =  config.x;
   xd(1) =  config.y;
   xd(2) =  config.z;

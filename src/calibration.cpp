@@ -16,8 +16,6 @@ void callback(odroid::calibrationConfig &config, uint32_t level) {
 void adcCallback(const rosserial_arduino::Adc msg)
 {
   ROS_INFO("DAQ value: voltage[%d] cmd[%d]", msg.adc0, msg.adc1);
-
-
 }
 
 int main(int argc, char **argv) {
@@ -37,12 +35,12 @@ int main(int argc, char **argv) {
 
   while (ros::ok()){
 
-    msg.adc0 = on_off;
-    msg.adc1 = cmd;
-    msg.adc2 = mode;
-    pub.publish(msg);
-    ros::spinOnce();
-    loop_rate.sleep();
+  msg.adc0 = on_off;
+  msg.adc1 = cmd;
+  msg.adc2 = mode;
+  pub.publish(msg);
+  ros::spinOnce();
+  loop_rate.sleep();
   }
   return 0;
 }

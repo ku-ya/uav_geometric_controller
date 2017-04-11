@@ -19,3 +19,4 @@ geometry_msgs/Vector3 Moment
 float32[4] gainX
 float32[4] gainR
 float32 dt_vicon_imu
+uint8[24] motor_power

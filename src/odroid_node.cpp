@@ -5,7 +5,6 @@
 // #include <odroid/visualize.hpp>
 #include <odroid/error.h>
 #include <XmlRpcValue.h>
-
 using namespace std;
 using namespace Eigen;
 using namespace message_filters;
@@ -223,7 +222,7 @@ void odroid_node::ctl_callback(hw_interface hw_intf){
     thr[k] = floor(1/0.03*(f_motor(k)+0.37)+0.5);
   }
   if(environment == 1){
-    hw_intf.motor_command(thr, MotorWarmup, MOTOR_ON);
+    power_msg = hw_intf.motor_command(thr, MotorWarmup, MOTOR_ON);
   }else{
     controller::gazebo_control(*this);
   }

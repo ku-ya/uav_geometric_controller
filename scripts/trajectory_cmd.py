@@ -72,7 +72,7 @@ def cmd(msg):
             rospy.set_param('/odroid_node/MotorWarmup', False)
 
         reset_height = 1.5
-        min_flight_height = 0.2
+        min_flight_height = 0.15
         vel_up = 0.5
         vel_dn = -0.5
         a = 2*np.pi/t_total# maps t = 0:t_total to 0:2*pi

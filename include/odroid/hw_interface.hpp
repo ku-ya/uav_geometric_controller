@@ -13,6 +13,7 @@
 // Adafruit PCA9685 Servo Informatio
 #define i2c_addr 0x40
 
+#include <std_msgs/Int8MultiArray.h>
 class hw_interface
 {
 public:
@@ -27,7 +28,7 @@ public:
   uint16_t servopl[6];// i2c servo pulse length (duty_cycle[i] = servopl[i]/4095 @ ~325 Hz)
   uint16_t zp[6] = {1300, 1285, 1230, 1280, 1215, 1275};
 
-  void motor_command(int thr[4], bool MotorWarmup, bool MOTOR_ON);
+  uint8_t* motor_command(int thr[4], bool MotorWarmup, bool MOTOR_ON);
   void open_I2C();
 };
 

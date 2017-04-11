@@ -2,8 +2,27 @@
 
 hw_interface::hw_interface(){}
 hw_interface::~hw_interface(){}
-void hw_interface::motor_command(int thr[4], bool MotorWarmup, bool MOTOR_ON){
+uint8_t* hw_interface::motor_command(int thr[4], bool MotorWarmup, bool MOTOR_ON){
   // Execute motor output commands
+  int length = 6;
+  char buffer[6];
+  uint8_t  *msg = new uint8_t[24] ;
+  for(int i=0;i<4;i++){
+    tcflush(fhi2c, TCIOFLUSH);
+
+    usleep(500);
+
+    if(ioctl(fhi2c, I2C_SLAVE, mtr_addr[i])<0)
+    printf("ERROR: ioctl\n");
+    read(fhi2c,buffer,length);
+    //printf("Motor:%d ",i);
+    for(int k=0;k<length;k++){
+      msg[i*4+k] = ((uint8_t)buffer[k]);
+      //printf("%d, ", buffer[k]);
+    }
+    //printf("\n");
+  }
+
   for(int i = 0; i < 4; i++){
     //printf("Motor %i I2C write command of %i to address %i (%e N).\n", i, thr[i], mtr_addr[i], f[i]);
     tcflush(fhi2c, TCIOFLUSH);
@@ -17,6 +36,7 @@ void hw_interface::motor_command(int thr[4], bool MotorWarmup, bool MOTOR_ON){
     while(write(fhi2c, &thr[i], 1)!=1)
     printf("ERROR: Motor %i I2C write command of %i to address %i not sent.\n", i, thr[i], mtr_addr[i]);
   }
+  return msg;
 }
 
 void hw_interface::open_I2C(){

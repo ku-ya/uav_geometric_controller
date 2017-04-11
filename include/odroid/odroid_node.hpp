@@ -42,7 +42,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <odroid/trajectory.h>
 #include <list>
-
+#include <std_msgs/Int8MultiArray.h>
 using namespace Eigen;
 
 class odroid_node
@@ -124,7 +124,7 @@ public:
 
     // Output of Control_Nonlinear() and Command Execution
     int thr[4] = {0,0,0,0};// i2c motor commands
-
+    uint8_t* power_msg;
     //! Constructor.
     odroid_node();
     //! Destructor.

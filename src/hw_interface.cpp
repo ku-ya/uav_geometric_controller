@@ -17,7 +17,7 @@ uint8_t* hw_interface::motor_command(int thr[4], bool MotorWarmup, bool MOTOR_ON
     read(fhi2c,buffer,length);
     //printf("Motor:%d ",i);
     for(int k=0;k<length;k++){
-      msg[i*4+k] = ((uint8_t)buffer[k]);
+      msg[i*6+k] = ((uint8_t)buffer[k]);
       //printf("%d, ", buffer[k]);
     }
     //printf("\n");

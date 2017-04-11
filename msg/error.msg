@@ -5,9 +5,12 @@ geometry_msgs/Vector3 xd_ddot
 geometry_msgs/Vector3 x_v
 geometry_msgs/Quaternion q_v
 geometry_msgs/Vector3 v_v
-geometry_msgs/Vector3 IMU
+geometry_msgs/Vector3 w_imu
 geometry_msgs/Quaternion q_imu
-geometry_msgs/Vector3 rpy
+float32[9] R_c
+float32[9] W_c
+float32[9] Wdot_c
+geometry_msgs/Vector3 b1d
 geometry_msgs/Vector3 ex
 geometry_msgs/Vector3 ev
 geometry_msgs/Vector3 eR

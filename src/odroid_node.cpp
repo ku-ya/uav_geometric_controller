@@ -18,12 +18,12 @@ void publish_error(odroid_node& node){
 
   tf::vectorEigenToMsg(node.x_v, e_msg.x_v);
   tf::vectorEigenToMsg(node.v_v, e_msg.v_v);
+  tf::vectorEigenToMsg(node.b1d, e_msg.b1d);
   tf::vectorEigenToMsg(node.eR, e_msg.eR);
   tf::vectorEigenToMsg(node.eW, e_msg.eW);
   tf::vectorEigenToMsg(node.M, e_msg.Moment);
-  tf::vectorEigenToMsg(node.rpy, e_msg.rpy);
   tf::vectorEigenToMsg(node.eX, e_msg.ex);
-  tf::vectorEigenToMsg(node.W_b, e_msg.IMU);
+  tf::vectorEigenToMsg(node.W_b, e_msg.w_imu);
   tf::vectorEigenToMsg(node.eV, e_msg.ev);
   tf::vectorEigenToMsg(node.xd, e_msg.xd);
   tf::vectorEigenToMsg(node.xd_dot, e_msg.xd_dot);
@@ -36,8 +36,16 @@ void publish_error(odroid_node& node){
     e_msg.throttle[i] = (float) node.thr[i];
     e_msg.f_motor[i] = (float)node.f_motor(i);
   }
+ for(int i = 0;i<24;i++){
+    e_msg.motor_power[i] = node.motor_power[i];
+    }
+  for(int i=0;i<9;i++){
+    e_msg.R_c[i] = (float)node.R_c(i);
+    e_msg.W_c[i] = (float)node.W_c(i); 
+  }
   e_msg.gainX = {node.kx, node.kv, node.kiX, node.cX};
   e_msg.gainR = {node.kR, node.kW, node.kiR, node.cR};
+  // e_msg.motor_power = &node.motor_power;
   node.pub_.publish(e_msg);
 }
 
@@ -104,8 +112,10 @@ odroid_node::odroid_node(){
   prev_x_v= prev_v_v = eiX =  eiX_last = eiR_last = Vector3d::Zero();
 	x_e = v_e = eiR = eiX = Vector3d::Zero();
   xd = xd_dot = xd_ddot= Wd = Wd_dot = W_b = W_raw = Vector3d::Zero();
-  x_v = v_v = prev_x_v = prev_v_v = Vector3d::Zero();
+  x_v = v_v = prev_x_v = prev_v_v = b1d = Vector3d::Zero();
+  M = eX = eV = eR = eW = Vector3d::Zero();
   f_motor =  Vector4d::Zero();
+  R_c = W_c = Wdot_c = Matrix3d::Zero();
   v_ave = MatrixXd::Zero(3,10);
   q_v=q_imu=Quaterniond(0,0,0,1);
 
@@ -222,8 +232,8 @@ void odroid_node::ctl_callback(hw_interface hw_intf){
     thr[k] = floor(1/0.03*(f_motor(k)+0.37)+0.5);
   }
   if(environment == 1){
-    power_msg = hw_intf.motor_command(thr, MotorWarmup, MOTOR_ON);
-  }else{
+    motor_power = hw_intf.motor_command(thr, MotorWarmup, MOTOR_ON);
+     }else{
     controller::gazebo_control(*this);
   }
 }

@@ -29,12 +29,12 @@ if __name__=="__main__":
 		# print vels(speed,turn)
 		while(1):
 			key = getKey()
-			print key
+			print(key)
 			if (key == '\x03'):
 				break
 			pub.publish(key)
 	except:
-		print e
+		print(e)
 	finally:
 		# pub.publish(twist)
     		termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)

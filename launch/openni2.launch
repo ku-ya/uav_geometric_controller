@@ -10,7 +10,7 @@
   <!-- device_id can have the following formats:
          "#1"  : the first device found
          "2@X" : the Xth device on USB bus 2 -->
-  <arg name="device_id" default="1d27/0601@5/3"/>
+  <arg name="device_id" default="#1"/>
   <!-- <arg name="device_id" default="#1"/> -->
   <!-- By default, calibrations are stored to file://${ROS_HOME}/camera_info/${NAME}.yaml,
        where ${NAME} is of the form "[rgb|depth]_[serial#]", e.g. "depth_B00367707227042B".
@@ -19,7 +19,7 @@
   <arg name="depth_camera_info_url" default="" />
 
   <!-- Hardware depth registration -->
-  <arg name="depth_registration" default="false" />
+  <arg name="depth_registration" default="true" />
 
   <!-- Driver parameters -->
   <arg name="color_depth_synchronization"     default="false" />
@@ -41,7 +41,7 @@
   <arg name="debayer_processing"              default="false" />
   <arg name="ir_processing"                   default="false" />
   <arg name="depth_processing"                default="true" />
-  <arg name="depth_registered_processing"     default="false" />
+  <arg name="depth_registered_processing"     default="true" />
   <arg name="disparity_processing"            default="false" />
   <arg name="disparity_registered_processing" default="false" />
   <arg name="hw_registered_processing"        default="false" if="$(arg depth_registration)" />

@@ -9,27 +9,29 @@ from odroid.msg import trajectory
 
 def char_to_mission(argument):
     switcher = {
-        't': 'takeoff',
-        'l': 'land',
-        'f': 'figure8',
-        'e': 'lissajous',
-        'p': 'p2p',
-        'r': 'reset',
-        'h': 'hover',
-        'm': 'motor',
-        'w': 'warmup'
-    }
+            't': 'takeoff',
+            'l': 'land',
+            'f': 'figure8',
+            'e': 'lissajous',
+            'p': 'p2p',
+            'r': 'reset',
+            'h': 'hover',
+            'm': 'motor',
+            'w': 'warmup',
+            '3': '3pt'
+            }
     return switcher.get(argument, "nothing")
 
 def char_to_speed(argument):
     switcher = {
-        't': 4,
-        'l': 4,
-        'f': 15,
-        'e': 15,
-        'p': 10,
-        'h': 4,
-    }
+            't': 4.,
+            'l': 4.,
+            'f': 15.,
+            'e': 15.,
+            'p': 10.,
+            'h': 4.,
+            '3': 21.
+            }
     return switcher.get(argument, "nothing")
 
 def cmd(msg):
@@ -79,7 +81,7 @@ def cmd(msg):
         b = 2*a# maps t = 0:t_total to 0:4*pi (Lissajous figure 8 double rotation in y)
 
 
-        print mission
+        print(mission)
 
         t_init = (rospy.get_rostime()).to_sec()
 
@@ -100,18 +102,60 @@ def cmd(msg):
                 A = 2.0
                 B = 1.0
                 delta = np.pi/2
-		if t < t_total:
-		    x = A*np.sin(a*t+delta+start_radians_x)
-	            x_dot = a*A*np.cos(a*t+delta+start_radians_x)
-	            x_ddot = -a*a*A*np.sin(a*t+delta+start_radians_x)
-	            y = B*np.sin(b*t+start_radians_y)
-	            y_dot = b*B*np.cos(b*t+start_radians_y)
-	            y_ddot = -b*b*B*np.sin(b*t+start_radians_y)
-	            z = reset_height
-	            z_dot = 0.0
-	            z_ddot = 0.0
-		else:
-		    x = 0.0
+                if t < t_total:
+                   x = A*np.sin(a*t+delta+start_radians_x)
+                   x_dot = a*A*np.cos(a*t+delta+start_radians_x)
+                   x_ddot = -a*a*A*np.sin(a*t+delta+start_radians_x)
+                   y = B*np.sin(b*t+start_radians_y)
+                   y_dot = b*B*np.cos(b*t+start_radians_y)
+                   y_ddot = -b*b*B*np.sin(b*t+start_radians_y)
+                   z = reset_height
+                   z_dot = 0.0
+                   z_ddot = 0.0
+                else:
+                   x = 0.0
+                   y = 0.0
+                   z = reset_height
+                   x_dot = 0.0
+                   y_dot = 0.0
+                   z_dot = 0.0
+                   x_ddot = 0.0
+                   y_ddot = 0.0
+                   z_ddot = 0.0
+                   print(x_dot)
+                   print('Lissajous figure 8 complete.')
+            elif mission=='3pt':
+                t_now = (rospy.get_rostime()).to_sec()
+                t = t_now - t_init
+                t_total3 = t_total/3
+                t_h = t_total3/2
+                if t < t_total3:
+                    x = 0
+                    y = 0
+                    z = reset_height + 1./4*(np.sin(np.pi*(-1./2+t/t_h))+1)
+                    x_dot = 0
+                    y_dot = 0
+                    z_dot = 1./4*1./t_h*np.pi*np.cos(np.pi*(-1./2+t/t_h))
+                elif t>t_total3 and t<t_total3*2:
+                    t = t - t_total3
+                    x = 1./2*(np.sin(np.pi*(-1./2+t/t_h))+1)
+                    y = 0
+                    z = reset_height
+                    x_dot = 1./2*1./t_h*np.pi*np.sin(np.pi*t/t_h)
+                    y_dot = 0
+                    z_dot = 0
+                elif t>t_total3*2 and t < t_total:
+                    t = t - t_total3*2
+                    x = 1./2*(np.sin(np.pi*(-1./2+t/t_h))+1)
+                    y = 1./2*(np.sin(np.pi*(-1./2+t/t_h))+1)
+                    z = reset_height + 1./4*(np.sin(np.pi*(-1./2+t/t_h))+1)
+                    x_dot = 1./2*1./t_h*np.pi*np.cos(np.pi*(-1./2+t/t_h))
+                    y_dot = 1./2*1./t_h*np.pi*np.cos(np.pi*(-1./2+t/t_h))
+                    z_dot = 1./4*1./t_h*np.pi*np.cos(np.pi*(-1./2+t/t_h))
+                    print(t)
+                    print(t_total)
+                else:
+                    x = 0.0
                     y = 0.0
                     z = reset_height
                     x_dot = 0.0
@@ -120,9 +164,7 @@ def cmd(msg):
                     x_ddot = 0.0
                     y_ddot = 0.0
                     z_ddot = 0.0
-		    print(x_dot)
-                    print('Lissajous figure 8 complete.')
-
+                    print('3pt complete')
             elif mission=='p2p':
                 t_now = (rospy.get_rostime()).to_sec()
                 t = t_now-t_init
@@ -137,7 +179,7 @@ def cmd(msg):
                 z_ddot = -(np.sin(t)/2)*a**2
 
                 if t > t_total:
-		    x = 0.0
+                    x = 0.0
                     y = 0.0
                     z = reset_height
                     x_dot = 0.0
@@ -206,9 +248,9 @@ def cmd(msg):
 
             pub.publish(cmd)
             rate.sleep()
-	    if t > t_total or mission == 'reset':
-		print('Trajectory complete. Ready for another command.')
-		break
+            if t > t_total or mission == 'reset':
+                print('Trajectory complete. Ready for another command.')
+                break
 
 
 def get_key():

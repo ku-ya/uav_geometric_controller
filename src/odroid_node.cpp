@@ -167,7 +167,8 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   rpy << roll, pitch, yaw;
 }
 
-void odroid_node::vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg){
+void odroid_node::vicon_callback(
+    const geometry_msgs::TransformStamped::ConstPtr& msg){
   // controller_flag = true;
   if(!Vicon_flag){ ROS_INFO("Vicon ready");}
   Vicon_flag = true;
@@ -199,9 +200,12 @@ void odroid_node::cmd_callback(const odroid::trajectory::ConstPtr& msg){
 void odroid_node::get_sensor(){
   ros::NodeHandle nh_sens;
     // IMU and keyboard input callback
-  ros::Subscriber imu_sub = nh_sens.subscribe("imu/imu",100, &odroid_node::imu_callback, this);
-  ros::Subscriber vicon_sub = nh_sens.subscribe("vicon/Maya/Maya",100, &odroid_node::vicon_callback, this);
-  ros::Subscriber cmd_sub = nh_sens.subscribe("xd",100, &odroid_node::cmd_callback, this);
+  ros::Subscriber imu_sub =
+    nh_sens.subscribe("imu/imu",100, &odroid_node::imu_callback, this);
+  ros::Subscriber vicon_sub =
+    nh_sens.subscribe("vicon/Maya/Maya",100, &odroid_node::vicon_callback, this);
+  ros::Subscriber cmd_sub =
+    nh_sens.subscribe("xd",100, &odroid_node::cmd_callback, this);
   ros::spin();
 }
 
@@ -224,7 +228,8 @@ void odroid_node::ctl_callback(hw_interface hw_intf){
 
   if(Vicon_flag){
     boost::mutex::scoped_lock scopedLock(mutex_);
-    controller::GeometricPositionController(*this, xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_b);
+    controller::GeometricPositionController(*this,
+        xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_b);
   }
   for(int k = 0; k < 4; k++){
     if(f_motor(k) < 0 ){f_motor(k)=0;}

@@ -17,7 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   rosserial_arduino
   tf
   tf2
-	message_generation
+  message_generation
   cv_bridge
   image_transport
   geometry_msgs
@@ -95,7 +95,7 @@ add_message_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
-	geometry_msgs
+  geometry_msgs
 )
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -172,6 +172,9 @@ add_dependencies(calibration ${PROJECT_NAME}_gencfg)
 target_link_libraries(odroid_node
   ${catkin_LIBRARIES} controller hw_interface
 )
+
+## add_dependencies(odroid_node ${PROJECT_NAME}_generate_messages_cpp)
+
 target_link_libraries(sim_vicon ${catkin_LIBRARIES})
 target_link_libraries(controller ${catkin_LIBRARIES})
 # target_link_libraries(visualize ${catkin_LIBRARIES})

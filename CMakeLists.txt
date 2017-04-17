@@ -113,7 +113,7 @@ generate_messages(
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
-  config/reconfigure.cfg
+  config/Gains.cfg
 	config/calibration.cfg
 )
 

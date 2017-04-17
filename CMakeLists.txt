@@ -36,7 +36,7 @@ include_directories(EIGEN3_INCLUDE_DIR ${GTEST_INCLUDE_DIRS})
 
 # find_package(OpenCV 3 REQUIRED)
 # include_directories(${OpenCV_INCLUDE_DIRS})
-include_directories(include ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
+include_directories(include ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${dynamic_reconfigure_PACKAGE_PATH}/cmake/cfgbuild.cmake)
 # find_package(openCV REQUIRED)
 # include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -166,7 +166,7 @@ add_dependencies(odroid_node ${PROJECT_NAME}_gencfg)
 add_dependencies(calibration ${PROJECT_NAME}_gencfg)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(odroid_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(odroid_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(odroid_node

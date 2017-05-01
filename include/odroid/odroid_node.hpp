@@ -79,6 +79,7 @@ public:
   Vector3d rpy;
   Matrix2d e; //inertial frame,
   // Measured Values in Vicon inettial frame
+  String vicon_name;
   Vector3d x_v, v_v, prev_x_v,prev_v_v;
 
   Quaterniond q_imu, q_v;

@@ -140,7 +140,7 @@ odroid_node::odroid_node(){
   ros::param::get("/controller/gain/pos/c",cX);
   ros::param::get("/controller/saturation/x",eiX_sat);
   ros::param::get("/controller/saturation/R",eiR_sat);
-
+  ros::param::param<std::vector<int>>("/port/i2c",mtr_addr,mtr_addr);
   pub_ = n_.advertise<odroid::error>("/drone_variable",1);
   ROS_INFO("Odroid node initialized");
 }
@@ -212,7 +212,7 @@ void odroid_node::get_sensor(){
 }
 
 void odroid_node::control(){
-  hw_interface hw_intf;  // open communication through I2C
+  hw_interface hw_intf(mtr_addr);  // open communication through I2C
   if(getEnv() == 1) hw_intf.open_I2C();
   ros::Rate loop_rate(100); // rate for the node loop
   while (ros::ok()){

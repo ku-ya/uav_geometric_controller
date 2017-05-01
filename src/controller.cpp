@@ -6,7 +6,7 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   std::cout.precision(5);
   Vector3d xd_2dot, xd_3dot, xd_4dot, b1d, b1d_dot, b1d_ddot;
   xd_2dot = xd_3dot = xd_4dot = b1d_dot = b1d_ddot = Vector3d::Zero();
-  b1d<< 1, 0, 0;
+  b1d = node.b1d;
   Vector3d e3(0,0,1);// commonly-used unit vector
   // convention conversion
   Vector3d x = node.R_conv*x_v;

@@ -113,6 +113,7 @@ odroid_node::odroid_node(){
 	x_e = v_e = eiR = eiX = Vector3d::Zero();
   xd = xd_dot = xd_ddot= Wd = Wd_dot = W_b = W_raw = Vector3d::Zero();
   x_v = v_v = prev_x_v = prev_v_v = b1d = Vector3d::Zero();
+  b1d << 1,0,0;
   M = eX = eV = eR = eW = Vector3d::Zero();
   f_motor =  Vector4d::Zero();
   R_c = W_c = Wdot_c = Matrix3d::Zero();
@@ -192,6 +193,7 @@ void odroid_node::cmd_callback(const odroid::trajectory::ConstPtr& msg){
   ros::param::get("/odroid_node/Motor", MOTOR_ON);
   ros::param::get("/odroid_node/MotorWarmup", MotorWarmup);
   boost::mutex::scoped_lock scopedLock(mutex_);
+  tf::vectorMsgToEigen(msg->b1,b1d);
   tf::vectorMsgToEigen(msg->xd,xd);
   tf::vectorMsgToEigen(msg->xd_dot,xd_dot);
   tf::vectorMsgToEigen(msg->xd_ddot,xd_ddot);

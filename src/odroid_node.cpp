@@ -141,6 +141,7 @@ odroid_node::odroid_node(){
   ros::param::get("/controller/saturation/x",eiX_sat);
   ros::param::get("/controller/saturation/R",eiR_sat);
   ros::param::param<std::vector<int>>("/port/i2c",mtr_addr,mtr_addr);
+  ros::param::get("/name/vicon",vicon_name);
   pub_ = n_.advertise<odroid::error>("/drone_variable",1);
   ROS_INFO("Odroid node initialized");
 }
@@ -205,7 +206,7 @@ void odroid_node::get_sensor(){
   ros::Subscriber imu_sub =
     nh_sens.subscribe("imu/imu",100, &odroid_node::imu_callback, this);
   ros::Subscriber vicon_sub =
-    nh_sens.subscribe("vicon/Maya/Maya",100, &odroid_node::vicon_callback, this);
+    nh_sens.subscribe(vicon_name,100, &odroid_node::vicon_callback, this);
   ros::Subscriber cmd_sub =
     nh_sens.subscribe("xd",100, &odroid_node::cmd_callback, this);
   ros::spin();

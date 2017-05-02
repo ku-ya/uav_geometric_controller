@@ -17,12 +17,12 @@
 class hw_interface
 {
 public:
-  hw_interface();
+  hw_interface(std::vector<int> address);
   ~hw_interface();
 
     // Open ports to I2C (motors)
   int fhi2c;
-  int mtr_addr[4]={41, 42, 43, 44}; //= {41, 42, 43, 44};// Motor addresses 1-6
+  std::vector<int> mtr_addr; //= {41, 42, 43, 44};// Motor addresses 1-6
   int thr[4];// i2c motor commands
   int servo_addr[4]; //= {0, 1, 2, 3, 4, 5};// Servo addresses 1-6
   uint16_t servopl[6];// i2c servo pulse length (duty_cycle[i] = servopl[i]/4095 @ ~325 Hz)

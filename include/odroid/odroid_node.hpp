@@ -79,7 +79,7 @@ public:
   Vector3d rpy;
   Matrix2d e; //inertial frame,
   // Measured Values in Vicon inettial frame
-  String vicon_name;
+  std::string vicon_name;
   Vector3d x_v, v_v, prev_x_v,prev_v_v;
 
   Quaterniond q_imu, q_v;
@@ -127,6 +127,7 @@ public:
 
   // Output of Control_Nonlinear() and Command Execution
   int thr[4] = {0,0,0,0};// i2c motor commands
+  std::vector<int>  mtr_addr;
   uint8_t* motor_power;
   //! Constructor.
   odroid_node();

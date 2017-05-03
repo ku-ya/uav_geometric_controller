@@ -27,7 +27,7 @@ def char_to_speed(argument):
             't': 4.,
             'l': 4.,
             'f': 15.,
-            'e': 15.,
+            'e': 25.,
             'p': 10.,
             'h': 4.,
             '3': 21.
@@ -104,11 +104,11 @@ def cmd(msg):
                 delta = np.pi/2
                 if t < t_total:
                    x = A*np.sin(a*t+delta+start_radians_x)
-                   x_dot = a*A*np.cos(a*t+delta+start_radians_x)
-                   x_ddot = -a*a*A*np.sin(a*t+delta+start_radians_x)
+                   x_dot = 0.0 #a*A*np.cos(a*t+delta+start_radians_x)
+                   x_ddot = 0.0 # -a*a*A*np.sin(a*t+delta+start_radians_x)
                    y = B*np.sin(b*t+start_radians_y)
-                   y_dot = b*B*np.cos(b*t+start_radians_y)
-                   y_ddot = -b*b*B*np.sin(b*t+start_radians_y)
+                   y_dot = 0.0 # b*B*np.cos(b*t+start_radians_y)
+                   y_ddot = 0.0 # -b*b*B*np.sin(b*t+start_radians_y)
                    z = reset_height
                    z_dot = 0.0
                    z_ddot = 0.0

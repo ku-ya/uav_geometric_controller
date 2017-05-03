@@ -1,6 +1,6 @@
 
 # Created by https://www.gitignore.io/api/osx,ros,c,c++,python,cuda
-
+*.swp
 ### OSX ###
 *.DS_Store
 .AppleDouble

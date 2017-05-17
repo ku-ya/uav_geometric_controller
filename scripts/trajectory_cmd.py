@@ -18,7 +18,8 @@ def char_to_mission(argument):
             'h': 'hover',
             'm': 'motor',
             'w': 'warmup',
-            '3': '3pt'
+            '3': '3pt',
+	    's': 'spin'
             }
     return switcher.get(argument, "nothing")
 
@@ -30,7 +31,8 @@ def char_to_speed(argument):
             'e': 25.,
             'p': 10.,
             'h': 4.,
-            '3': 21.
+            '3': 21.,
+	    's': 10.
             }
     return switcher.get(argument, "nothing")
 
@@ -91,7 +93,7 @@ def cmd(msg):
             # t_last = cmd.header.stamp.to_sec()
 
             x = y = z = x_dot = y_dot = z_dot = x_ddot = y_ddot = z_ddot = 0.0
-
+	    b1 = [1,0,0]
 
             if mission=='lissajous':
                 t_now = (rospy.get_rostime()).to_sec()
@@ -202,6 +204,19 @@ def cmd(msg):
                 if t > t_total:
                   z_dot = 0
                   print('takeoff complete')
+	    elif mission == 'spin':
+                t_now = (rospy.get_rostime()).to_sec()
+		t = t_now-t_init
+		b1 = [np.cos(2*np.pi*t/t_total),np.sin(2*np.pi*t/t_total),0]
+                x = 0
+                y = 0
+                z = reset_height
+                x_dot = 0
+                y_dot = 0
+                z_dot = 0
+                x_ddot = 0
+                y_ddot = 0
+                z_ddot = 0
 
             elif mission == 'reset':
                 x = 0
@@ -233,6 +248,9 @@ def cmd(msg):
                     pub.publish(cmd)
                     print('landing complete')
 
+	    cmd.b1.x = b1[0]
+	    cmd.b1.y = b1[1]
+	    cmd.b1.z = b1[2]
 
             cmd.xd.x = x
             cmd.xd.y = y

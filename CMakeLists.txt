@@ -14,7 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   dynamic_reconfigure
-  rosserial_arduino
   tf
   tf2
   message_generation
@@ -113,7 +112,7 @@ generate_messages(
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
-  config/Gains.cfg
+  config/gains.cfg
 	config/calibration.cfg
 )
 
@@ -158,12 +157,10 @@ add_library(hw_interface  src/hw_interface.cpp)
 
 ## Declare a C++ executable
 add_executable(odroid_node src/odroid_node.cpp)
-add_executable(calibration src/calibration.cpp)
 add_executable(sim_vicon src/sim_vicon.cpp)
 # add_executable(visualize src/visualize.cpp)
 add_dependencies(odroid_node ${catkin_EXPORTED_TARGETS})
 add_dependencies(odroid_node ${PROJECT_NAME}_gencfg)
-add_dependencies(calibration ${PROJECT_NAME}_gencfg)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(odroid_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -178,10 +175,6 @@ target_link_libraries(odroid_node
 target_link_libraries(sim_vicon ${catkin_LIBRARIES})
 target_link_libraries(controller ${catkin_LIBRARIES})
 # target_link_libraries(visualize ${catkin_LIBRARIES})
-
-target_link_libraries(calibration
-  ${catkin_LIBRARIES}
-)
 
 #############
 ## Install ##

@@ -140,7 +140,7 @@ odroid_node::odroid_node(){
   ros::param::get("/controller/gain/pos/c",cX);
   ros::param::get("/controller/saturation/x",eiX_sat);
   ros::param::get("/controller/saturation/R",eiR_sat);
-  ros::param::param<std::vector<int>>("/port/i2c",mtr_addr,mtr_addr);
+  // ros::param::param<std::vector<int>>("/port/i2c",mtr_addr,mtr_addr);
   ros::param::get("/name/vicon",vicon_name);
   pub_ = n_.advertise<odroid::error>("/drone_variable",1);
   ROS_INFO("Odroid node initialized");

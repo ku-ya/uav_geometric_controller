@@ -51,12 +51,13 @@
 	  <!-- Start nodelet manager -->
 	  <arg name="manager" value="$(arg camera)_nodelet_manager2" />
 	  <arg name="debug" default="false" /> <!-- Run manager in GDB? -->
+	  <include file="$(find rgbd_launch)/launch/includes/manager.launch.xml">
+	    <arg name="name" value="$(arg manager)" />
+	    <arg name="debug" value="$(arg debug)" />
+	    <arg name="num_worker_threads"  value="$(arg num_worker_threads)" />
+	  </include>
 
-<<<<<<< HEAD
-	
-=======
 
->>>>>>> 3be2cddd184a218b162cf08cd5070fba8c51be1c
 
     <!-- Load standard constellation of processing nodelets -->
     <include file="$(find rgbd_launch)/launch/includes/processing.launch.xml">
@@ -77,9 +78,6 @@
     </include>
 
 
-<<<<<<< HEAD
-=======
  </group>
 
->>>>>>> 3be2cddd184a218b162cf08cd5070fba8c51be1c
 </launch>

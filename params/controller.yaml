@@ -8,7 +8,7 @@ odroid_node:
 controller:
   mode: 1
   g: 9.81
-  m: 1.245 # 1.374 base odroid #1.7 with sensors
+  m: 1.5 # 1.245 Jetson, 1.374 base odroid #1.7 with sensors
   J: [9.773E-3, 0.0, 0.0,
     0.0, 9.773E-3, 0.0,
     0.0,  0.0,  1.749E-2]

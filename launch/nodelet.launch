@@ -1,0 +1,10 @@
+<launch>
+  <group ns="camera">
+
+    <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager"/>
+    <node pkg="nodelet" type="nodelet" name="depth_image_proc" args="load depth_image_proc/point_cloud_xyzrgb standalone_nodelet" output="screen">
+    </node>
+    <node pkg="nodelet" type="nodelet" name="depth_image_proc_reg" args="load depth_image_proc/register standalone_nodelet" output="screen">
+    </node>
+  </group>
+</launch>

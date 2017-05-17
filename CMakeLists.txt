@@ -30,8 +30,9 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Boost REQUIRED COMPONENTS thread)
 find_package(Boost REQUIRED COMPONENTS python)
 find_package(Eigen3 REQUIRED)
+find_package(PythonLibs REQUIRED)
 include_directories(EIGEN3_INCLUDE_DIR ${GTEST_INCLUDE_DIRS})
-
+include_directories(${PYTHON_INCLUDE_DIRS})
 
 # find_package(OpenCV 3 REQUIRED)
 # include_directories(${OpenCV_INCLUDE_DIRS})
@@ -171,7 +172,7 @@ target_link_libraries(odroid_node
 )
 
 ## add_dependencies(odroid_node ${PROJECT_NAME}_generate_messages_cpp)
-
+target_link_libraries(hw_interface ${PYTHON_LIBRARIES})
 target_link_libraries(sim_vicon ${catkin_LIBRARIES})
 target_link_libraries(controller ${catkin_LIBRARIES})
 # target_link_libraries(visualize ${catkin_LIBRARIES})

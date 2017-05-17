@@ -10,6 +10,7 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>    /* For O_RDWR */
 #include <unistd.h>   /* For open(), creat() */
+#include <Python.h>
 // Adafruit PCA9685 Servo Informatio
 #define i2c_addr 0x40
 

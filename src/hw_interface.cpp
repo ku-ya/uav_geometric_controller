@@ -1,9 +1,9 @@
 #include <odroid/hw_interface.hpp>
-
+using namespace std;
 hw_interface::hw_interface(std::vector<int> address){
     for(int i = 0; i < 4; i++){
-    mtr_addr[i] = address[i];
-    }
+        mtr_addr[i] = i+41;
+   }
 }
 hw_interface::~hw_interface(){}
 uint8_t* hw_interface::motor_command(int thr[4], bool MotorWarmup, bool MOTOR_ON){

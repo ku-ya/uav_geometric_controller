@@ -1,10 +1,7 @@
 #include <odroid/odroid_node.hpp>
 // User header files
 #include <odroid/controller.hpp>
-// #include <odroid/sensor.hpp>
-// #include <odroid/visualize.hpp>
 #include <odroid/error.h>
-#include <XmlRpcValue.h>
 using namespace std;
 using namespace Eigen;
 using namespace message_filters;
@@ -41,7 +38,7 @@ void publish_error(odroid_node& node){
     }
   for(int i=0;i<9;i++){
     e_msg.R_c[i] = (float)node.R_c(i);
-    e_msg.W_c[i] = (float)node.W_c(i); 
+    e_msg.W_c[i] = (float)node.W_c(i);
   }
   e_msg.gainX = {node.kx, node.kv, node.kiX, node.cX};
   e_msg.gainR = {node.kR, node.kW, node.kiR, node.cR};
@@ -141,7 +138,9 @@ odroid_node::odroid_node(){
   ros::param::get("/controller/saturation/x",eiX_sat);
   ros::param::get("/controller/saturation/R",eiR_sat);
   // ros::param::param<std::vector<int>>("/port/i2c",mtr_addr,mtr_addr);
-  ros::param::get("/name/vicon",vicon_name);
+  mtr_addr = std::vector<int>{41,42,43,44};
+  //ros::param::get("/name/vicon",vicon_name);
+  vicon_name = "/vicon/Maya/pose";
   pub_ = n_.advertise<odroid::error>("/drone_variable",1);
   ROS_INFO("Odroid node initialized");
 }
@@ -170,15 +169,15 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
 }
 
 void odroid_node::vicon_callback(
-    const geometry_msgs::TransformStamped::ConstPtr& msg){
+    const geometry_msgs::PoseStamped::ConstPtr& msg){
   // controller_flag = true;
   if(!Vicon_flag){ ROS_INFO("Vicon ready");}
   Vicon_flag = true;
   dt_vicon = (msg->header.stamp - vicon_time).toSec();
   vicon_time = msg->header.stamp;
   Eigen::Affine3d pose;
-  tf::quaternionMsgToEigen(msg->transform.rotation, q_v);
-  tf::transformMsgToEigen(msg->transform,pose);
+  tf::quaternionMsgToEigen(msg->pose.orientation, q_v);
+  tf::poseMsgToEigen(msg->pose,pose);
   boost::mutex::scoped_lock scopedLock(mutex_);
   x_v  = pose.matrix().block<3,1>(0,3);
   R_b = pose.matrix().block<3,3>(0,0);

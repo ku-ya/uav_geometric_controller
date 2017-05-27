@@ -150,7 +150,7 @@ public:
   //! Controller function
   void ctl_callback(hw_interface hw_intf);
   //! Vicon sensor message subscriber
-  void vicon_callback(const geometry_msgs::TransformStamped::ConstPtr& msg);
+  void vicon_callback(const geometry_msgs::PoseStamped::ConstPtr& msg);
   // IMU and Vicon synchronization callback
   void imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu,
       const geometry_msgs::TransformStamped::ConstPtr& msgVicon);

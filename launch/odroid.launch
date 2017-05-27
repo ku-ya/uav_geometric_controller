@@ -17,7 +17,7 @@
     <!-- <node pkg="tf" type="static_transform_publisher" name="base_link" args="0 0 0 0 0 0 base_link vicon/Maya/Maya 10" /> -->
     <!-- start odroid node-->
     <node name="odroid_node" type="odroid_node" pkg="odroid" respawn="false" output="screen">
-        <remap from="imu/imu" to="raw_imu"/>
+        <!-- remap from="imu/imu" to="raw_imu"/ -->
     </node>
     <!-- <node name="rviz" pkg="rviz" type="rviz" output="screen" /> -->
 </launch>

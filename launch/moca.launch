@@ -1,6 +1,6 @@
 <launch>
 <!-- Based on pysical (MOCA) or simulation (Gazebo) testing choose option -->
-  <include file="$(find imu_vn_100)/launch/vn_100_cont.launch"/>
+  <include file="$(find uav_control)/launch/vn_100_cont_odroid.launch"/>
   <arg name="MOCA" value="true"/>
   <rosparam>
       environment: 1

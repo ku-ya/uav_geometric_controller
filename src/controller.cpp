@@ -29,9 +29,6 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   Vector3d ev = v - xd_dot;
   node.eX = ex; node.eV = ev;
 
-  if(node.mode == 0){
-    ex = ev = Vector3d::Zero();
-  }
 
   node.eiX = node.eiX_last+node.del_t*(ex+node.cX*ev);
   err_sat(-node.eiX_sat, node.eiX_sat, node.eiX);
@@ -92,7 +89,6 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   node.R_c = Rd;
   node.W_c = Rddot;
   node.Wdot_c = Rddot;
-  node.b1d = b1d;
   // Vector3d Wd, Wddot;
   vee_eigen(Rd.transpose()*Rddot, Wd);
   vee_eigen(Rd.transpose()*Rdddot-hat_eigen(Wd)*hat_eigen(Wd), Wddot);

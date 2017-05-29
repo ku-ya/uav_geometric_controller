@@ -47,6 +47,10 @@ def cmd(msg):
     cmd = trajectory()
     cmd.header.frame_id = 'Quad'
     # rospy.set_param('/odroid_node/Motor', True)
+
+    cmd.b1.x = 1
+    cmd.b1.y = 0
+    cmd.b1.z = 0
     pub.publish(cmd)
 
     if mission == 'motor':

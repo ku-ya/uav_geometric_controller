@@ -193,10 +193,14 @@ void odroid_node::cmd_callback(const odroid::trajectory::ConstPtr& msg){
   ros::param::get("/odroid_node/Motor", MOTOR_ON);
   ros::param::get("/odroid_node/MotorWarmup", MotorWarmup);
   boost::mutex::scoped_lock scopedLock(mutex_);
-  tf::vectorMsgToEigen(msg->b1,b1d);
-  tf::vectorMsgToEigen(msg->xd,xd);
-  tf::vectorMsgToEigen(msg->xd_dot,xd_dot);
-  tf::vectorMsgToEigen(msg->xd_ddot,xd_ddot);
+  //tf::vectorMsgToEigen(msg->b1,b1d);
+  //tf::vectorMsgToEigen(msg->xd,xd);
+  //tf::vectorMsgToEigen(msg->xd_dot,xd_dot);
+  //tf::vectorMsgToEigen(msg->xd_ddot,xd_ddot);
+  b1d << msg->b1[0], msg->b1[1], msg->b1[2];
+  xd << msg->xc[0], msg->xc[1], msg->xc[2];
+  xd_dot << msg->xc_dot[0], msg->xc_dot[1], msg->xc_dot[2];
+  xd_ddot << msg->xc_2dot[0], msg->xc_2dot[1], msg->xc_2dot[2];
 }
 
 void odroid_node::get_sensor(){
@@ -207,7 +211,7 @@ void odroid_node::get_sensor(){
   ros::Subscriber vicon_sub =
     nh_sens.subscribe(vicon_name,100, &odroid_node::vicon_callback, this);
   ros::Subscriber cmd_sub =
-    nh_sens.subscribe("xd",100, &odroid_node::cmd_callback, this);
+    nh_sens.subscribe("xc",100, &odroid_node::cmd_callback, this);
   ros::spin();
 }
 

@@ -1,5 +1,5 @@
 Header header
-geometry_msgs/Vector3 b1
-geometry_msgs/Vector3 xd
-geometry_msgs/Vector3 xd_dot
-geometry_msgs/Vector3 xd_ddot
+float32[3] b1
+float32[3] xc
+float32[3] xc_dot
+float32[3] xc_2dot

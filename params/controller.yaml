@@ -16,7 +16,7 @@ controller:
   R_conv: [1.0, 0.0, 0.0,
         0.0, -1.0, 0.0,
         0.0, 0.0, -1.0] # Convention conversion (NEU->NED)
-  l: 0.22 # arm length odroid one 0.305
+  l: 0.305 # arm length odroid one 0.305
   c_tf: 0.1 # moment constant
   gain:
     att:

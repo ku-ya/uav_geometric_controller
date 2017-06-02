@@ -86,9 +86,9 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   Rd << Rd1, Rd2, Ld;
   Rddot << Rd1dot, Rd2dot, Lddot;
   Rdddot << Rd1ddot, Rd2ddot, Ldddot;
-  node.R_c = Rd;
-  node.W_c = Rddot;
-  node.Wdot_c = Rddot;
+  node.Rc = Rd;
+  node.Rc_dot = Rddot;
+  node.Rc_2dot = Rddot;
   // Vector3d Wd, Wddot;
   vee_eigen(Rd.transpose()*Rddot, Wd);
   vee_eigen(Rd.transpose()*Rdddot-hat_eigen(Wd)*hat_eigen(Wd), Wddot);

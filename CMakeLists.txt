@@ -72,9 +72,8 @@ include_directories(include ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS} ${dynam
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  DAQ.msg
-	error.msg
-	trajectory.msg
+    trajectory.msg
+    states.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -113,8 +112,8 @@ generate_messages(
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
-  config/gains.cfg
-	config/calibration.cfg
+    config/gains.cfg
+    config/calibration.cfg
 )
 
 

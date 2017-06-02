@@ -68,7 +68,7 @@ public:
   //  Wd = f(Rd) desired angular velocity in the body-fixed frae
   //  Wd_dot = f(R) desired angular acceleration in body-fixed frame
   //  W_b = angular velocity in the body-fixed frame
-  Matrix3d Rd;
+  Matrix3d Rd,Rc,Rc_dot,Rc_2dot, R_imu;
   Vector3d Wd, Wd_dot, W_b, W_raw;
   // Gains
   // Position gains:

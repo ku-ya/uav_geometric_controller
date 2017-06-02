@@ -1,13 +1,13 @@
 #include <odroid/odroid_node.hpp>
 // User header files
 #include <odroid/controller.hpp>
-#include <odroid/error.h>
+#include <odroid/states.h>
 using namespace std;
 using namespace Eigen;
 using namespace message_filters;
 
 void publish_error(odroid_node& node){
-  odroid::error e_msg;
+  odroid::states e_msg;
   e_msg.header.stamp = ros::Time::now();
   e_msg.header.frame_id = "drone";
   Vector3d kR_eR = node.kR*node.eR;
@@ -18,17 +18,18 @@ void publish_error(odroid_node& node){
   tf::vectorEigenToMsg(node.b1d, e_msg.b1d);
   tf::vectorEigenToMsg(node.eR, e_msg.eR);
   tf::vectorEigenToMsg(node.eW, e_msg.eW);
-  tf::vectorEigenToMsg(node.M, e_msg.Moment);
+  tf::vectorEigenToMsg(node.M, e_msg.moment);
   tf::vectorEigenToMsg(node.eX, e_msg.ex);
   tf::vectorEigenToMsg(node.W_b, e_msg.w_imu);
   tf::vectorEigenToMsg(node.eV, e_msg.ev);
-  tf::vectorEigenToMsg(node.xd, e_msg.xd);
-  tf::vectorEigenToMsg(node.xd_dot, e_msg.xd_dot);
-  tf::vectorEigenToMsg(node.xd_ddot, e_msg.xd_ddot);
+  tf::vectorEigenToMsg(node.xd, e_msg.xc);
+  tf::vectorEigenToMsg(node.xd_dot, e_msg.xc_dot);
+  tf::vectorEigenToMsg(node.xd_ddot, e_msg.xc_2dot);
+  tf::vectorEigenToMsg(node.Wd, e_msg.Wc);
+  tf::vectorEigenToMsg(node.Wd_dot, e_msg.Wc_dot);
   tf::quaternionEigenToMsg(node.q_v, e_msg.q_v);
   tf::quaternionEigenToMsg(node.q_imu, e_msg.q_imu);
   e_msg.force = node.f_total;
-  e_msg.dt_vicon_imu = (float)node.dt_vicon_imu;
   for(int i = 0; i<4;i++){
     e_msg.throttle[i] = (float) node.thr[i];
     e_msg.f_motor[i] = (float)node.f_motor(i);
@@ -37,11 +38,13 @@ void publish_error(odroid_node& node){
     e_msg.motor_power[i] = node.motor_power[i];
     }
   for(int i=0;i<9;i++){
-    e_msg.R_c[i] = (float)node.R_c(i);
-    e_msg.W_c[i] = (float)node.W_c(i);
+    e_msg.Rc[i] = (float)node.Rc(i);
+    e_msg.Rc_dot[i] = (float)node.Rc_dot(i);
+    e_msg.Rc_2dot[i] = (float)node.Rc_2dot(i);
+    e_msg.R_imu[i] = (float)node.R_imu(i);
   }
-  e_msg.gainX = {node.kx, node.kv, node.kiX, node.cX};
-  e_msg.gainR = {node.kR, node.kW, node.kiR, node.cR};
+  e_msg.gain_position = {node.kx,node.kv, node.kiX};
+  e_msg.gain_attitude = {node.kR, node.kW, node.kiR};
   // e_msg.motor_power = &node.motor_power;
   node.pub_.publish(e_msg);
 }
@@ -141,7 +144,7 @@ odroid_node::odroid_node(){
   mtr_addr = std::vector<int>{41,42,43,44};
   //ros::param::get("/name/vicon",vicon_name);
   vicon_name = "/vicon/Maya/pose";
-  pub_ = n_.advertise<odroid::error>("/drone_variable",1);
+  pub_ = n_.advertise<odroid::states>("/drone_variable",1);
   ROS_INFO("Odroid node initialized");
 }
 
@@ -161,6 +164,7 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   tf::quaternionMsgToTF(msg->orientation,temp);
   tf::quaternionMsgToEigen(msg->orientation,q_imu);
   tf::Matrix3x3 m(temp);
+  tf::matrixTFToEigen(m, R_imu);
   double roll, pitch, yaw;
   m.getRPY(roll, pitch, yaw);
   boost::mutex::scoped_lock scopedLock(mutex_);

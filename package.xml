@@ -35,13 +35,13 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
   <build_depend>tf</build_depend>
-<build_depend>message_generation</build_depend>
-<build_depend>cv_bridge</build_depend>
-<build_depend>image_transport</build_depend>
-<build_depend>opencv3</build_depend>
-<build_depend>geometry_msgs</build_depend>
-<build_depend>eigen_conversions</build_depend>
-<build_depend>tf_conversions</build_depend>
+    <build_depend>message_generation</build_depend>
+    <build_depend>cv_bridge</build_depend>
+    <build_depend>image_transport</build_depend>
+    <build_depend>opencv3</build_depend>
+    <build_depend>geometry_msgs</build_depend>
+    <build_depend>eigen_conversions</build_depend>
+    <build_depend>tf_conversions</build_depend>
 
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>

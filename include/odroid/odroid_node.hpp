@@ -63,20 +63,20 @@ public:
   // Control_Nonliner Inputs: inertial frame
   //  xd = f(t) desired position, xd_dot = f(xd)
   //  desired velocity, xd_ddot = f(xd) desired acceleration
-  Vector3d xd, xd_dot, xd_ddot;
+  Vector3d xd, xd_dot, xd_ddot, xc_ned, xc_ned_dot,xc_ned_2dot;
   //  Rd = f(t) desired attitude (usually using local coordinates)
   //  Wd = f(Rd) desired angular velocity in the body-fixed frae
   //  Wd_dot = f(R) desired angular acceleration in body-fixed frame
   //  W_b = angular velocity in the body-fixed frame
-  Matrix3d Rd,Rc,Rc_dot,Rc_2dot, R_imu;
+  Matrix3d Rd,Rc,Rc_dot,Rc_2dot, R_imu, R;
   Vector3d Wd, Wd_dot, W_b, W_raw;
   // Gains
   // Position gains:
   //  kx = proportional, kv = derivative, kiX = integral
   // Attitude gains:
   // kR = proportional, kW = derivative, kiR = integral
-  float kx, kv, kiX, cX, kR, kW, kiR, cR;
-  Vector3d rpy;
+  float kx, kv, kiX, cX, kR, kRr, kW, kiR, cR;
+  Vector3d rpy, x, v, W;
   Matrix2d e; //inertial frame,
   // Measured Values in Vicon inettial frame
   std::string vicon_name;

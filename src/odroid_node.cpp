@@ -153,8 +153,8 @@ odroid_node::odroid_node(){
   ros::param::get("/controller/saturation/x",eiX_sat);
   ros::param::get("/controller/saturation/R",eiR_sat);
   ros::param::param<std::vector<int>>("/port/i2c",mtr_addr,mtr_addr);
-  //ros::param::get("/name/vicon",vicon_name);
-  vicon_name = "/vicon/Maya/pose";
+  ros::param::get("/name/vicon",vicon_name);
+  vicon_name = "/vicon/"+vicon_name+"/pose";
   pub_ = n_.advertise<odroid::states>("/uav_states",1);
   ROS_INFO("Odroid node initialized");
 }

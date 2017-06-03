@@ -1,14 +1,14 @@
 name:
-    vicon: 'Maya'
+    vicon: 'Jetson'
 port:
-    i2c: [41,42,43,44]
+    i2c: [44,41,42,43]
 odroid_node:
   Motor: 0
   MotorWarmup: 0
 controller:
   mode: 1
   g: 9.81
-  m: 1.5 # 1.245 Jetson, 1.374 base odroid #1.7 with sensors
+  m: 1.3 # 1.245 Jetson, 1.374 base odroid #1.7 with sensors
   J: [9.773E-3, 0.0, 0.0,
     0.0, 9.773E-3, 0.0,
     0.0,  0.0,  1.749E-2]
@@ -16,7 +16,7 @@ controller:
   R_conv: [1.0, 0.0, 0.0,
         0.0, -1.0, 0.0,
         0.0, 0.0, -1.0] # Convention conversion (NEU->NED)
-  l: 0.305 # arm length odroid one 0.305
+  l: 0.2 # arm length odroid one 0.305
   c_tf: 0.1 # moment constant
   gain:
     att:

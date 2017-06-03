@@ -2,7 +2,8 @@
 using namespace std;
 hw_interface::hw_interface(std::vector<int> address){
     for(int i = 0; i < 4; i++){
-        mtr_addr[i] = i+41;
+        mtr_addr[i] = address[i];
+        cout<<mtr_addr[i]<<endl;
    }
 }
 hw_interface::~hw_interface(){}

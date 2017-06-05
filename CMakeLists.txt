@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(odroid)
+project(uav_controller)
 
 add_definitions(-std=c++11)
 
@@ -112,8 +112,7 @@ generate_messages(
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
-    config/gains.cfg
-    config/calibration.cfg
+    config/Gains.cfg
 )
 
 
@@ -128,7 +127,7 @@ generate_dynamic_reconfigure_options(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
  INCLUDE_DIRS include
- LIBRARIES odroid
+ LIBRARIES uav_controller
  CATKIN_DEPENDS message_runtime cv_bridge roscpp rospy std_msgs image_transport geometry_msgs
 #  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
@@ -153,26 +152,27 @@ add_library(hw_interface  src/hw_interface.cpp)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(arduino_daq.py ${PROJECT_NAME}_gencfg)
+#add_dependencies(controller node)
 
 ## Declare a C++ executable
-add_executable(odroid_node src/odroid_node.cpp)
-add_executable(sim_vicon src/sim_vicon.cpp)
+add_executable(node src/node.cpp)
+#add_executable(sim_vicon src/sim_vicon.cpp)
 # add_executable(visualize src/visualize.cpp)
-add_dependencies(odroid_node ${catkin_EXPORTED_TARGETS})
-add_dependencies(odroid_node ${PROJECT_NAME}_gencfg)
+add_dependencies(node ${catkin_EXPORTED_TARGETS})
+add_dependencies(node ${PROJECT_NAME}_gencfg)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(odroid_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(odroid_node
-  ${catkin_LIBRARIES} controller hw_interface
+target_link_libraries(node
+  ${catkin_LIBRARIES} hw_interface controller
 )
 
-## add_dependencies(odroid_node ${PROJECT_NAME}_generate_messages_cpp)
+#add_dependencies(node ${PROJECT_NAME}_generate_messages_cpp)
 target_link_libraries(hw_interface ${PYTHON_LIBRARIES})
-target_link_libraries(sim_vicon ${catkin_LIBRARIES})
+#target_link_libraries(sim_vicon ${catkin_LIBRARIES})
 target_link_libraries(controller ${catkin_LIBRARIES})
 # target_link_libraries(visualize ${catkin_LIBRARIES})
 

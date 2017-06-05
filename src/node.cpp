@@ -1,13 +1,13 @@
-#include <odroid/odroid_node.hpp>
+#include <uav_controller/node.hpp>
 // User header files
-#include <odroid/controller.hpp>
-#include <odroid/states.h>
+#include <uav_controller/controller.hpp>
+#include <uav_controller/states.h>
 using namespace std;
 using namespace Eigen;
 using namespace message_filters;
 
-void publish_error(odroid_node& node){
-  odroid::states e_msg;
+void publish_error(node& node){
+  uav_controller::states e_msg;
   e_msg.header.stamp = ros::Time::now();
   e_msg.header.frame_id = "drone";
   Vector3d kR_eR = node.kR*node.eR;
@@ -62,20 +62,20 @@ void publish_error(odroid_node& node){
 
 int main(int argc, char **argv){
   ros::init(argc,argv,"Xrotor");
-  odroid_node odnode;
+  node odnode;
   ros::NodeHandle nh = odnode.getNH();
   // dynamic reconfiguration server for gains and print outs
-  dynamic_reconfigure::Server<odroid::GainsConfig> server;
-  dynamic_reconfigure::Server<odroid::GainsConfig>::CallbackType dyn_serv;
-  dyn_serv = boost::bind(&odroid_node::callback, &odnode, _1, _2);
+  dynamic_reconfigure::Server<uav_controller::GainsConfig> server;
+  dynamic_reconfigure::Server<uav_controller::GainsConfig>::CallbackType dyn_serv;
+  dyn_serv = boost::bind(&node::callback, &odnode, _1, _2);
   server.setCallback(dyn_serv);
 
   // visualize vis_pub;
   // vis_pub.publisher_initialization(odnode);
   ros::Duration(1).sleep();
   // IMU and keyboard input callback
-  boost::thread subscribe(&odroid_node::get_sensor, &odnode);
-  boost::thread command(&odroid_node::control, &odnode);
+  boost::thread subscribe(&node::get_sensor, &odnode);
+  boost::thread command(&node::control, &odnode);
 
   ros::Rate loop_rate(100); // rate for the node loop
   while (ros::ok()){
@@ -88,7 +88,7 @@ int main(int argc, char **argv){
   return 0;
 }
 
-odroid_node::odroid_node(){
+node::node(){
   ros::param::get("/controller/del_t",del_t);  cout<<"\ndel_t: "<< del_t<<endl;
   ros::param::get("/controller/g",g);
   ros::param::get("/controller/m",m); cout<<"m: "<< m<<endl;
@@ -155,17 +155,17 @@ odroid_node::odroid_node(){
   ros::param::param<std::vector<int>>("/port/i2c",mtr_addr,mtr_addr);
   ros::param::get("/name/vicon",vicon_name);
   vicon_name = "/vicon/"+vicon_name+"/pose";
-  pub_ = n_.advertise<odroid::states>("/uav_states",1);
+  pub_ = n_.advertise<uav_controller::states>("/uav_states",1);
   ROS_INFO("Odroid node initialized");
 }
 
-odroid_node::~odroid_node(){};
+node::~node(){};
 
 // callback for IMU sensor det
-bool odroid_node::getIMU(){return IMU_flag;}
-bool odroid_node::getWarmup(){return MotorWarmup;}
+bool node::getIMU(){return IMU_flag;}
+bool node::getWarmup(){return MotorWarmup;}
 
-void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
+void node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   if(!IMU_flag){ ROS_INFO("IMU ready");}
   IMU_flag = true;
   dt_imu = (msg->header.stamp - imu_time).toSec();
@@ -183,7 +183,7 @@ void odroid_node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   rpy << roll, pitch, yaw;
 }
 
-void odroid_node::vicon_callback(
+void node::vicon_callback(
     const geometry_msgs::PoseStamped::ConstPtr& msg){
   // controller_flag = true;
   if(!Vicon_flag){ ROS_INFO("Vicon ready");}
@@ -204,9 +204,9 @@ void odroid_node::vicon_callback(
   // prev_v_v = v_v;
 }
 
-void odroid_node::cmd_callback(const odroid::trajectory::ConstPtr& msg){
-  ros::param::get("/odroid_node/Motor", MOTOR_ON);
-  ros::param::get("/odroid_node/MotorWarmup", MotorWarmup);
+void node::cmd_callback(const uav_controller::trajectory::ConstPtr& msg){
+  ros::param::get("/node/Motor", MOTOR_ON);
+  ros::param::get("/node/MotorWarmup", MotorWarmup);
   boost::mutex::scoped_lock scopedLock(mutex_);
   //tf::vectorMsgToEigen(msg->b1,b1d);
   //tf::vectorMsgToEigen(msg->xd,xd);
@@ -218,19 +218,19 @@ void odroid_node::cmd_callback(const odroid::trajectory::ConstPtr& msg){
   xd_ddot << msg->xc_2dot[0], msg->xc_2dot[1], msg->xc_2dot[2];
 }
 
-void odroid_node::get_sensor(){
+void node::get_sensor(){
   ros::NodeHandle nh_sens;
     // IMU and keyboard input callback
   ros::Subscriber imu_sub =
-    nh_sens.subscribe("imu/imu",100, &odroid_node::imu_callback, this);
+    nh_sens.subscribe("imu/imu",100, &node::imu_callback, this);
   ros::Subscriber vicon_sub =
-    nh_sens.subscribe(vicon_name,100, &odroid_node::vicon_callback, this);
+    nh_sens.subscribe(vicon_name,100, &node::vicon_callback, this);
   ros::Subscriber cmd_sub =
-    nh_sens.subscribe("xc",100, &odroid_node::cmd_callback, this);
+    nh_sens.subscribe("xc",100, &node::cmd_callback, this);
   ros::spin();
 }
 
-void odroid_node::control(){
+void node::control(){
   hw_interface hw_intf(mtr_addr);  // open communication through I2C
   if(getEnv() == 1) hw_intf.open_I2C();
   ros::Rate loop_rate(100); // rate for the node loop
@@ -243,7 +243,7 @@ void odroid_node::control(){
 }
 
 // Action for controller
-void odroid_node::ctl_callback(hw_interface hw_intf){
+void node::ctl_callback(hw_interface hw_intf){
   VectorXd Wd, Wd_dot;
   Wd = VectorXd::Zero(3); Wd_dot = VectorXd::Zero(3);
 
@@ -264,7 +264,7 @@ void odroid_node::ctl_callback(hw_interface hw_intf){
   }
 }
 
-void odroid_node::callback(odroid::GainsConfig &config, uint32_t level) {
+void node::callback(uav_controller::GainsConfig &config, uint32_t level) {
   ROS_INFO("Reconfigure Request: Update");
 
   mode = config.mode;

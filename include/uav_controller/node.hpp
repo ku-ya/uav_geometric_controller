@@ -30,9 +30,8 @@
 // Dynamic reconfigure includes.
 #include <dynamic_reconfigure/server.h>
 // Auto-generated from cfg/ directory.
-#include <odroid/GainsConfig.h>
-#include <odroid/hw_interface.hpp>
-// #include <odroid/visualize.hpp>
+#include <uav_controller/GainsConfig.h>
+#include <uav_controller/hw_interface.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread.hpp>
 
@@ -40,12 +39,12 @@
 #include <eigen_conversions/eigen_msg.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <odroid/trajectory.h>
+#include <uav_controller/trajectory.h>
 #include <list>
 #include <std_msgs/Int8MultiArray.h>
 using namespace Eigen;
 
-class odroid_node
+class node
 {
 public:
   boost::mutex mutex_;
@@ -130,9 +129,9 @@ public:
   std::vector<int>  mtr_addr;
   uint8_t* motor_power;
   //! Constructor.
-  odroid_node();
+  node();
   //! Destructor.
-  ~odroid_node();
+  ~node();
   //! Callback function for dynamic reconfigure server.
   // void configCallback(node_example::node_example_paramsConfig
   // &config, uint32_t level);
@@ -145,7 +144,7 @@ public:
   //! Keyboard input message subscriber
   void key_callback(const std_msgs::String::ConstPtr& msg);
   //! Controller
-  void cmd_callback(const odroid::trajectory::ConstPtr& msg);
+  void cmd_callback(const uav_controller::trajectory::ConstPtr& msg);
   void control();
   //! Controller function
   void ctl_callback(hw_interface hw_intf);
@@ -155,7 +154,7 @@ public:
   void imu_vicon_callback(const sensor_msgs::Imu::ConstPtr& msgImu,
       const geometry_msgs::TransformStamped::ConstPtr& msgVicon);
   //! dynamic reconfigure callback
-  void callback(odroid::GainsConfig &config, uint32_t level);
+  void callback(uav_controller::GainsConfig &config, uint32_t level);
   // node handle getter
   ros::NodeHandle getNH(){return n_;};
   // void gazebo_controll();

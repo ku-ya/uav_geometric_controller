@@ -1,8 +1,8 @@
-#include <odroid/controller.hpp>
+#include <uav_controller/controller.hpp>
 using namespace Eigen;
 using namespace std;
 
-void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W_in, Matrix3d R_v){
+void controller::GeometricPositionController(node& node, Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W_in, Matrix3d R_v){
   std::cout.precision(5);
   Vector3d xd_2dot, xd_3dot, xd_4dot, b1d, b1d_dot, b1d_ddot;
   xd_2dot = xd_3dot = xd_4dot = b1d_dot = b1d_ddot = Vector3d::Zero();
@@ -119,7 +119,7 @@ void controller::GeometricPositionController(odroid_node& node, Vector3d xd, Vec
   node.f_motor = node.Ainv*FM;
 }
 
-void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3d Wd, Vector3d Wddot, Vector3d Win, Matrix3d Rin){
+void controller::GeometricControl_SphericalJoint_3DOF(node& node, Vector3d Wd, Vector3d Wddot, Vector3d Win, Matrix3d Rin){
 
   Matrix3d D = node.R_conv;
   Matrix3d R = D*Rin;// LI<-LBFF
@@ -159,7 +159,7 @@ void controller::GeometricControl_SphericalJoint_3DOF(odroid_node& node, Vector3
   node.f_motor = node.Ainv * FM;
 }
 
-void controller::gazebo_control(odroid_node& node){
+void controller::gazebo_control(node& node){
   ros::ServiceClient client_FM = node.n_.serviceClient<gazebo_msgs::ApplyBodyWrench>("/gazebo/apply_body_wrench");
   gazebo_msgs::ApplyBodyWrench FMcmds_srv;
 

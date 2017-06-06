@@ -14,13 +14,13 @@ This is creating the `catkin_ws`
       $ cd
       $ mkdir -p catkin_ws/src
       $ cd catkin_ws/src
-      $ git clone https://github.com/fdcl-gwu/ROS_odroid_node.git
+      $ git clone https://github.com/fdcl-gwu/ROS_node.git
       ~~~
 
 3. Run the comprehensive setup script
 
     ~~~
-    $ cd ROS_odroid_node/setup
+    $ cd ROS_node/setup
     $ ./ros_install.bash
     ~~~
     

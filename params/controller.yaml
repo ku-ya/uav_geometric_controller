@@ -2,7 +2,7 @@ name:
     vicon: 'Maya'
 port:
     i2c: [41,42,43,44]
-odroid_node:
+node:
   Motor: 0
   MotorWarmup: 0
 controller:

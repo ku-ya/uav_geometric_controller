@@ -1,14 +1,14 @@
 #include <odroid/visualize.hpp>
 
 
-void visualize::publisher_initialization(odroid_node& node){
+void visualize::publisher_initialization(node& node){
   ros::NodeHandle nh = node.getNH();
   vis_pub_0 = nh.advertise<visualization_msgs::Marker>("/force0",1);
   vis_pub_1 = nh.advertise<visualization_msgs::Marker>("/force1",1);
   vis_pub_2 = nh.advertise<visualization_msgs::Marker>("/force2",1);
   vis_pub_3 = nh.advertise<visualization_msgs::Marker>("/force3",1);
 }
-void visualize::force_markers(odroid_node& node){
+void visualize::force_markers(node& node){
     Vector4d f_motor = node.f_motor;
     double scale = node.scale;
     visualization_msgs::Marker marker;

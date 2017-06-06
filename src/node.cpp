@@ -161,7 +161,7 @@ node::node(){
   ros::param::get("/name/vicon",vicon_name);
   vicon_name = "/vicon/"+vicon_name+"/pose";
   pub_ = n_.advertise<uav_controller::states>("/uav_states",1);
-  ROS_INFO("Odroid node initialized");
+  ROS_INFO("UAV node initialized");
 }
 
 node::~node(){};

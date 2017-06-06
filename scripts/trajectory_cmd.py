@@ -46,7 +46,7 @@ def cmd(msg):
 
     cmd = trajectory()
     cmd.header.frame_id = 'Quad'
-    # rospy.set_param('/odroid_node/Motor', True)
+    # rospy.set_param('/node/Motor', True)
 
     cmd.b1.x = 1
     cmd.b1.y = 0
@@ -54,30 +54,30 @@ def cmd(msg):
     pub.publish(cmd)
 
     if mission == 'motor':
-        if rospy.get_param('/odroid_node/Motor'):
-            rospy.set_param('/odroid_node/Motor', False)
+        if rospy.get_param('/node/Motor'):
+            rospy.set_param('/node/Motor', False)
             print('Motor OFF')
         else:
-            rospy.set_param('/odroid_node/Motor', True)
+            rospy.set_param('/node/Motor', True)
             print('Motor ON')
-        rospy.set_param('/odroid_node/MotorWarmup', True)
+        rospy.set_param('/node/MotorWarmup', True)
         pub.publish(cmd)
     elif mission == 'warmup':
-        if rospy.get_param('/odroid_node/MotorWarmup'):
-            rospy.set_param('/odroid_node/MotorWarmup', False)
+        if rospy.get_param('/node/MotorWarmup'):
+            rospy.set_param('/node/MotorWarmup', False)
             print('Motor warmup OFF')
         else:
-            rospy.set_param('/odroid_node/MotorWarmup', True)
+            rospy.set_param('/node/MotorWarmup', True)
             print('Motor warmup ON')
         pub.publish(cmd)
 
     else:
-        if not rospy.get_param('/odroid_node/Motor'):
-            rospy.set_param('/odroid_node/Motor', True)
-            rospy.set_param('/odroid_node/MotorWarmup', True)
+        if not rospy.get_param('/node/Motor'):
+            rospy.set_param('/node/Motor', True)
+            rospy.set_param('/node/MotorWarmup', True)
             print('Motor warmup ON')
             rospy.sleep(3)
-            rospy.set_param('/odroid_node/MotorWarmup', False)
+            rospy.set_param('/node/MotorWarmup', False)
 
         reset_height = 1.5
         min_flight_height = 0.15
@@ -248,7 +248,7 @@ def cmd(msg):
                 y_ddot = 0
                 z_ddot = 0
                 if z <= min_flight_height:
-                    rospy.set_param('/odroid_node/Motor', False)
+                    rospy.set_param('/node/Motor', False)
                     pub.publish(cmd)
                     print('landing complete')
 

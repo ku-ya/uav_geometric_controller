@@ -1,7 +1,7 @@
 #include <odroid/sensor.hpp>
 using namespace std;
 
-void sensor::imu_callback(const sensor_msgs::Imu::ConstPtr& msg, odroid_node& node){
+void sensor::imu_callback(const sensor_msgs::Imu::ConstPtr& msg, node& node){
   vector3Transfer(node.W_b, msg->angular_velocity);
   if(!node.IMU_flag){ ROS_INFO("IMU ready");}
   node.IMU_flag = true;

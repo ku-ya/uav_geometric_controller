@@ -3,7 +3,7 @@
 
 #include "math.hpp"
 #include <eigen3/Eigen/Dense>
-// #include <odroid/odroid_node.hpp>
+// #include <odroid/node.hpp>
 // #include <odroid/error.h>
 #include <termios.h>
 #include <linux/i2c-dev.h>

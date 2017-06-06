@@ -1,7 +1,7 @@
 #include <ros/ros.h>
 #include <gtest/gtest.h>
 #include <iostream>
-#include "odroid/controller_sep.hpp"
+#include "uav_controller/controller_sep.hpp"
 
 // Make sure that gtest is working properly
 TEST(TestGtest, testFail)

@@ -40,32 +40,32 @@ void controller::GeometricPositionController(node& node, Vector3d xd, Vector3d x
   node.eiX_last = node.eiX;
 
   // Force 'f' along negative b3-axis
-  double kx = node.kx;
-  double kv = node.kv;
-  double kiX = node.kiX;
-  double kR = node.kR;
-  double kRr = node.kRr;
-  double kW = node.kW;
-  double kiR = node.kiR;
+  float kx = node.kx;
+  float kv = node.kv;
+  float kiX = node.kiX;
+  float kR = node.kR;
+  float kRr = node.kRr;
+  float kW = node.kW;
+  float kiR = node.kiR;
 
-  double m = node.m;
-  double g = node.g;
+  float m = node.m;
+  float g = node.g;
 
   Vector3d A = -kx*ex-kv*ev-kiX*node.eiX-m*g*e3+m*xd_2dot;
   Vector3d L = R*e3;
   Vector3d Ldot = R*hat_eigen(W)*e3;
-  double f = -A.dot(R*e3);
+  float f = -A.dot(R*e3);
   node.f_total = f;
 
   // Intermediate Terms for Rotational Errors
   Vector3d ea = g*e3-f/m*L-xd_2dot;
   Vector3d Adot = -kx*ev-kv*ea+m*xd_3dot;// Lee Matlab: -ki*satdot(sigma,ei,ev+c1*ex);
 
-  double fdot = -Adot.dot(L)-A.dot(Ldot);
+  float fdot = -Adot.dot(L)-A.dot(Ldot);
   Vector3d eb = -fdot/m*L-f/m*Ldot-xd_3dot;
   Vector3d Addot = -kx*ea-kv*eb+m*xd_4dot;// Lee Matlab: -ki*satdot(sigma,ei,ea+c1*ev);
 
-  double nA = A.norm();
+  float nA = A.norm();
   Vector3d Ld = -A/nA;
   Vector3d Lddot = -Adot/nA+A*A.dot(Adot)/pow(nA,3);
   Vector3d Ldddot = -Addot/nA+Adot/pow(nA,3)*(2*A.dot(Adot))
@@ -76,7 +76,7 @@ void controller::GeometricPositionController(node& node, Vector3d xd, Vector3d x
   Vector3d Ld2dot = -hat_eigen(b1d_dot)*Ld-hat_eigen(b1d)*Lddot;
   Vector3d Ld2ddot = -hat_eigen(b1d_ddot)*Ld-2*hat_eigen(b1d_dot)*Lddot-hat_eigen(b1d)*Ldddot;
 
-  double nLd2 = Ld2.norm();
+  float nLd2 = Ld2.norm();
   Vector3d Rd2 = Ld2/nLd2;
   Vector3d Rd2dot = Ld2dot/nLd2-Ld2.dot(Ld2dot)/pow(nLd2,3)*Ld2;
   Vector3d Rd2ddot = Ld2ddot/nLd2-Ld2.dot(Ld2dot)/pow(nLd2,3)*Ld2dot
@@ -148,7 +148,7 @@ void controller::GeometricControl_SphericalJoint_3DOF(node& node, Vector3d Wd, V
   Matrix3d What;
   eigen_skew(W, What);
 
-  Vector3d M = -node.kR * node.eR - node.kW * eW - node.kiR * node.eiR + W.cross(node.J*W) + node.J*(- R.transpose()*Rd*Wddot - What*R.transpose()*Rd*Wd) - M_g;
+  Vector3d M = -node.kR * node.eR - node.kW * eW - node.kiR * node.eiR + W.cross(node.J*W) + node.J*(R.transpose()*Rd*Wddot - What*R.transpose()*Rd*Wd) - M_g;
   // To try different motor speeds, choose a force in the radial direction
   double f = node.m*node.g;// N
   node.f_total = f;

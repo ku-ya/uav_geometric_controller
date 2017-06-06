@@ -42,6 +42,8 @@ geometry_msgs/Vector3 ex # + ev
 geometry_msgs/Vector3 ev
 geometry_msgs/Vector3 eR # + eW
 geometry_msgs/Vector3 eW
+# TODO include eiX, eiR values
+
 # Actuation value
 # force: total thrust
 # f_motor: force for each motor
@@ -55,8 +57,8 @@ float32[4] throttle
 geometry_msgs/Vector3 moment
 
 # controller position and attitude gains
-float32[3] gain_position
-float32[3] gain_attitude
+float32[6] gain_position
+float32[7] gain_attitude
 
 # sensor feed back from the motor
 uint8[24] motor_power

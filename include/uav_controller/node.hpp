@@ -1,5 +1,5 @@
-#ifndef ODROID_NODE_H
-#define ODROID_NODE_H
+#ifndef NODE_H
+#define NODE_H
 // System header files (gcc compiler on ODROID)
 #include <math.h>
 #include "AUX_Functions.h"
@@ -57,7 +57,7 @@ public:
   ros::Time vicon_time, imu_time;
   double dt_vicon = 0, dt_imu = 0, dt_vicon_imu;
   //  m = body mass, g = gravity, J = moment of inertial
-  double m, g, l, c_tf; Matrix3d J;
+  float m, g, l, c_tf; Matrix3d J;
   Matrix4d Ainv;
   // Control_Nonliner Inputs: inertial frame
   //  xd = f(t) desired position, xd_dot = f(xd)
@@ -111,7 +111,7 @@ public:
   Vector3d b1d;
   // Error Functions
   Vector3d eX, eV, eR, eW, F, M;
-  double f_total;
+  float f_total;
   Vector4d f_motor;
   // Control_Nonlinear Outputs:
   //  eX = position error in inertial frame
@@ -122,7 +122,7 @@ public:
   // Control_Nonlinear Inputs & Outputs:
   //  eiX = integral position error
   //  eiR = integral attitude error
-  double eiX_sat, eiR_sat;
+  float eiX_sat, eiR_sat;
 
   // Output of Control_Nonlinear() and Command Execution
   int thr[4] = {0,0,0,0};// i2c motor commands

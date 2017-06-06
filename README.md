@@ -1,4 +1,4 @@
-# ROS_odroid_node
+# ROS_node for UAV geometric controller
 
 This repository contains all the ROS source code developed for UAV for indooor (MOCA) and simulation (Gazebo) environments.
 

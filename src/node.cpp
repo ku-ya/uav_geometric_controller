@@ -28,8 +28,8 @@ void publish_error(node& node){
   tf::vectorEigenToMsg(node.xc_ned, e_msg.xc_ned);
   tf::vectorEigenToMsg(node.xc_ned_dot, e_msg.xc_ned_dot);
   tf::vectorEigenToMsg(node.xc_ned_2dot, e_msg.xc_ned_2dot);
-  tf::vectorEigenToMsg(node.Wd, e_msg.Wc);
-  tf::vectorEigenToMsg(node.Wd_dot, e_msg.Wc_dot);
+  tf::vectorEigenToMsg(node.Wc, e_msg.Wc);
+  tf::vectorEigenToMsg(node.Wc_dot, e_msg.Wc_dot);
   tf::vectorEigenToMsg(node.v, e_msg.v);
   tf::vectorEigenToMsg(node.x, e_msg.x);
   tf::vectorEigenToMsg(node.W, e_msg.W);
@@ -39,10 +39,11 @@ void publish_error(node& node){
   for(int i = 0; i<4;i++){
     e_msg.throttle[i] = (float) node.thr[i];
     e_msg.f_motor[i] = (float)node.f_motor(i);
+    e_msg.f_motor_sat[i] = (float)node.f_motor_sat(i);
   }
  for(int i = 0;i<24;i++){
      if(node.motor_power == NULL){
-     cout<<"motor power is pointed at NULL"<<endl;
+        cout<<"motor power is pointed at NULL"<<endl;
      }else{
 		e_msg.motor_power[i] = node.motor_power[i];
     }
@@ -257,9 +258,10 @@ void node::ctl_callback(hw_interface hw_intf){
         xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_b);
   }
   for(int k = 0; k < 4; k++){
-    if(f_motor(k) < 0 ){f_motor(k)=0;}
-    else if(f_motor(k) > 6.2){f_motor(k) = 6.2;}
-    thr[k] = floor(1/0.03*(f_motor(k)+0.37)+0.5);
+    f_motor_sat(k) = f_motor(k);
+    if(f_motor(k) < 0 ){f_motor_sat(k)=0;}
+    else if(f_motor(k) > 6.2){f_motor_sat(k) = 6.2;}
+    thr[k] = floor(1/0.03*(f_motor_sat(k)+0.37)+0.5);
   }
   if(environment == 1){
     motor_power = hw_intf.motor_command(thr, MotorWarmup, MOTOR_ON);

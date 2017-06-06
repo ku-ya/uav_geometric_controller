@@ -98,6 +98,8 @@ void controller::GeometricPositionController(node& node, Vector3d xd, Vector3d x
   // Vector3d Wd, Wddot;
   vee_eigen(Rd.transpose()*Rddot, Wd);
   vee_eigen(Rd.transpose()*Rdddot-hat_eigen(Wd)*hat_eigen(Wd), Wddot);
+  // TODO: node.Wc and node.Wc_dot
+  node.Wc = Wd; node.Wc_dot = Wddot;
   // Attitude Error 'eR'
   vee_eigen(.5*(Rd.transpose()*R-R.transpose()*Rd), node.eR);
   // Angular Velocity Error 'eW'
@@ -107,8 +109,8 @@ void controller::GeometricPositionController(node& node, Vector3d xd, Vector3d x
   err_sat(-node.eiR_sat, node.eiR_sat, node.eiR);
   node.eiR_last = node.eiR;
   // 3D Moment
-  Matrix3d kRv = Vector3d(kR,kR,kR*kRr).asDiagonal();
-  node.M = -kRv*node.eR-kW*node.eW-kiR*node.eiR+hat_eigen(R.transpose()*Rd*Wd)*node.J*R.transpose()*Rd*Wd+node.J*R.transpose()*Rd*Wddot;// LBFF
+  Matrix3d kRm = Vector3d(kR,kR,kR*kRr).asDiagonal();
+  node.M = -kRm*node.eR-kW*node.eW-kiR*node.eiR+hat_eigen(R.transpose()*Rd*Wd)*node.J*R.transpose()*Rd*Wd+node.J*R.transpose()*Rd*Wddot;// LBFF
 
   Matrix<double, 4, 1> FM;
   FM[0] = f;

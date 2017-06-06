@@ -110,9 +110,9 @@ public:
   Matrix3d R_c, W_c, Wdot_c;
   Vector3d b1d;
   // Error Functions
-  Vector3d eX, eV, eR, eW, F, M;
+  Vector3d Wc, Wc_dot, eX, eV, eR, eW, F, M;
   float f_total;
-  Vector4d f_motor;
+  Vector4d f_motor, f_motor_sat;
   // Control_Nonlinear Outputs:
   //  eX = position error in inertial frame
   //  eV = velocity error in inertial frame

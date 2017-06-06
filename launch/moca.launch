@@ -1,11 +1,11 @@
 <launch>
 <!-- Based on pysical (MOCA) or simulation (Gazebo) testing choose option -->
-  <include file="$(find uav_control)/launch/vn_100_cont_odroid.launch"/>
+  <include file="$(find uav_control)/launch/imu_odroid.launch"/>
   <arg name="MOCA" value="true"/>
   <rosparam>
       environment: 1
   </rosparam>
-  <rosparam file="$(find odroid)/params/controller.yaml" />
+  <rosparam file="$(find uav_controller)/params/controller.yaml" />
   <param name="simulation" type="bool" value="false"/>
   <arg name="paused" default="false"/>
   <arg name="gui" default="true"/>

@@ -74,7 +74,7 @@ public:
   //  kx = proportional, kv = derivative, kiX = integral
   // Attitude gains:
   // kR = proportional, kW = derivative, kiR = integral
-  float kx, kv, kiX, cX, kR, kRr, kW, kiR, cR;
+  float kx,kxr, kv, kiX, cX, kR, kRr, kW, kiR, cR;
   Vector3d rpy, x, v, W;
   Matrix2d e; //inertial frame,
   // Measured Values in Vicon inettial frame

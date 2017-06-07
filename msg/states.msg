@@ -57,7 +57,7 @@ float32[4] throttle
 geometry_msgs/Vector3 moment
 
 # controller position and attitude gains
-float32[6] gain_position
+float32[7] gain_position
 float32[7] gain_attitude
 
 # sensor feed back from the motor

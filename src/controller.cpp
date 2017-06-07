@@ -41,6 +41,7 @@ void controller::GeometricPositionController(node& node, Vector3d xd, Vector3d x
 
   // Force 'f' along negative b3-axis
   float kx = node.kx;
+  float kxr = node.kxr;
   float kv = node.kv;
   float kiX = node.kiX;
   float kR = node.kR;
@@ -51,7 +52,8 @@ void controller::GeometricPositionController(node& node, Vector3d xd, Vector3d x
   float m = node.m;
   float g = node.g;
 
-  Vector3d A = -kx*ex-kv*ev-kiX*node.eiX-m*g*e3+m*xd_2dot;
+  Matrix3d kxm = Vector3d(kx,kx,kx*kxr).asDiagonal();
+  Vector3d A = -kxm*ex-kv*ev-kiX*node.eiX-m*g*e3+m*xd_2dot;
   Vector3d L = R*e3;
   Vector3d Ldot = R*hat_eigen(W)*e3;
   float f = -A.dot(R*e3);
@@ -59,11 +61,11 @@ void controller::GeometricPositionController(node& node, Vector3d xd, Vector3d x
 
   // Intermediate Terms for Rotational Errors
   Vector3d ea = g*e3-f/m*L-xd_2dot;
-  Vector3d Adot = -kx*ev-kv*ea+m*xd_3dot;// Lee Matlab: -ki*satdot(sigma,ei,ev+c1*ex);
+  Vector3d Adot = -kxm*ev-kv*ea+m*xd_3dot;// Lee Matlab: -ki*satdot(sigma,ei,ev+c1*ex);
 
   float fdot = -Adot.dot(L)-A.dot(Ldot);
   Vector3d eb = -fdot/m*L-f/m*Ldot-xd_3dot;
-  Vector3d Addot = -kx*ea-kv*eb+m*xd_4dot;// Lee Matlab: -ki*satdot(sigma,ei,ea+c1*ev);
+  Vector3d Addot = -kxm*ea-kv*eb+m*xd_4dot;// Lee Matlab: -ki*satdot(sigma,ei,ea+c1*ev);
 
   float nA = A.norm();
   Vector3d Ld = -A/nA;

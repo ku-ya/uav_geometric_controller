@@ -56,7 +56,7 @@ void publish_error(node& node){
     e_msg.R[i] = (float)node.R(i);
     e_msg.R_v[i] = (float)node.R_b(i);
   }
-  e_msg.gain_position = {node.kx,node.kv, node.kiX, 0,0,0};
+  e_msg.gain_position = {node.kx,node.kv, node.kiX, node.kxr,0,0,0};
   e_msg.gain_attitude = {node.kR, node.kW, node.kiR, node.kRr, 0,0,0};
   for(int i = 0; i <3;i++){
     e_msg.gain_position[3+i] = node.eiX[i];
@@ -148,10 +148,12 @@ node::node(){
 
   printf("Suggested gain from wnx %f wnR %f zeta %f\nkx %f kv %f kR %f kW %f\n\n\n",wnx,wnR,zetax,kx,kv,kR,kW);
   ros::param::get("/controller/gain/att/kp",kR);
+  ros::param::get("/controller/gain/att/kRr",kRr);
   ros::param::get("/controller/gain/att/kd",kW);
   ros::param::get("/controller/gain/att/ki",kiR);
   ros::param::get("/controller/gain/att/c",cR);
   ros::param::get("/controller/gain/pos/kp",kx);
+  ros::param::get("/controller/gain/pos/kxr",kxr);
   ros::param::get("/controller/gain/pos/kd",kv);
   ros::param::get("/controller/gain/pos/ki",kiX);
   ros::param::get("/controller/gain/pos/c",cX);
@@ -285,6 +287,7 @@ void node::callback(uav_controller::GainsConfig &config, uint32_t level) {
   kRr = config.kRr;
   kx = config.kx;
   kv = config.kv;
+  kxr = config.kxr;
 
   if(MOTOR_ON && !MotorWarmup){
     kiR = config.kiR;

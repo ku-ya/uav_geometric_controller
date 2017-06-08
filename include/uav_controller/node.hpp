@@ -79,7 +79,9 @@ public:
   Matrix2d e; //inertial frame,
   // Measured Values in Vicon inettial frame
   std::string vicon_name;
-  Vector3d x_v, v_v, prev_x_v,prev_v_v;
+  Vector3d x_v, v_v, prev_x_v,prev_v_v, x_v_ned, v_v_ned;
+  Vector3d xd_ned, xd_dot_ned, xd_2dot_ned, xd_3dot_ned, xd_4dot_ned;
+  Matrix3d R_v_ned;
 
   Quaterniond q_imu, q_v;
   MatrixXd v_ave;
@@ -108,7 +110,7 @@ public:
   Matrix3d R_b, R_conv; // inertial to body and convention conversion
   Vector3d x_e, v_e;// Position and Velocity in inertial (e) frame
   Matrix3d R_c, W_c, Wdot_c;
-  Vector3d b1d;
+  Vector3d b1d, b1d_ned;
   // Error Functions
   Vector3d Wc, Wc_dot, eX, eV, eR, eW, F, M;
   float f_total;

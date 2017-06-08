@@ -1,0 +1,17 @@
+<launch>
+<!-- Based on pysical (MOCA) or simulation (Gazebo) testing choose option -->
+  <arg name="MOCA" value="true"/>
+  <rosparam>
+      environment: 0
+  </rosparam>
+  <rosparam file="$(find uav_controller)/params/controller.yaml" />
+  <param name="simulation" type="bool" value="false"/>
+  <arg name="paused" default="false"/>
+  <arg name="gui" default="true"/>
+  <arg name="debug" default="false"/>
+  <arg name="verbose" default="true"/>
+  <!-- start odroid node-->
+  <node name="node" type="node" pkg="uav_controller" respawn="false" output="screen">
+  </node>
+  <!-- <node name="rviz" pkg="rviz" type="rviz" output="screen" /> -->
+</launch>

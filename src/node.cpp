@@ -128,9 +128,10 @@ node::node(){
   prev_x_v= prev_v_v = eiX =  eiX_last = eiR_last = Vector3d::Zero();
 	x_e = v_e = eiR = eiX = Vector3d::Zero();
   xd = xd_dot = xd_ddot= Wd = Wd_dot = W_b = W_raw = Vector3d::Zero();
-  x_v = v_v = prev_x_v = prev_v_v = b1d = Vector3d::Zero();
+  x_v = v_v = prev_x_v = prev_v_v = b1d = b1d_ned =  Vector3d::Zero();
   W = xc_ned = xc_ned_dot = xc_ned_2dot = x = v = Vector3d::Zero();
   b1d << 1,0,0;
+  b1d_ned = R_conv*b1d;
   M = eX = eV = eR = eW = Vector3d::Zero();
   f_motor =  Vector4d::Zero();
   Rc = Rc_dot = Rc_2dot = Matrix3d::Zero();
@@ -209,6 +210,10 @@ void node::vicon_callback(
   v_v = v_ave.rowwise().mean();
   prev_x_v = x_v;
   // prev_v_v = v_v;
+  x_v_ned = R_conv*x_v;
+  v_v_ned = R_conv*v_v;
+  R_v_ned = R_conv*R_b*R_conv;
+
 }
 
 void node::cmd_callback(const uav_controller::trajectory::ConstPtr& msg){
@@ -220,9 +225,13 @@ void node::cmd_callback(const uav_controller::trajectory::ConstPtr& msg){
   //tf::vectorMsgToEigen(msg->xd_dot,xd_dot);
   //tf::vectorMsgToEigen(msg->xd_ddot,xd_ddot);
   b1d << msg->b1[0], msg->b1[1], msg->b1[2];
+  b1d_ned = R_conv*b1d;
   xd << msg->xc[0], msg->xc[1], msg->xc[2];
   xd_dot << msg->xc_dot[0], msg->xc_dot[1], msg->xc_dot[2];
   xd_ddot << msg->xc_2dot[0], msg->xc_2dot[1], msg->xc_2dot[2];
+  xc_ned = R_conv*xd;
+  xc_ned_dot = R_conv*xd_dot;
+  xc_ned_2dot = R_conv*xd_ddot;
 }
 
 void node::get_sensor(){
@@ -257,7 +266,7 @@ void node::ctl_callback(hw_interface hw_intf){
   if(Vicon_flag){
     boost::mutex::scoped_lock scopedLock(mutex_);
     controller::GeometricPositionController(*this,
-        xd, xd_dot, xd_ddot, Wd, Wd_dot, x_v, v_v, W_b, R_b);
+        xc_ned, xc_ned_dot, xc_ned_2dot, Wd, Wd_dot, x_v_ned, v_v_ned, W_b, R_v_ned);
   }
   for(int k = 0; k < 4; k++){
     f_motor_sat(k) = f_motor(k);
@@ -290,8 +299,8 @@ void node::callback(uav_controller::GainsConfig &config, uint32_t level) {
   kxr = config.kxr;
 
   if(MOTOR_ON && !MotorWarmup){
-    kiR = config.kiR;
-    kiX = config.kiX;
+    kiR = config.kiR; //config.kiR;
+    kiX = config.kiX; //config.kiX;
   }else{
     kiR = 0;
     kiX = 0;

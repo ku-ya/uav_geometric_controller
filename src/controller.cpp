@@ -2,30 +2,15 @@
 using namespace Eigen;
 using namespace std;
 
-void controller::GeometricPositionController(node& node, Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W_in, Matrix3d R_v){
+void controller::GeometricPositionController(node& node, Vector3d xd, Vector3d xd_dot, Vector3d xd_2dot,Vector3d Wd, Vector3d Wddot, Vector3d x, Vector3d v, Vector3d W_in, Matrix3d R){
   std::cout.precision(5);
-  Vector3d xd_2dot, xd_3dot, xd_4dot, b1d, b1d_dot, b1d_ddot;
-  xd_2dot = xd_3dot = xd_4dot = b1d_dot = b1d_ddot = Vector3d::Zero();
-  b1d = node.b1d;
+  Vector3d xd_3dot, xd_4dot, b1d, b1d_dot, b1d_ddot;
+  xd_3dot = xd_4dot = b1d_dot = b1d_ddot = Vector3d::Zero();
+  b1d = node.b1d_ned;
   Vector3d e3(0,0,1);// commonly-used unit vector
   // convention conversion
-  Vector3d x = node.R_conv*x_v;
-  Vector3d v = node.R_conv*v_v;
-  Matrix3d R = node.R_conv*R_v*node.R_conv;
   Vector3d W = W_in;
   node.R = R; node.W = W; node.v = v; node.x = x;
-
-  xd = node.R_conv*xd;
-  xd_dot = node.R_conv*xd_dot;
-  xd_2dot = node.R_conv*xd_2dot;
-  xd_3dot = node.R_conv*xd_3dot;
-  xd_4dot = node.R_conv*xd_4dot;
-
-  node.xc_ned = xd;
-  node.xc_ned_dot = xd_dot;
-  node.xc_ned_2dot = xd_2dot;
-
-  b1d = node.R_conv*b1d;
   b1d_dot = node.R_conv*b1d_dot;
   b1d_ddot = node.R_conv*b1d_ddot;
 
@@ -48,7 +33,6 @@ void controller::GeometricPositionController(node& node, Vector3d xd, Vector3d x
   float kRr = node.kRr;
   float kW = node.kW;
   float kiR = node.kiR;
-
   float m = node.m;
   float g = node.g;
 

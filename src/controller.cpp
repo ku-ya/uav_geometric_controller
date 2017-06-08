@@ -80,7 +80,7 @@ void controller::GeometricPositionController(node& node, Vector3d xd, Vector3d x
   Rdddot << Rd1ddot, Rd2ddot, Ldddot;
   node.Rc = Rd;
   node.Rc_dot = Rddot;
-  node.Rc_2dot = Rddot;
+  node.Rc_2dot = Rdddot;
   // Vector3d Wd, Wddot;
   vee_eigen(Rd.transpose()*Rddot, Wd);
   vee_eigen(Rd.transpose()*Rdddot-hat_eigen(Wd)*hat_eigen(Wd), Wddot);

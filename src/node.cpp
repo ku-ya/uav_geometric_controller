@@ -298,11 +298,6 @@ void node::callback(uav_controller::GainsConfig &config, uint32_t level) {
   kv = config.kv;
   kxr = config.kxr;
 
-  if(MOTOR_ON && !MotorWarmup){
-    kiR = config.kiR; //config.kiR;
-    kiX = config.kiX; //config.kiX;
-  }else{
-    kiR = 0;
-    kiX = 0;
-  }
+  kiR = config.kiR; //config.kiR;
+  kiX = config.kiX; //config.kiX;
 }

@@ -94,16 +94,16 @@ int main(int argc, char **argv){
 }
 
 node::node(){
-  ros::param::get("/controller/del_t",del_t);  cout<<"\ndel_t: "<< del_t<<endl;
-  ros::param::get("/controller/g",g);
-  ros::param::get("/controller/m",m); cout<<"m: "<< m<<endl;
+  ros::param::get("controller/del_t",del_t);  cout<<"\ndel_t: "<< del_t<<endl;
+  ros::param::get("controller/g",g);
+  ros::param::get("controller/m",m); cout<<"m: "<< m<<endl;
 
   std::vector<double> J_vec;
-  ros::param::param<std::vector<double>>("/controller/J", J_vec, J_vec);
+  ros::param::param<std::vector<double>>("controller/J", J_vec, J_vec);
   J=Matrix3d(J_vec.data());  std::cout<<"J: \n"<<J<<std::endl;
 
-  ros::param::get("/controller/l",l); cout<<"l: "<< l<<endl;
-  ros::param::get("/controller/c_tf",c_tf); cout<<"c_tf: "<< c_tf<<endl;
+  ros::param::get("controller/l",l); cout<<"l: "<< l<<endl;
+  ros::param::get("controller/c_tf",c_tf); cout<<"c_tf: "<< c_tf<<endl;
 
   Matrix4d A;
   A << 1.0,   1.0,  1.0,   1.0,
@@ -114,10 +114,10 @@ node::node(){
   Ainv = A.inverse();
 
   cout<<"Ainv:\n"<<Ainv<<"\n"<<endl;
-  ros::param::get("/environment",environment);
-  ros::param::get("/controller/mode",mode);
+  ros::param::get("environment",environment);
+  ros::param::get("controller/mode",mode);
   cout<<"Mode: "<<mode<<" (0: Attitude, 1: Position)\n"<<endl;
-  ros::param::param<std::vector<double>>("/controller/R_conv", J_vec, J_vec);
+  ros::param::param<std::vector<double>>("controller/R_conv", J_vec, J_vec);
   R_conv=Matrix3d(J_vec.data());  std::cout<<"R_conv: \n"<<R_conv<<std::endl;
 
   IMU_flag = false; // IMU sensor reading check
@@ -148,22 +148,22 @@ node::node(){
   kW = 2*wnR*zetaR*norm_J;
 
   printf("Suggested gain from wnx %f wnR %f zeta %f\nkx %f kv %f kR %f kW %f\n\n\n",wnx,wnR,zetax,kx,kv,kR,kW);
-  ros::param::get("/controller/gain/att/kp",kR);
-  ros::param::get("/controller/gain/att/kRr",kRr);
-  ros::param::get("/controller/gain/att/kd",kW);
-  ros::param::get("/controller/gain/att/ki",kiR);
-  ros::param::get("/controller/gain/att/c",cR);
-  ros::param::get("/controller/gain/pos/kp",kx);
-  ros::param::get("/controller/gain/pos/kxr",kxr);
-  ros::param::get("/controller/gain/pos/kd",kv);
-  ros::param::get("/controller/gain/pos/ki",kiX);
-  ros::param::get("/controller/gain/pos/c",cX);
-  ros::param::get("/controller/saturation/x",eiX_sat);
-  ros::param::get("/controller/saturation/R",eiR_sat);
-  ros::param::param<std::vector<int>>("/port/i2c",mtr_addr,mtr_addr);
-  ros::param::get("/name/vicon",vicon_name);
+  ros::param::get("controller/gain/att/kp",kR);
+  ros::param::get("controller/gain/att/kRr",kRr);
+  ros::param::get("controller/gain/att/kd",kW);
+  ros::param::get("controller/gain/att/ki",kiR);
+  ros::param::get("controller/gain/att/c",cR);
+  ros::param::get("controller/gain/pos/kp",kx);
+  ros::param::get("controller/gain/pos/kxr",kxr);
+  ros::param::get("controller/gain/pos/kd",kv);
+  ros::param::get("controller/gain/pos/ki",kiX);
+  ros::param::get("controller/gain/pos/c",cX);
+  ros::param::get("controller/saturation/x",eiX_sat);
+  ros::param::get("controller/saturation/R",eiR_sat);
+  ros::param::param<std::vector<int>>("port/i2c",mtr_addr,mtr_addr);
+  ros::param::get("name/vicon",vicon_name);
   vicon_name = "/vicon/"+vicon_name+"/pose";
-  pub_ = n_.advertise<uav_geometric_controller::states>("/uav_states",1);
+  pub_ = n_.advertise<uav_geometric_controller::states>("uav_states",1);
   ROS_INFO("UAV node initialized");
 }
 

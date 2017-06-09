@@ -1,13 +1,13 @@
-#include <uav_controller/node.hpp>
+#include <uav_geometric_controller/node.hpp>
 // User header files
-#include <uav_controller/controller.hpp>
-#include <uav_controller/states.h>
+#include <uav_geometric_controller/controller.hpp>
+#include <uav_geometric_controller/states.h>
 using namespace std;
 using namespace Eigen;
 using namespace message_filters;
 
 void publish_error(node& node){
-  uav_controller::states e_msg;
+  uav_geometric_controller::states e_msg;
   e_msg.header.stamp = ros::Time::now();
   e_msg.header.frame_id = "drone";
   Vector3d kR_eR = node.kR*node.eR;
@@ -70,8 +70,8 @@ int main(int argc, char **argv){
   node odnode;
   ros::NodeHandle nh = odnode.getNH();
   // dynamic reconfiguration server for gains and print outs
-  dynamic_reconfigure::Server<uav_controller::GainsConfig> server;
-  dynamic_reconfigure::Server<uav_controller::GainsConfig>::CallbackType dyn_serv;
+  dynamic_reconfigure::Server<uav_geometric_controller::GainsConfig> server;
+  dynamic_reconfigure::Server<uav_geometric_controller::GainsConfig>::CallbackType dyn_serv;
   dyn_serv = boost::bind(&node::callback, &odnode, _1, _2);
   server.setCallback(dyn_serv);
 
@@ -163,7 +163,7 @@ node::node(){
   ros::param::param<std::vector<int>>("/port/i2c",mtr_addr,mtr_addr);
   ros::param::get("/name/vicon",vicon_name);
   vicon_name = "/vicon/"+vicon_name+"/pose";
-  pub_ = n_.advertise<uav_controller::states>("/uav_states",1);
+  pub_ = n_.advertise<uav_geometric_controller::states>("/uav_states",1);
   ROS_INFO("UAV node initialized");
 }
 
@@ -216,7 +216,7 @@ void node::vicon_callback(
 
 }
 
-void node::cmd_callback(const uav_controller::trajectory::ConstPtr& msg){
+void node::cmd_callback(const uav_geometric_controller::trajectory::ConstPtr& msg){
   ros::param::get("/node/Motor", MOTOR_ON);
   ros::param::get("/node/MotorWarmup", MotorWarmup);
   boost::mutex::scoped_lock scopedLock(mutex_);
@@ -281,7 +281,7 @@ void node::ctl_callback(hw_interface hw_intf){
   }
 }
 
-void node::callback(uav_controller::GainsConfig &config, uint32_t level) {
+void node::callback(uav_geometric_controller::GainsConfig &config, uint32_t level) {
   ROS_INFO("Reconfigure Request: Update");
 
   mode = config.mode;

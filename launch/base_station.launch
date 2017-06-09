@@ -1,7 +1,7 @@
 <launch>
 <!-- Based on pysical (MOCA) testing choose option -->
     <include file="$(find uav_demo)/launch/vicon.launch"/>
-    <node name="key_cmd" type="key_direct.py" pkg="uav_controller" respawn="false" output="screen" />
-    <node name="cmd_traj" type="trajectory_cmd.py" pkg="uav_controller" respawn="false" output="screen" />
+    <node name="key_cmd" type="key_direct.py" pkg="uav_geometric_controller" respawn="false" output="screen" />
+    <node name="cmd_traj" type="trajectory_cmd.py" pkg="uav_geometric_controller" respawn="false" output="screen" />
     <!-- <node name="rviz" pkg="rviz" type="rviz" output="screen" /> -->
 </launch>

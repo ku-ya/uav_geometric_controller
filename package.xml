@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>uav_controller</name>
+  <name>uav_geometric_controller</name>
   <version>0.0.0</version>
   <description>The cpp controller package</description>
 

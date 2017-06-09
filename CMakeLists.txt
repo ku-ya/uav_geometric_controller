@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(uav_controller)
+project(uav_geometric_controller)
 
 add_definitions(-std=c++11)
 
@@ -127,7 +127,7 @@ generate_dynamic_reconfigure_options(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
  INCLUDE_DIRS include
- LIBRARIES uav_controller
+ LIBRARIES uav_geometric_controller
  CATKIN_DEPENDS message_runtime cv_bridge roscpp rospy std_msgs image_transport geometry_msgs
 #  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib

@@ -3,7 +3,7 @@
 
 #include "math.hpp"
 #include <eigen3/Eigen/Dense>
-#include <uav_controller/node.hpp>
+#include <uav_geometric_controller/node.hpp>
 
 class controller
 {

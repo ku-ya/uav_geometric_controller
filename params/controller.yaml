@@ -21,14 +21,14 @@ controller:
   gain:
     att:
       kp: 0.4
-      kd: 0.1
+      kd: 0.3
       ki: 0.0
       c: 0.10
       kRr: 0.5
     pos:
       kp: 8.0
       kd: 4.0
-      ki: 0.0
+      ki: 1.0
       c: 0.10
       kxr: 0.5
   saturation:

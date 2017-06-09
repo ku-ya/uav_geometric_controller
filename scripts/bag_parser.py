@@ -7,6 +7,7 @@ import pdb
 import yaml
 import argparse
 import sys
+# import attitude
 
 import matplotlib as mpl
 from mpl_toolkits.mplot3d import Axes3D
@@ -71,7 +72,7 @@ def read_bag_file(filename):
     gainX_array = np.zeros((num_drone_var_msg,4))
     gainR_array = np.zeros((num_drone_var_msg,4))
     dt_vicon_array = np.zeros((num_drone_var_msg,1))
-    q_v_array = np.zeros((num_drone_var_msg,4))
+    q_vicon_received_array = np.zeros((num_drone_var_msg,4))
     q_imu_array = np.zeros((num_drone_var_msg,4))
 
 
@@ -98,20 +99,37 @@ def read_bag_file(filename):
         gainX_array[drone_var_index,:] = np.array([msg.gainX[0], msg.gainX[1], msg.gainX[2], msg.gainX[3]])
         gainR_array[drone_var_index,:] = np.array([msg.gainR[0], msg.gainR[1], msg.gainR[2], msg.gainR[3]])
         dt_vicon_array[drone_var_index,:] = np.array([msg.dt_vicon_imu])
-        q_v_array[drone_var_index,:] = np.array([msg.q_v.w, msg.q_v.x, msg.q_v.y, msg.q_v.z])
+        q_vicon_received_array[drone_var_index,:] = np.array([msg.q_v.w, msg.q_v.x, msg.q_v.y, msg.q_v.z])
         q_imu_array[drone_var_index,:] = np.array([msg.q_imu.w, msg.q_imu.x, msg.q_imu.y, msg.q_imu.z])
 
         drone_var_index += 1
+
+    # for comparison, read vicon thread
+    vicon_var_topic = '/vicon/Maya/Maya'
+    vicon_var_msg_type = bag.get_type_and_topic_info()[1].get(vicon_var_topic)[0]
+    num_vicon_var_msg = bag.get_type_and_topic_info()[1].get(vicon_var_topic)[1]
+    vicon_var_msg_freq = bag.get_type_and_topic_info()[1].get(vicon_var_topic)[2]
+
+    vicon_index = 0
+    v_time_array = np.zeros((num_vicon_var_msg,1))
+    q_vicon_sent_array = np.zeros((num_vicon_var_msg,4))
+    for topic, msg, t in bag.read_messages(topics=[vicon_var_topic]):
+        # pdb.set_trace()
+        v_time_array[vicon_index,0] = t.to_sec()
+        q_vicon_sent_array[vicon_index,:] = np.array([msg.transform.rotation.w, msg.transform.rotation.x, msg.transform.rotation.y, msg.transform.rotation.z])
+
+        vicon_index += 1
 
     bag.close()
 
     # shift the time array to the starting epoch
     time_array = time_array - time_array[0]
+    v_time_array = v_time_array - v_time_array[0]
 
     return time_array, xd_array, xd_dot_array, xd_ddot_array, IMU_W_array, \
             IMU_RPY_array, x_v_array, v_v_array, ex_array, ev_array, eR_array, \
             eW_array, f_array, f_motor_array, thr_array, M_array, gainX_array, \
-            gainR_array, dt_vicon_array, q_v_array, q_imu_array
+            gainR_array, dt_vicon_array, q_vicon_received_array, q_imu_array, v_time_array, q_vicon_sent_array
 
 
 def plot_31_2(t, x, y, x_label, y_label, title, latex):
@@ -256,6 +274,48 @@ def plot_41_2(t, x, y, title, y_label_1, y_label_2, y_label_3, y_label_4, legend
 
 
 
+def vicon_imu_comaprison(t_sent, t_received, vicon_sent, vicon_received, latex):
+    print('Plotting Sent and Received quaternion comparison')
+
+    mpl.rcParams['legend.fontsize'] = 10
+    if latex:
+        plt.rc('text', usetex=True)
+        plt.rc('font', family='serif')
+
+
+    fig = plt.figure()
+    fig.suptitle('Sent and Received Quaternion Comparison', fontsize=12)
+
+    plt.subplot(411)
+    plt.plot(t_received[:], vicon_received[:,0],'b', label = 'Received')
+    plt.plot(t_sent[:], vicon_sent[:,0],'r', label = 'Sent')
+    plt.xlabel('Time (sec since epoch) ')
+    plt.ylabel('w')
+    plt.legend()
+
+    plt.subplot(412)
+    plt.plot(t_received[:], vicon_received[:,1],'b', label = 'Received')
+    plt.plot(t_sent[:], vicon_sent[:,1],'r', label = 'Sent')
+    plt.xlabel('Time (sec since epoch) ')
+    plt.ylabel('x')
+
+    plt.subplot(413)
+    plt.plot(t_received[:], vicon_received[:,2],'b', label = 'Received')
+    plt.plot(t_sent[:], vicon_sent[:,2],'r', label = 'Sent')
+    plt.xlabel('Time (sec since epoch) ')
+    plt.ylabel('y')
+
+    plt.subplot(414)
+    plt.plot(t_received[:], vicon_received[:,3],'b', label = 'Received')
+    plt.plot(t_sent[:], vicon_sent[:,3],'r', label = 'Sent')
+    plt.xlabel('Time (sec since epoch) ')
+    plt.ylabel('z')
+    # plt.set_xlim(15, 35)
+
+
+    return
+
+
 def plot_1(t, x, title, y_label, latex):
     print('Plotting ' + title + ' ...')
 
@@ -316,17 +376,19 @@ if __name__ == "__main__":
         time_array, xd_array, xd_dot_array, xd_ddot_array, IMU_W_array, IMU_RPY_array, \
             x_v_array, v_v_array, ex_array, ev_array, eR_array, eW_array, f_array, \
             f_motor_array, thr_array, M_array, gainX_array, gainR_array, \
-            dt_vicon_array, q_v_array, q_imu_array = read_bag_file(args.input_file)
+            dt_vicon_array, q_vicon_received_array, q_imu_array, v_time_array, q_vicon_sent_array = read_bag_file(args.input_file)
     except (AttributeError):
         print("Error in reading the bag file. Most likely there was a change in the message format.")
         print("Skipping the plotting commands!")
         sys.exit()
 
 
-    plot_trajectory(x_v_array, latex)
+    # plot_trajectory(x_v_array, latex)
     # plot_41_1(time_array, thr_array, 'Throttle Values', 'Motor 1', 'Motor 2', 'Motor 3', 'Motor 4', latex)
     # plot_31_2(time_array, IMU_W_array, x_v_array, 'IMU', 'Vicon', 'IMU + Vicon', latex)
-    # plot_41_2(time_array, q_v_array, q_imu_array, 'Quaternion Comparison', 'w', 'q1', 'q2', 'q3', 'Vicon', 'IMU', latex)
+    # plot_41_2(time_array, q_vicon_received_array, q_imu_array, 'Quaternion Comparison', 'w', 'q1', 'q2', 'q3', 'Vicon', 'IMU', latex)
+    vicon_imu_comaprison(v_time_array, time_array, q_vicon_sent_array, q_vicon_received_array, latex)
+
 
     if args.latex:
         plot_31_2(time_array, x_v_array, xd_array, 'vicon', 'desired', 'position', latex)

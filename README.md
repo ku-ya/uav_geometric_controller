@@ -7,7 +7,7 @@ This repository contains all the ROS source code developed for UAV for indooor (
 1. First you need [ROS](http://wiki.ros.org/indigo/Installation) (use kinetic distro)
       * This is super easy now.
         We've created a setup script that will install all the necessary packages.
-2. Create a workspace in a convienent directory and clone the repo. 
+2. Create a workspace in a convienent directory and clone the repo.
 This is creating the `catkin_ws`
 
       ~~~
@@ -23,10 +23,10 @@ This is creating the `catkin_ws`
     $ cd ROS_node/setup
     $ ./ros_install.bash
     ~~~
-    
-4. The script will install ROS and all necessary packages. 
+
+4. The script will install ROS and all necessary packages.
 You can then go to your `catkin_ws` and build as necessary
-5. Modify the path 
+5. Modify the path
     ~~~
     $ cd ~/catkin_ws
     $ source devel/setup.bash
@@ -35,7 +35,7 @@ You can then go to your `catkin_ws` and build as necessary
 
 ## Running the code
 
-There are a variety of possible ways to compile and use the code. 
+There are a variety of possible ways to compile and use the code.
 It is already setup to provide simulation capabilities via Gazebo as well as hardware interfaces for use on the vehicles.
 
 ### Gazebo simulation environment
@@ -47,7 +47,7 @@ roslaunch odroid empty_gazebo.launch
 roslaunch odroid odroid_gazebo.launch
 ```
 
-This will create a Gazebo simulation and the appropriate nodes for communication. 
+This will create a Gazebo simulation and the appropriate nodes for communication.
 
 ###  Indoor testing at MOCA
 
@@ -126,7 +126,7 @@ tag v0.3
 - Gazebo simulation quad controller integration complete
 
 tag V0.2
-- Synchronized message from IMU and Vicon for sensor callback  
+- Synchronized message from IMU and Vicon for sensor callback
 
 tag V0.1
 - Initial working node for attitude control on a spherical joint
@@ -166,20 +166,20 @@ Check:
 ### Python issues
 
   * If you have Anaconda installed, you can simply uncomment the path modifcation in your `~/.bashrc` file
-  This will ensure that the system Python is Pin use rather than Anaconda. 
+  This will ensure that the system Python is Pin use rather than Anaconda.
 
     More explicitly, make sure the following line is commented in `~/.bashrc` and then run `source ~/.bashrc` or open a new terminal window and verify that the system python is running.
     ~~~
     # added by Anaconda3 4.3.0 installer
     # export PATH="/home/<username>/anaconda3/bin:$PATH"
     ~~~
-  * Install `pip` using the system package manager - `$ sudo apt-get install python-pip python3-pip`  
+  * Install `pip` using the system package manager - `$ sudo apt-get install python-pip python3-pip`
   * Ensure you have `catkin_pkg` and `ros_pkg` installed via `pip install --user catkin_pkg ros_pkg`
   * Check which Python you're using by `$ python --version`. It should not point to Anaconda after you modify the `.bashrc` file. If it still does then you need to open a new terminal window to load the new configuration.
-  
+
 ### `nmap`
 
-This a command-line tool to scan your local network. 
+This a command-line tool to scan your local network.
 To find IP addresses of other devices on your local subnet use the following:
 
 ~~~
@@ -188,5 +188,3 @@ $ nmap -sP 192.168.2.1/24
 
 This command assumes the local network is `192.168.2.*`.
 If this is not the case you need to modify the command by finding the local gateway using `ifconfig`
-  
-

@@ -56,7 +56,7 @@ void publish_error(node& node){
     e_msg.R[i] = (float)node.R(i);
     e_msg.R_v[i] = (float)node.R_b(i);
   }
-  e_msg.gain_position = {node.kx,node.kv, node.kiX, node.kxr,0,0,0};
+  e_msg.gain_position = {node.kx,node.kv, node.kiX, 1,0,0,0};
   e_msg.gain_attitude = {node.kR, node.kW, node.kiR, node.kRr, 0,0,0};
   for(int i = 0; i <3;i++){
     e_msg.gain_position[3+i] = node.eiX[i];
@@ -217,8 +217,8 @@ void node::vicon_callback(
 }
 
 void node::cmd_callback(const uav_geometric_controller::trajectory::ConstPtr& msg){
-  ros::param::get("/uav/Motor", MOTOR_ON);
-  ros::param::get("/uav/MotorWarmup", MotorWarmup);
+  ros::param::get("uav/Motor", MOTOR_ON);
+  ros::param::get("uav/MotorWarmup", MotorWarmup);
   boost::mutex::scoped_lock scopedLock(mutex_);
   //tf::vectorMsgToEigen(msg->b1,b1d);
   //tf::vectorMsgToEigen(msg->xd,xd);
@@ -296,7 +296,7 @@ void node::callback(uav_geometric_controller::GainsConfig &config, uint32_t leve
   kRr = config.kRr;
   kx = config.kx;
   kv = config.kv;
-  kxr = config.kxr;
+  //kxr = config.kxr;
 
   kiR = config.kiR; //config.kiR;
   kiX = config.kiX; //config.kiX;

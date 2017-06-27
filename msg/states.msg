@@ -15,7 +15,7 @@ geometry_msgs/Vector3 xc_ned_2dot
 # vicon pose, velocity (ENU)
 geometry_msgs/Vector3 x_v
 geometry_msgs/Quaternion q_v
-float32[9] R_v
+std_msgs/Float32MultiArray R_v
 geometry_msgs/Vector3 v_v
 
 # IMU attitude, angular velocity (NED)

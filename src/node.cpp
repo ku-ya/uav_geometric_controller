@@ -46,16 +46,17 @@ void publish_error(node& node){
      if(node.motor_power == NULL){
         cout<<"motor power is pointed at NULL"<<endl;
      }else{
-		e_msg.motor_power[i] = node.motor_power[i];
+		e_msg.motor_power[i] = (float)node.motor_power[i];
     }
     }
+  e_msg.R_v.data.clear();
   for(int i=0;i<9;i++){
     e_msg.Rc[i] = (float)node.Rc(i);
     e_msg.Rc_dot[i] = (float)node.Rc_dot(i);
     e_msg.Rc_2dot[i] = (float)node.Rc_2dot(i);
     e_msg.R_imu[i] = (float)node.R_imu(i);
     e_msg.R[i] = (float)node.R(i);
-    e_msg.R_v[i] = (float)node.R_b(i);
+    e_msg.R_v.data.push_back((float)node.R_b(i));
   }
   e_msg.gain_position = {node.kx,node.kv, node.kiX, 1,0,0,0};
   e_msg.gain_attitude = {node.kR, node.kW, node.kiR, node.kRr, 0,0,0};

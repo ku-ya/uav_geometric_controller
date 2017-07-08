@@ -15,7 +15,7 @@ geometry_msgs/Vector3 xc_ned_2dot
 # vicon pose, velocity (ENU)
 geometry_msgs/Vector3 x_v
 geometry_msgs/Quaternion q_v
-float32[9] R_v
+std_msgs/Float32MultiArray R_v
 geometry_msgs/Vector3 v_v
 
 # IMU attitude, angular velocity (NED)
@@ -61,4 +61,4 @@ float32[7] gain_position
 float32[7] gain_attitude
 
 # sensor feed back from the motor
-uint8[24] motor_power
+float32[24] motor_power

@@ -149,6 +149,7 @@ include_directories(
 add_library(controller  src/controller.cpp)
 # add_library(visualize  src/visualize.cpp)
 add_library(hw_interface  src/hw_interface.cpp)
+add_library(uav src/uav.cpp)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure

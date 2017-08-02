@@ -58,8 +58,10 @@ void publish_error(node& node){
     e_msg.R[i] = (float)node.R(i);
     e_msg.R_v.data.push_back((float)node.R_b(i));
   }
-  e_msg.gain_position = {node.kx,node.kv, node.kiX, node.kxr,node.cX, node.eiX_sat,0,0,0};
-  e_msg.gain_attitude = {node.kR, node.kW, node.kiR, node.kRr,node.cR, node.eiR_sat, 0,0,0};
+  e_msg.gain_position =
+    {node.kx, node.kv, node.kiX, node.kxr, node.cX, node.eiX_sat,0,0,0};
+  e_msg.gain_attitude =
+    {node.kR, node.kW, node.kiR, node.kRr, node.cR, node.eiR_sat, 0,0,0};
   for(int i = 0; i <5;i++){
     e_msg.gain_position[6+i] = node.eiX[i];
     e_msg.gain_attitude[6+i] = node.eiR[i];
@@ -171,8 +173,6 @@ node::node(){
   pub_ = n_.advertise<uav_geometric_controller::states>("uav_states",1);
   ROS_INFO("UAV node initialized");
 }
-
-node::~node(){};
 
 // callback for IMU sensor det
 bool node::getIMU(){return IMU_flag;}

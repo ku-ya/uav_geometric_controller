@@ -136,7 +136,7 @@ public:
   //! Constructor.
   node();
   //! Destructor.
-  ~node();
+  virtual ~node() = default;
   //! Callback function for dynamic reconfigure server.
   // void configCallback(node_example::node_example_paramsConfig
   // &config, uint32_t level);

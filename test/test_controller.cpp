@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include "uav_geometric_controller/controller_sep.hpp"
+// #include "uav_geometirc_controller/uav.h"
 
 // Make sure that gtest is working properly
 TEST(TestGtest, testFail)

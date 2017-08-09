@@ -7,6 +7,7 @@ using namespace Eigen;
 using namespace message_filters;
 
 void publish_error(node& node){
+ // UAV states publisher
   uav_geometric_controller::states e_msg;
   e_msg.header.stamp = ros::Time::now();
   e_msg.header.frame_id = "drone";
@@ -45,27 +46,32 @@ void publish_error(node& node){
      if(node.motor_power == NULL){
         cout<<"motor power is pointed at NULL"<<endl;
      }else{
-		e_msg.motor_power[i] = node.motor_power[i];
+		e_msg.motor_power[i] = (float)node.motor_power[i];
     }
     }
+  e_msg.R_v.data.clear();
   for(int i=0;i<9;i++){
     e_msg.Rc[i] = (float)node.Rc(i);
     e_msg.Rc_dot[i] = (float)node.Rc_dot(i);
     e_msg.Rc_2dot[i] = (float)node.Rc_2dot(i);
     e_msg.R_imu[i] = (float)node.R_imu(i);
     e_msg.R[i] = (float)node.R(i);
-    e_msg.R_v[i] = (float)node.R_b(i);
+    e_msg.R_v.data.push_back((float)node.R_b(i));
   }
-  e_msg.gain_position = {node.kx,node.kv, node.kiX, node.kxr,0,0,0};
-  e_msg.gain_attitude = {node.kR, node.kW, node.kiR, node.kRr, 0,0,0};
-  for(int i = 0; i <3;i++){
-    e_msg.gain_position[3+i] = node.eiX[i];
-    e_msg.gain_attitude[4+i] = node.eiR[i];
+  e_msg.gain_position =
+    {node.kx, node.kv, node.kiX, node.kxr, node.cX, node.eiX_sat,0,0,0};
+  e_msg.gain_attitude =
+    {node.kR, node.kW, node.kiR, node.kRr, node.cR, node.eiR_sat, 0,0,0};
+  for(int i = 0; i <5;i++){
+    e_msg.gain_position[6+i] = node.eiX[i];
+    e_msg.gain_attitude[6+i] = node.eiR[i];
+
   }
   node.pub_.publish(e_msg);
 }
 
 int main(int argc, char **argv){
+    // Main node for the controller
   ros::init(argc,argv,"Xrotor");
   node odnode;
   ros::NodeHandle nh = odnode.getNH();
@@ -94,6 +100,7 @@ int main(int argc, char **argv){
 }
 
 node::node(){
+    // Controller node initialization
   ros::param::get("controller/del_t",del_t);  cout<<"\ndel_t: "<< del_t<<endl;
   ros::param::get("controller/g",g);
   ros::param::get("controller/m",m); cout<<"m: "<< m<<endl;
@@ -167,13 +174,12 @@ node::node(){
   ROS_INFO("UAV node initialized");
 }
 
-node::~node(){};
-
 // callback for IMU sensor det
 bool node::getIMU(){return IMU_flag;}
 bool node::getWarmup(){return MotorWarmup;}
 
 void node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
+    // IMU message subscriber to read in sensor data from the IMU driver
   if(!IMU_flag){ ROS_INFO("IMU ready");}
   IMU_flag = true;
   dt_imu = (msg->header.stamp - imu_time).toSec();
@@ -193,7 +199,8 @@ void node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
 
 void node::vicon_callback(
     const geometry_msgs::PoseStamped::ConstPtr& msg){
-  // controller_flag = true;
+    // Vicon senser message subscriber
+    // controller_flag = true;
   if(!Vicon_flag){ ROS_INFO("Vicon ready");}
   Vicon_flag = true;
   dt_vicon = (msg->header.stamp - vicon_time).toSec();
@@ -219,6 +226,7 @@ void node::vicon_callback(
 void node::cmd_callback(const uav_geometric_controller::trajectory::ConstPtr& msg){
   ros::param::get("uav/Motor", MOTOR_ON);
   ros::param::get("uav/MotorWarmup", MotorWarmup);
+  // Desired command subscriber
   boost::mutex::scoped_lock scopedLock(mutex_);
   //tf::vectorMsgToEigen(msg->b1,b1d);
   //tf::vectorMsgToEigen(msg->xd,xd);
@@ -235,6 +243,7 @@ void node::cmd_callback(const uav_geometric_controller::trajectory::ConstPtr& ms
 }
 
 void node::get_sensor(){
+    // Subscriber for all the topics
   ros::NodeHandle nh_sens;
     // IMU and keyboard input callback
   ros::Subscriber imu_sub =
@@ -247,6 +256,7 @@ void node::get_sensor(){
 }
 
 void node::control(){
+    // Controller 100Hz command sent to motor speed controller
   hw_interface hw_intf(mtr_addr);  // open communication through I2C
   if(getEnv() == 1) hw_intf.open_I2C();
   ros::Rate loop_rate(100); // rate for the node loop
@@ -282,6 +292,7 @@ void node::ctl_callback(hw_interface hw_intf){
 }
 
 void node::callback(uav_geometric_controller::GainsConfig &config, uint32_t level) {
+    // Dynamic reconfiguration of the gains
   ROS_INFO("Reconfigure Request: Update");
 
   mode = config.mode;
@@ -296,7 +307,7 @@ void node::callback(uav_geometric_controller::GainsConfig &config, uint32_t leve
   kRr = config.kRr;
   kx = config.kx;
   kv = config.kv;
-  kxr = config.kxr;
+  //kxr = config.kxr;
 
   kiR = config.kiR; //config.kiR;
   kiX = config.kiX; //config.kiX;

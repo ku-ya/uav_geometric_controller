@@ -134,11 +134,13 @@ node::node(){
   xd = xd_dot = xd_ddot= Wd = Wd_dot = W_b = W_raw = Vector3d::Zero();
   x_v = v_v = prev_x_v = prev_v_v = b1d = b1d_ned =  Vector3d::Zero();
   W = xc_ned = xc_ned_dot = xc_ned_2dot = x = v = Vector3d::Zero();
+  Wc = Wc_dot = Vector3d::Zero();
   b1d << 1,0,0;
   b1d_ned = R_conv*b1d;
   M = eX = eV = eR = eW = Vector3d::Zero();
   f_motor =  Vector4d::Zero();
-  Rc = Rc_dot = Rc_2dot = Matrix3d::Zero();
+  Rc = Matrix3d::Identity(); 
+  Rc_dot = Rc_2dot = Matrix3d::Zero();
   v_ave = MatrixXd::Zero(3,10);
   q_v=q_imu=Quaterniond(0,0,0,1);
 

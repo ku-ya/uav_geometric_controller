@@ -35,7 +35,7 @@ uint8_t* hw_interface::motor_command(int thr[4], bool MotorWarmup, bool MOTOR_ON
     if(ioctl(fhi2c, I2C_SLAVE, mtr_addr[i])<0)
     printf("ERROR: ioctl\n");
     if(MOTOR_ON == false)// set motor speed to zero
-      thr[i] = 0;
+      thr[i] = 60;
     else if(MotorWarmup == true)// warm up motors at 20 throttle command
       thr[i] = 60;
     while(write(fhi2c, &thr[i], 1)!=1)

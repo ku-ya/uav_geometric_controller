@@ -49,24 +49,24 @@ void publish_error(node& node){
 		e_msg.motor_power[i] = (float)node.motor_power[i];
     }
     }
-  e_msg.R_v.data.clear();
-  for(int i=0;i<9;i++){
-    e_msg.Rc[i] = (float)node.Rc(i);
-    e_msg.Rc_dot[i] = (float)node.Rc_dot(i);
-    e_msg.Rc_2dot[i] = (float)node.Rc_2dot(i);
-    e_msg.R_imu[i] = (float)node.R_imu(i);
-    e_msg.R[i] = (float)node.R(i);
-    e_msg.R_v.data.push_back((float)node.R_b(i));
-  }
-  e_msg.gain_position =
-    {node.kx, node.kv, node.kiX, node.kxr, node.cX, node.eiX_sat,0,0,0};
-  e_msg.gain_attitude =
-    {node.kR, node.kW, node.kiR, node.kRr, node.cR, node.eiR_sat, 0,0,0};
-  for(int i = 0; i <5;i++){
-    e_msg.gain_position[6+i] = node.eiX[i];
-    e_msg.gain_attitude[6+i] = node.eiR[i];
-
-  }
+  // e_msg.R_v.data.clear();
+  // for(int i=0;i<9;i++){
+  //   e_msg.Rc[i] = (float)node.Rc(i);
+  //   e_msg.Rc_dot[i] = (float)node.Rc_dot(i);
+  //   e_msg.Rc_2dot[i] = (float)node.Rc_2dot(i);
+  //   e_msg.R_imu[i] = (float)node.R_imu(i);
+  //   e_msg.R[i] = (float)node.R(i);
+  //   e_msg.R_v.data.push_back((float)node.R_b(i));
+  // }
+  // e_msg.gain_position =
+  //   {node.kx, node.kv, node.kiX, node.kxr, node.cX, node.eiX_sat,0,0,0};
+  // e_msg.gain_attitude =
+  //   {node.kR, node.kW, node.kiR, node.kRr, node.cR, node.eiR_sat, 0,0,0};
+  // for(int i = 0; i <5;i++){
+  //   e_msg.gain_position[6+i] = node.eiX[i];
+  //   e_msg.gain_attitude[6+i] = node.eiR[i];
+  //
+  // }
   node.pub_.publish(e_msg);
 }
 

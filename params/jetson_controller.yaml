@@ -1,10 +1,10 @@
 name:
     vicon: 'Jetson'
 port:
-    i2c: [44,41,42,43]
+    i2c: [43,44,41,42]
 node:
-  Motor: 0
-  MotorWarmup: 0
+  Motor: True
+  MotorWarmup: True
 controller:
   mode: 1
   g: 9.81

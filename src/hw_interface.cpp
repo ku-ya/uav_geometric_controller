@@ -48,7 +48,7 @@ void hw_interface::open_I2C(){
   // Open i2c:
   fhi2c = open("/dev/i2c-1", O_RDWR);// Chris
   printf("Opening i2c port...\n");
-  if(fhi2c!=3)
+  if(fhi2c<0)
   printf("ERROR opening i2c port.\n");
   else
   printf("The i2c port is open.\n");

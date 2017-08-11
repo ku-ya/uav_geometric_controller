@@ -110,14 +110,17 @@ void controller::GeometricPositionController(node& node, Vector3d xd, Vector3d x
 void controller::GeometricControl_SphericalJoint_3DOF(node& node, Vector3d Wd, Vector3d Wddot, Vector3d Win, Matrix3d Rin){
 
   Matrix3d D = node.R_conv;
-  Matrix3d R = D*Rin;// LI<-LBFF
+  Matrix3d R = Rin;// LI<-LBFF
   Vector3d W = Win;// LBFF
 
-  Matrix3d Rd = MatrixXd::Identity(3,3);
+  node.R = R;
+
+
+  Matrix3d Rd = Matrix3d::Identity();
 
   Vector3d e3(0,0,1), b3(0,0,1), vee_3by1;
   double l = 0;//.05;// length of rod connecting to the spherical joint
-  Vector3d r = -l * b3;
+  Vector3d r = - l * b3;
   Vector3d F_g = node.m * node.g * R.transpose() * e3;
   Vector3d M_g = r.cross(F_g);
   //   Calculate eR (rotation matrix error)
@@ -130,6 +133,7 @@ void controller::GeometricControl_SphericalJoint_3DOF(node& node, Vector3d Wd, V
   // Update integral term of control
   // Attitude:
   node.eiR = node.eiR_last + node.del_t * node.eR;
+  err_sat(-node.eiR_sat, node.eiR_sat, node.eiR);
   node.eiR_last = node.eiR;
   // Calculate 3 DOFs of M (controlled moment in body-fixed frame)
   // MATLAB: M = -kR*eR-kW*eW-kRi*eiR+cross(W,J*W)+J*(R'*Rd*Wddot-hat(W)*R'*Rd*Wd);

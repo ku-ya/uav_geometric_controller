@@ -137,11 +137,13 @@ node::node(){
   xd = xd_dot = xd_ddot= Wd = Wd_dot = W_b = W_raw = Vector3d::Zero();
   x_v = v_v = prev_x_v = prev_v_v = b1d = b1d_ned =  Vector3d::Zero();
   W = xc_ned = xc_ned_dot = xc_ned_2dot = x = v = Vector3d::Zero();
+  Wc = Wc_dot = Vector3d::Zero();
   b1d << 1,0,0;
   b1d_ned = R_conv*b1d;
   M = eX = eV = eR = eW = Vector3d::Zero();
   f_motor =  Vector4d::Zero();
-  Rc = Rc_dot = Rc_2dot = Matrix3d::Zero();
+  Rc = Matrix3d::Identity();
+  Rc_dot = Rc_2dot = Matrix3d::Zero();
   v_ave = MatrixXd::Zero(3,10);
   q_v=q_imu=Quaterniond(0,0,0,1);
 
@@ -225,9 +227,7 @@ void node::vicon_callback(
 
 void node::cmd_callback(const uav_geometric_controller::trajectory::ConstPtr& msg){
   ros::param::get("uav/Motor", MOTOR_ON);
-  // MOTOR_ON = true;
   ros::param::get("uav/MotorWarmup", MotorWarmup);
-  // MotorWarmup= false;
   // Desired command subscriber
   boost::mutex::scoped_lock scopedLock(mutex_);
   //tf::vectorMsgToEigen(msg->b1,b1d);
@@ -277,14 +277,22 @@ void node::ctl_callback(hw_interface hw_intf){
 
   if(Vicon_flag){
     boost::mutex::scoped_lock scopedLock(mutex_);
-    controller::GeometricPositionController(*this,
-        xc_ned, xc_ned_dot, xc_ned_2dot, Wd, Wd_dot, x_v_ned, v_v_ned, W_b, R_v_ned);
+    if(mode == 1)
+    {
+        controller::GeometricPositionController(*this,
+            xc_ned, xc_ned_dot, xc_ned_2dot, Wd, Wd_dot, x_v_ned, v_v_ned, W_b, R_v_ned);
+    }
+    else
+    {
+        controller::GeometricControl_SphericalJoint_3DOF(*this,
+            Wd, Wd_dot, W_b, R_v_ned);
+    }
   }
   for(int k = 0; k < 4; k++){
     f_motor_sat(k) = f_motor(k);
     if(f_motor(k) < 0 ){f_motor_sat(k)=0;}
     else if(f_motor(k) > 6.2){f_motor_sat(k) = 6.2;}
-    thr[k] = floor(1/0.03*(f_motor_sat(k)+0.37)+0.5);
+    thr[k] = floor(1.2*1/0.03*(f_motor_sat(k)+0.37));
   }
   if(environment == 1){
     motor_power = hw_intf.motor_command(thr, MotorWarmup, MOTOR_ON);

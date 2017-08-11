@@ -32,7 +32,7 @@ def char_to_speed(argument):
             'p': 10.,
             'h': 4.,
             '3': 21.,
-	    's': 10.
+	        's': 10.
             }
     return switcher.get(argument, "nothing")
 

@@ -3,8 +3,8 @@ name:
 port:
     i2c: [43,44,41,42]
 node:
-  Motor: True
-  MotorWarmup: True
+  Motor: 0
+  MotorWarmup: 0
 controller:
   mode: 1
   g: 9.81
@@ -16,7 +16,7 @@ controller:
   R_conv: [1.0, 0.0, 0.0,
         0.0, -1.0, 0.0,
         0.0, 0.0, -1.0] # Convention conversion (NEU->NED)
-  l: 0.2 # arm length odroid one 0.305
+  l: 0.225 # arm length odroid one 0.305
   c_tf: 0.1 # moment constant
   gain:
     att:

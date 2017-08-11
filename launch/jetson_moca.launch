@@ -1,7 +1,7 @@
 <launch>
 <!-- Based on pysical (MOCA) or simulation (Gazebo) testing choose option -->
   <include file="$(find uav_control)/launch/imu_jetson.launch"/>
-  <include file="$(find imu_transformer)/launch/ned_to_enu.launch"/>
+  <!-- include file="$(find imu_transformer)/launch/ned_to_enu.launch"/ -->
   <arg name="MOCA" value="true"/>
   <rosparam>
       environment: 1
@@ -12,7 +12,6 @@
   <arg name="gui" default="true"/>
   <arg name="debug" default="false"/>
   <arg name="verbose" default="true"/>
-  <remap from="imu/imu" to="imu_uav/data"/>
 
   <!-- start odroid node-->
   <node name="jetson_uav" type="node" pkg="uav_geometric_controller" respawn="false" output="screen">

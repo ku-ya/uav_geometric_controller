@@ -35,7 +35,7 @@ uint8_t* hw_interface::motor_command(int thr[4], bool MotorWarmup, bool MOTOR_ON
     if(ioctl(fhi2c, I2C_SLAVE, mtr_addr[i])<0)
     printf("ERROR: ioctl\n");
     if(MOTOR_ON == false)// set motor speed to zero
-      thr[i] = 60;
+      thr[i] = 0;
     else if(MotorWarmup == true)// warm up motors at 20 throttle command
       thr[i] = 60;
     while(write(fhi2c, &thr[i], 1)!=1)
@@ -48,7 +48,7 @@ void hw_interface::open_I2C(){
   // Open i2c:
   fhi2c = open("/dev/i2c-1", O_RDWR);// Chris
   printf("Opening i2c port...\n");
-  if(fhi2c<0)
+  if(fhi2c!=3)
   printf("ERROR opening i2c port.\n");
   else
   printf("The i2c port is open.\n");

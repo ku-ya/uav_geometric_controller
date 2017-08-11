@@ -292,7 +292,7 @@ void node::ctl_callback(hw_interface hw_intf){
     f_motor_sat(k) = f_motor(k);
     if(f_motor(k) < 0 ){f_motor_sat(k)=0;}
     else if(f_motor(k) > 6.2){f_motor_sat(k) = 6.2;}
-    thr[k] = floor(1.2*1/0.03*(f_motor_sat(k)+0.37));
+    thr[k] = floor(-4.0*pow(f_motor_sat(k),2)+f_motor_sat(k)*61.83+15.98);
   }
   if(environment == 1){
     motor_power = hw_intf.motor_command(thr, MotorWarmup, MOTOR_ON);

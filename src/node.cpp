@@ -227,7 +227,9 @@ void node::vicon_callback(
 
 void node::cmd_callback(const uav_geometric_controller::trajectory::ConstPtr& msg){
   ros::param::get("uav/Motor", MOTOR_ON);
+  // MOTOR_ON = true;
   ros::param::get("uav/MotorWarmup", MotorWarmup);
+  // MotorWarmup= false;
   // Desired command subscriber
   boost::mutex::scoped_lock scopedLock(mutex_);
   //tf::vectorMsgToEigen(msg->b1,b1d);

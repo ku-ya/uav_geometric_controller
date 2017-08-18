@@ -291,8 +291,8 @@ void node::ctl_callback(hw_interface hw_intf){
   for(int k = 0; k < 4; k++){
     f_motor_sat(k) = f_motor(k);
     if(f_motor(k) < 0 ){f_motor_sat(k)=0;}
-    else if(f_motor(k) > 6.2){f_motor_sat(k) = 6.2;}
-    thr[k] = floor(-4.0*pow(f_motor_sat(k),2)+f_motor_sat(k)*61.83+15.98);
+    else if(f_motor(k) > 14.0){f_motor_sat(k) = 14.0;}
+    thr[k] = floor((-0.8118*pow(f_motor_sat(k),2)+f_motor_sat(k)*28.17+30.79));
   }
   if(environment == 1){
     motor_power = hw_intf.motor_command(thr, MotorWarmup, MOTOR_ON);
@@ -311,6 +311,8 @@ void node::callback(uav_geometric_controller::GainsConfig &config, uint32_t leve
   xd(0) =  config.x;
   xd(1) =  config.y;
   xd(2) =  config.z;
+
+  xc_ned = R_conv*xd;
 
   kR = config.kR;
   kW = config.kW;

@@ -12,11 +12,11 @@ def talker():
         data.eW.x = np.sin(10*time)
         data.eW.y = np.sin(15*time)
         data.eW.z = np.sin(20*time)
-        data.eR.x = np.sin(10*time) + np.random.rand()
+        data.eR.x = np.sin(10*time) + np.random.rand() - 0.5
         data.eR.y = np.sin(15*time)
         data.eR.z = np.sin(20*time)
         data.moment.x = np.sin(10*time)
-        data.moment.y = np.sin(15*time) + np.random.rand()
+        data.moment.y = np.sin(15*time) + np.random.rand() - 0.5
         data.moment.z = np.sin(20*time)
         pub.publish(data)
         time += 0.01

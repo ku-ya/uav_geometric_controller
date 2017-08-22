@@ -29,25 +29,40 @@ class DaqThread(Thread):
             pass
 
 class Viewer(HasTraits):
-    index = Array(dtype=np.float64, shape=(100,))
+    index = Array(dtype=np.float64, shape=(200,))
     data = Array(dtype=np.float64, shape=(None))
     data_y = Array(dtype=np.float64, shape=(None))
     data_z = Array(dtype=np.float64, shape=(None))
 
+    eR_data = Array(dtype=np.float64, shape=(None))
+    eR_data_y = Array(dtype=np.float64, shape=(None))
+    eR_data_z = Array(dtype=np.float64, shape=(None))
+
+    M_data = Array(dtype=np.float64, shape=(None))
+    M_data_y = Array(dtype=np.float64, shape=(None))
+    M_data_z = Array(dtype=np.float64, shape=(None))
+
     plot_type = Enum("line", "scatter")
 
-    plot = Instance(Plot)
+    plot_eW = Instance(Plot)
+    plot_eR = Instance(Plot)
+    plot_M = Instance(Plot)
     #
-    traits_view = View(
-        Item('plot',editor=ComponentEditor(), show_label=False),
-        width=800, height=500, resizable=True, title="Error Plot")
+    traits_view = View(VGroup(
+        Item('plot_eW',editor=ComponentEditor(), label='error W', show_label=True),
+        Item('plot_eR',editor=ComponentEditor(), label='error R',show_label=True),
+        Item('plot_M',editor=ComponentEditor(), label='Moment',show_label=True)
+        ),
+        width=1000, height=900, resizable=True, title="Error Plot")
 
     def __init__(self, *args, **kw):
         super(Viewer, self).__init__(*args, **kw)
         plotdata = ArrayPlotData(time=self.index, x=self.data)
         plot = Plot(plotdata)
         plot.plot(('time', 'x'), type="scatter", color="blue")
-        self.plot = plot
+        self.plot_eW = plot
+        self.plot_eR = plot
+        self.plot_M = plot
 
     def _data_changed(self):
         plotdata = ArrayPlotData(time=self.index, x=self.data, y=self.data_y, z=self.data_z)
@@ -55,15 +70,31 @@ class Viewer(HasTraits):
         plot.plot(('time', 'x'), type="line", color="red")
         plot.plot(('time', 'y'), type="line", color="green")
         plot.plot(('time', 'z'), type="line", color="blue")
-        self.plot = plot
+        self.plot_eW = plot
+
+    def _eR_data_changed(self):
+        plotdata = ArrayPlotData(time=self.index, x=self.eR_data, y=self.eR_data_y, z=self.eR_data_z)
+        plot = Plot(plotdata)
+        plot.plot(('time', 'x'), type="line", color="red")
+        plot.plot(('time', 'y'), type="line", color="green")
+        plot.plot(('time', 'z'), type="line", color="blue")
+        self.plot_eR = plot
+
+    def _M_data_changed(self):
+        plotdata = ArrayPlotData(time=self.index, x=self.M_data, y=self.M_data_y, z=self.M_data_z)
+        plot = Plot(plotdata)
+        plot.plot(('time', 'x'), type="line", color="red")
+        plot.plot(('time', 'y'), type="line", color="green")
+        plot.plot(('time', 'z'), type="line", color="blue")
+        self.plot_M = plot
 
 class ErrorView(HasTraits):
     name = Str
     error_val = Enum('eW', 'eR', 'M')
-    eW = np.zeros((100,3))#deque([0]*100, 100)
-    eR = np.zeros((100,3))
-    M = np.zeros((100,3))
-    time = deque([0]*100, 100)
+    eW = np.zeros((200,3))#deque([0]*100, 100)
+    eR = np.zeros((200,3))
+    M = np.zeros((200,3))
+    time = deque([0]*200, 200)
     start_stop_motor = Button()
     mean = Float(0.0)
     stddev = Float(1.0)
@@ -107,12 +138,22 @@ class ErrorView(HasTraits):
         of our viewer object.
         """
         error_data = eval('self.' + self.error_val)
-        self.time = np.linspace(0, 1, len(error_data))
+        self.time = np.linspace(0, 0.01*len(error_data), len(error_data))
 
         self.viewer.index = list(self.time)
         self.viewer.data = list(error_data[:,0])
         self.viewer.data_y = list(error_data[:,1])
         self.viewer.data_z = list(error_data[:,2])
+
+        self.time = np.linspace(0, 1, len(self.eR))
+
+        self.viewer.eR_data = list(self.eR[:,0])
+        self.viewer.eR_data_y = list(self.eR[:,1])
+        self.viewer.eR_data_z = list(self.eR[:,2])
+
+        self.viewer.M_data = list(self.M[:,0])
+        self.viewer.M_data_y = list(self.M[:,1])
+        self.viewer.M_data_z = list(self.M[:,2])
         return
 
 class main(HasTraits):

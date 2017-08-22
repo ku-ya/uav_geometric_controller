@@ -30,50 +30,39 @@ class DaqThread(Thread):
 
 class Viewer(HasTraits):
     index = Array(dtype=np.float64, shape=(100,))
-    data = Array(dtype=np.float64, shape=(100,))
+    data = Array(dtype=np.float64, shape=(None))
+    data_y = Array(dtype=np.float64, shape=(None))
+    data_z = Array(dtype=np.float64, shape=(None))
 
     plot_type = Enum("line", "scatter")
 
-    # plot = Instance(Plot)
+    plot = Instance(Plot)
     #
-    # traits_view = View(
-    #     Item('plot',editor=ComponentEditor(), show_label=False),
-    #     width=500, height=500, resizable=True, title="Error Plot")
-    #
-    # def _plot_default(self):
-    #     x = np.linspace(-14, 14, 100)
-    #     # y = x/2 * np.sin(x)
-    #     # y2 = np.cos(x)
-    #     plotdata = ArrayPlotData(x=self.index, y=self.data)
-    #     plot = Plot(plotdata)
-    #     plot.plot(('x', 'y'), type="scatter", color="blue")
-    #     # plot.plot(("x", "y2"), type="line", color="red")
-    #     return plot
-    view = View(ChacoPlotItem("index", "data",
-                          type_trait="plot_type",
-                          resizable=True,
-                          x_label="Time",
-                          y_label="Signal",
-                          color="blue",
-                          bgcolor="white",
-                          border_visible=True,
-                          border_width=1,
-                          padding_bg_color="lightgray",
-                          width=800,
-                          height=380,
-                          marker_size=2,
-                          show_label=False),
-            HGroup(spring, Item("plot_type", style='custom'), spring),
-            resizable = True,
-            buttons = ["OK"],
-            width=800, height=500)
+    traits_view = View(
+        Item('plot',editor=ComponentEditor(), show_label=False),
+        width=800, height=500, resizable=True, title="Error Plot")
+
+    def __init__(self, *args, **kw):
+        super(Viewer, self).__init__(*args, **kw)
+        plotdata = ArrayPlotData(time=self.index, x=self.data)
+        plot = Plot(plotdata)
+        plot.plot(('time', 'x'), type="scatter", color="blue")
+        self.plot = plot
+
+    def _data_changed(self):
+        plotdata = ArrayPlotData(time=self.index, x=self.data, y=self.data_y, z=self.data_z)
+        plot = Plot(plotdata)
+        plot.plot(('time', 'x'), type="line", color="red")
+        plot.plot(('time', 'y'), type="line", color="green")
+        plot.plot(('time', 'z'), type="line", color="blue")
+        self.plot = plot
 
 class ErrorView(HasTraits):
     name = Str
     error_val = Enum('eW', 'eR', 'M')
-    eW = deque([0]*100, 100)
-    eR = deque([0]*100, 100)
-    M = deque([0]*100, 100)
+    eW = np.zeros((100,3))#deque([0]*100, 100)
+    eR = np.zeros((100,3))
+    M = np.zeros((100,3))
     time = deque([0]*100, 100)
     start_stop_motor = Button()
     mean = Float(0.0)
@@ -101,8 +90,6 @@ class ErrorView(HasTraits):
         logging.debug('errer val changed to ' + self.error_val)
 
     def _start_stop_motor_fired(self):
-        # self.eW = np.linspace(0,10,12)
-        # self.time = np.linspace(0,10,12)
         logging.debug('errer val changed')
         if self.capture_thread and self.capture_thread.isAlive():
             self.capture_thread.wants_abort = True
@@ -119,23 +106,13 @@ class ErrorView(HasTraits):
         will generate a new random data point and set it on the `.data` array
         of our viewer object.
         """
-        # # Generate a new number and increment the tick count
-        # new_val = self._generator(self.mean, self.stddev)
-        # self.num_ticks += 1
-        #
-        # # grab the existing data, truncate it, and append the new point.
-        # # This isn't the most efficient thing in the world but it works.
-        # cur_data = self.viewer.data
-        # new_data = np.hstack((cur_data[-self.max_num_points+1:], [new_val]))
-        # new_index = np.arange(self.num_ticks - len(new_data) + 1,
-        #                       self.num_ticks + 0.01)
-        # self.eW.append(new_val)
-        # self.time.append(self.num_ticks)
         error_data = eval('self.' + self.error_val)
         self.time = np.linspace(0, 1, len(error_data))
 
         self.viewer.index = list(self.time)
-        self.viewer.data = list(error_data)
+        self.viewer.data = list(error_data[:,0])
+        self.viewer.data_y = list(error_data[:,1])
+        self.viewer.data_z = list(error_data[:,2])
         return
 
 class main(HasTraits):
@@ -160,7 +137,12 @@ class main(HasTraits):
 
     def ros_callback(self, data):
         # pass eR eW M
-        self.error_window.eW.append(data.eW.x)
+        self.error_window.eW = np.vstack((self.error_window.eW[1:,:],
+            np.array([data.eW.x, data.eW.y, data.eW.z])))
+        self.error_window.eR = np.vstack((self.error_window.eR[1:,:],
+            np.array([data.eR.x, data.eR.y, data.eR.z])))
+        self.error_window.M = np.vstack((self.error_window.M[1:,:],
+            np.array([data.moment.x, data.moment.y, data.moment.z])))
         pass
 
 

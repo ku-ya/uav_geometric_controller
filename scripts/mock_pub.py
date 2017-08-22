@@ -10,6 +10,14 @@ def talker():
     time = 0.01
     while not rospy.is_shutdown():
         data.eW.x = np.sin(10*time)
+        data.eW.y = np.sin(15*time)
+        data.eW.z = np.sin(20*time)
+        data.eR.x = np.sin(10*time) + np.random.rand()
+        data.eR.y = np.sin(15*time)
+        data.eR.z = np.sin(20*time)
+        data.moment.x = np.sin(10*time)
+        data.moment.y = np.sin(15*time) + np.random.rand()
+        data.moment.z = np.sin(20*time)
         pub.publish(data)
         time += 0.01
         rate.sleep()

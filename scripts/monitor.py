@@ -29,7 +29,7 @@ class DaqThread(Thread):
             pass
 
 class Viewer(HasTraits):
-    index = Array(dtype=np.float64, shape=(200,))
+    index = Array(dtype=np.float64, shape=(None))
     data = Array(dtype=np.float64, shape=(None))
     data_y = Array(dtype=np.float64, shape=(None))
     data_z = Array(dtype=np.float64, shape=(None))
@@ -41,8 +41,6 @@ class Viewer(HasTraits):
     M_data = Array(dtype=np.float64, shape=(None))
     M_data_y = Array(dtype=np.float64, shape=(None))
     M_data_z = Array(dtype=np.float64, shape=(None))
-
-    plot_type = Enum("line", "scatter")
 
     plot_eW = Instance(Plot)
     plot_eR = Instance(Plot)
@@ -65,32 +63,26 @@ class Viewer(HasTraits):
         self.plot_M = plot
 
     def _data_changed(self):
-        plotdata = ArrayPlotData(time=self.index, x=self.data, y=self.data_y, z=self.data_z)
-        plot = Plot(plotdata)
-        plot.plot(('time', 'x'), type="line", color="red")
-        plot.plot(('time', 'y'), type="line", color="green")
-        plot.plot(('time', 'z'), type="line", color="blue")
-        self.plot_eW = plot
+        self.plot_eW = self.plot_default(self.index, self.data, self.data_y, self.data_z)
 
     def _eR_data_changed(self):
-        plotdata = ArrayPlotData(time=self.index, x=self.eR_data, y=self.eR_data_y, z=self.eR_data_z)
-        plot = Plot(plotdata)
-        plot.plot(('time', 'x'), type="line", color="red")
-        plot.plot(('time', 'y'), type="line", color="green")
-        plot.plot(('time', 'z'), type="line", color="blue")
-        self.plot_eR = plot
+        self.plot_eR = self.plot_default(self.index, self.eR_data, self.eR_data_y, self.eR_data_z)
 
     def _M_data_changed(self):
-        plotdata = ArrayPlotData(time=self.index, x=self.M_data, y=self.M_data_y, z=self.M_data_z)
+        self.plot_M = self.plot_default(self.index, self.M_data, self.M_data_y, self.M_data_z)
+
+    def plot_default(self, time, x, y, z):
+        plotdata = ArrayPlotData(time=time, x=x, y=y, z=z)
         plot = Plot(plotdata)
         plot.plot(('time', 'x'), type="line", color="red")
         plot.plot(('time', 'y'), type="line", color="green")
         plot.plot(('time', 'z'), type="line", color="blue")
-        self.plot_M = plot
+        return plot
 
 class ErrorView(HasTraits):
     name = Str
     error_val = Enum('eW', 'eR', 'M')
+    N = Int(200)
     eW = np.zeros((200,3))#deque([0]*100, 100)
     eR = np.zeros((200,3))
     M = np.zeros((200,3))
@@ -107,6 +99,7 @@ class ErrorView(HasTraits):
         Group(
             Item('name'),
             Item('error_val'),
+            Item('N', label='Sample N'),
             orientation = 'horizontal',
         ),
         # Group(
@@ -117,6 +110,12 @@ class ErrorView(HasTraits):
             # height = 400,
             resizable = True,
         )
+
+    def _N_changed(self):
+        self.eW = np.zeros((self.N,3))
+        self.eR = np.zeros((self.N,3))
+        self.M = np.zeros((self.N,3))
+
     def _error_val_changed(self):
         logging.debug('errer val changed to ' + self.error_val)
 
@@ -128,14 +127,11 @@ class ErrorView(HasTraits):
             self.capture_thread = DaqThread()
             self.capture_thread.wants_abort = False
             self.capture_thread.start()
-
         pass
 
     def timer_tick(self, *args):
         """
-        Callback function that should get called based on a timer tick.  This
-        will generate a new random data point and set it on the `.data` array
-        of our viewer object.
+        Callback function
         """
         error_data = eval('self.' + self.error_val)
         self.time = np.linspace(0, 0.01*len(error_data), len(error_data))

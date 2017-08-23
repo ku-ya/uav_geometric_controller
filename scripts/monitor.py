@@ -9,9 +9,9 @@ from threading import Thread
 from time import sleep
 from pyface.timer.api import Timer
 import logging
-import random
 from collections import deque
 import pdb
+import os
 
 import rospy
 from uav_geometric_controller.msg import states
@@ -22,11 +22,20 @@ logging.basicConfig(level=logging.DEBUG,
 
 class DaqThread(Thread):
     wants_abort = False
+    def __init__(self,args):
+        Thread.__init__(self)
+        self.args = args
+
     def run(self):
+        print(self.args)
         while not self.wants_abort:
-            print('thead alive')
+            print('Starting...')
+            os.system(self.args)
+            self.wants_abort = True
+            print('Process...killed')
             sleep(0.1)
             pass
+
 
 class Viewer(HasTraits):
     index = Array(dtype=np.float64, shape=(None))
@@ -88,24 +97,44 @@ class ErrorView(HasTraits):
     M = np.zeros((200,3))
     time = deque([0]*200, 200)
     start_stop_motor = Button()
+    rqt_reconfig = Button()
     mean = Float(0.0)
     stddev = Float(1.0)
     max_num_points = Int(100)
     num_ticks = Int(0)
 
+    mission = Enum('takeoff','land')
+
     capture_thread = Instance(DaqThread)
+    rqt_thread = Instance(DaqThread)
+
     _generator = Trait(np.random.normal, Callable)
     traits_view = View(
+        HGroup(
+        Item('start_stop_motor', label='start stop motor', show_label=False),
+        Item('rqt_reconfig', label='Gain tuning', show_label=False),
+        Item('rqt_reconfig', label='Controller', show_label=False),
+        Item('rqt_reconfig', label='Mapping', show_label=False),
+        Item('rqt_reconfig', label='OpenGL', show_label=False),
+        Item('rqt_reconfig', label='Exporation', show_label=False),
+        Item('mission', label='mission', show_label=False),
+        label='Run',
+        ),
         Group(
             Item('name'),
             Item('error_val'),
             Item('N', label='Sample N'),
             orientation = 'horizontal',
+            label='UAV states',
         ),
-        # Group(
-        #     ChacoPlotItem('time','eW', show_label=False),
-        #     ),
-        Item('start_stop_motor'),
+        Group(
+            Item('name'),
+            label='Mapping',
+        ),
+        Group(
+            Item('name'),
+            label='Exporation',
+        ),
             # width = 500,
             # height = 400,
             resizable = True,
@@ -124,9 +153,21 @@ class ErrorView(HasTraits):
         if self.capture_thread and self.capture_thread.isAlive():
             self.capture_thread.wants_abort = True
         else:
-            self.capture_thread = DaqThread()
+            self.capture_thread = DaqThread(args='ls')
             self.capture_thread.wants_abort = False
             self.capture_thread.start()
+        pass
+
+    def _rqt_reconfig_fired(self):
+        logging.debug('errer val changed')
+        if self.rqt_thread and self.rqt_thread.isAlive():
+            self.rqt_thread.wants_abort = True
+        else:
+            self.rqt_thread = DaqThread(
+                args='rosrun rqt_reconfigure rqt_reconfigure'
+                )
+            self.rqt_thread.wants_abort = False
+            self.rqt_thread.start()
         pass
 
     def timer_tick(self, *args):

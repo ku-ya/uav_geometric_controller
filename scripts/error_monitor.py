@@ -10,10 +10,13 @@ import random
 from collections import deque
 
 eW = deque([0]*10, 100)
+eR = deque([0]*10, 100)
+M = deque([0]*10, 100)
 
 # This just simulates reading from a socket.
 def callback(data):
     ew.append(data.eW.x)
+    # eW.appenh(np.random.rand())
 
     pass
 

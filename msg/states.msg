@@ -5,7 +5,7 @@ Header header
 # north east down (NED) or local tangent plane (LTP)
 # east north up (ENU)
 # desired position, velocity, acceleration in (ENU)
-geometry_msgs/Vector3 xc # + xc_dot, xc_2dot, xc_3dot
+geometry_msgs/Vector3 xc
 geometry_msgs/Vector3 xc_dot
 geometry_msgs/Vector3 xc_2dot
 geometry_msgs/Vector3 xc_ned # desired command in NED frame

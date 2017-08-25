@@ -45,6 +45,9 @@
 #include <uav_geometric_controller/trajectory.h>
 #include <list>
 #include <std_msgs/Int8MultiArray.h>
+#include <tf2/convert.h>
+// #include "tf2_bullet/tf2_bullet.h"
+// #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 using namespace Eigen;
 
 class node
@@ -55,7 +58,7 @@ public:
   ros::NodeHandle n_;
   ros::NodeHandle nhSub_;
 
-  ros::Publisher pub_;
+  ros::Publisher pub_, pub_imu_;
   ros::Publisher vis_pub_0, vis_pub_1, vis_pub_2, vis_pub_3;
   ros::Time vicon_time, imu_time;
   double dt_vicon = 0, dt_imu = 0, dt_vicon_imu;
@@ -88,7 +91,7 @@ public:
 
   Quaterniond q_imu, q_v;
   MatrixXd v_ave;
-  bool IMU_flag, Vicon_flag, controller_flag;
+  bool IMU_flag, Vicon_flag, controller_flag, IMU_as_attitude;
   // Integral errors begin at zero
   Vector3d eiX, eiR, eiX_last, eiR_last;
   // Threads (except command key) ON/OFF

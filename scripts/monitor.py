@@ -252,6 +252,6 @@ class main(HasTraits):
 if __name__ == '__main__':
     rospy.init_node('error_plot', anonymous=True)
     view = main()
-    rospy.Subscriber("uav_state", states, view.ros_callback)
+    rospy.Subscriber("uav_states", states, view.ros_callback)
     view.configure_traits()
     print('Completed')

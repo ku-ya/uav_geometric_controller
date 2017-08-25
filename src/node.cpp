@@ -52,21 +52,21 @@ void publish_error(node& node){
   e_msg.R_v.data.clear();
   for(int i=0;i<9;i++){
     e_msg.Rc[i] = (float)node.Rc(i);
-  //   e_msg.Rc_dot[i] = (float)node.Rc_dot(i);
-  //   e_msg.Rc_2dot[i] = (float)node.Rc_2dot(i);
-  //   e_msg.R_imu[i] = (float)node.R_imu(i);
-  //   e_msg.R[i] = (float)node.R(i);
-  //   e_msg.R_v.data.push_back((float)node.R_b(i));
+    e_msg.Rc_dot[i] = (float)node.Rc_dot(i);
+    e_msg.Rc_2dot[i] = (float)node.Rc_2dot(i);
+    e_msg.R_imu[i] = (float)node.R_imu(i);
+    e_msg.R[i] = (float)node.R(i);
+    e_msg.R_v.data.push_back((float)node.R_b(i));
   }
-  // e_msg.gain_position =
-  //   {node.kx, node.kv, node.kiX, node.kxr, node.cX, node.eiX_sat,0,0,0};
-  // e_msg.gain_attitude =
-  //   {node.kR, node.kW, node.kiR, node.kRr, node.cR, node.eiR_sat, 0,0,0};
-  // for(int i = 0; i <5;i++){
-  //   e_msg.gain_position[6+i] = node.eiX[i];
-  //   e_msg.gain_attitude[6+i] = node.eiR[i];
-  //
-  // }
+  e_msg.gain_position =
+    {node.kx, node.kv, node.kiX, node.kxr, node.cX, node.eiX_sat,0,0,0};
+  e_msg.gain_attitude =
+    {node.kR, node.kW, node.kiR, node.kRr, node.cR, node.eiR_sat, 0,0,0};
+  for(int i = 0; i <3;i++){
+    e_msg.gain_position[6+i] = node.eiX[i];
+    e_msg.gain_attitude[6+i] = node.eiR[i];
+
+  }
   node.pub_.publish(e_msg);
 }
 
@@ -133,11 +133,12 @@ node::node(){
   R_b = R_imu =  R = Matrix3d::Zero();
 
   prev_x_v= prev_v_v = eiX =  eiX_last = eiR_last = Vector3d::Zero();
-	x_e = v_e = eiR = eiX = Vector3d::Zero();
+  eV = eX = x_e = v_e = eiR = eiX = eR =  Vector3d::Zero();
   xd = xd_dot = xd_ddot= Wd = Wd_dot = W_b = W_raw = Vector3d::Zero();
   x_v = v_v = prev_x_v = prev_v_v = b1d = b1d_ned =  Vector3d::Zero();
   W = xc_ned = xc_ned_dot = xc_ned_2dot = x = v = Vector3d::Zero();
-  Wc = Wc_dot = Vector3d::Zero();
+  R_v_ned = Matrix3d::Identity();
+  x = v = Wc = Wc_dot = Vector3d::Zero();
   b1d << 1,0,0;
   b1d_ned = R_conv*b1d;
   M = eX = eV = eR = eW = Vector3d::Zero();
@@ -146,6 +147,7 @@ node::node(){
   Rc_dot = Rc_2dot = Matrix3d::Zero();
   v_ave = MatrixXd::Zero(3,10);
   q_v=q_imu=Quaterniond(0,0,0,1);
+  f_total = 0.0;
 
   double wnx = 4, zetax = 0.7;
   kx = wnx*wnx*m;
@@ -173,6 +175,7 @@ node::node(){
   ros::param::get("name/vicon",vicon_name);
   vicon_name = "/vicon/"+vicon_name+"/pose";
   pub_ = n_.advertise<uav_geometric_controller::states>("uav_states",1);
+  pub_imu_ = n_.advertise<sensor_msgs::Imu>("imu/data_raw", 1);
   ROS_INFO("UAV node initialized");
 }
 
@@ -192,10 +195,36 @@ void node::imu_callback(const sensor_msgs::Imu::ConstPtr& msg){
   tf::quaternionMsgToEigen(msg->orientation,q_imu);
   tf::Matrix3x3 m(temp);
   tf::matrixTFToEigen(m, R_imu);
+
+  tf::Matrix3x3 Mimu;
+  Mimu.setEulerYPR(0.7854, 0, 0);
+  Matrix3d MimuEig;
+  tf::matrixTFToEigen(Mimu, MimuEig);
+  tf::matrixEigenToTF(MimuEig*R, m);
+
+  if(IMU_as_attitude)
+  {
+      R = MimuEig * R_imu;
+  }
+
+
+  m.getRotation(temp);
+  sensor_msgs::Imu imu_out;
+  imu_out.header = msg->header;
+  imu_out.header.frame_id = "uav";
+  // tf::quaternionTFToMsg(temp, imu_out.orientation);
+  // cout<<temp<<endl;
+  Vector3d acc(msg->linear_acceleration.x, msg->linear_acceleration.y,
+    msg->linear_acceleration.z);
+  tf::vectorEigenToMsg(MimuEig*acc, imu_out.linear_acceleration);
+  pub_imu_.publish(imu_out);
+
   double roll, pitch, yaw;
   m.getRPY(roll, pitch, yaw);
   boost::mutex::scoped_lock scopedLock(mutex_);
-  tf::vectorMsgToEigen(msg->angular_velocity, W_b);
+  Vector3d W_b_;
+  tf::vectorMsgToEigen(msg->angular_velocity, W_b_);
+  W_b = MimuEig * W_b_;
   rpy << roll, pitch, yaw;
 }
 
@@ -262,30 +291,31 @@ void node::control(){
   hw_interface hw_intf(mtr_addr);  // open communication through I2C
   if(getEnv() == 1) hw_intf.open_I2C();
   ros::Rate loop_rate(100); // rate for the node loop
+  ROS_INFO("Controller thread loop stapting");
   while (ros::ok()){
-    if(getIMU() or getWarmup()){
+    // if(getIMU() or getWarmup()){
       ctl_callback(hw_intf);
-    }
+    // }
     loop_rate.sleep();
   }
 }
-
 // Action for controller
 void node::ctl_callback(hw_interface hw_intf){
   VectorXd Wd, Wd_dot;
   Wd = VectorXd::Zero(3); Wd_dot = VectorXd::Zero(3);
 
-  if(Vicon_flag){
+  // if(Vicon_flag){
+  {
     boost::mutex::scoped_lock scopedLock(mutex_);
     if(mode == 1)
     {
         controller::GeometricPositionController(*this,
-            xc_ned, xc_ned_dot, xc_ned_2dot, Wd, Wd_dot, x_v_ned, v_v_ned, W_b, R_v_ned);
+            xc_ned, xc_ned_dot, xc_ned_2dot, Wd, Wd_dot, x_v_ned, v_v_ned, W_b, R);
     }
     else
     {
         controller::GeometricControl_SphericalJoint_3DOF(*this,
-            Wd, Wd_dot, W_b, R_v_ned);
+            Wd, Wd_dot, W_b, R);
     }
   }
   for(int k = 0; k < 4; k++){
@@ -323,8 +353,9 @@ void node::callback(uav_geometric_controller::GainsConfig &config, uint32_t leve
   //kxr = config.kxr;
 
   kiR = config.kiR; //config.kiR;
-  kiX = config.kiX; //config.kiX;
+  kiX = config.kiX; //config.kiX
 
   MOTOR_ON = config.Motor;
   MotorWarmup = config.MotorWarmup;
+  IMU_as_attitude = config.IMU_as_attitude;
 }

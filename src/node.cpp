@@ -292,7 +292,7 @@ void node::ctl_callback(hw_interface hw_intf){
     f_motor_sat(k) = f_motor(k);
     if(f_motor(k) < 0 ){f_motor_sat(k)=0;}
     else if(f_motor(k) > 14.0){f_motor_sat(k) = 14.0;}
-    thr[k] = floor((-0.8118*pow(f_motor_sat(k),2)+f_motor_sat(k)*28.17+30.79));
+    thr[k] = floor((-1.054*pow(f_motor_sat(k),2)+f_motor_sat(k)*31.59+17.97));
   }
   if(environment == 1){
     motor_power = hw_intf.motor_command(thr, MotorWarmup, MOTOR_ON);
@@ -306,6 +306,7 @@ void node::callback(uav_geometric_controller::GainsConfig &config, uint32_t leve
   ROS_INFO("Reconfigure Request: Update");
 
   mode = config.mode;
+  m = config.m;
   // MOTOR_ON = config.Motor;
   // MotorWarmup = config.MotorWarmup;
   xd(0) =  config.x;

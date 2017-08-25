@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import numpy as np
 import rospy
-from uav_geometric_controller.msg import trajectory
+from uav_control.msg import states
 
 import matplotlib.pyplot as plt
 import time
@@ -15,7 +15,8 @@ M = deque([0]*10, 100)
 
 # This just simulates reading from a socket.
 def callback(data):
-    eW.appenh(np.random.rand())
+    ew.append(data.eW.x)
+    # eW.appenh(np.random.rand())
 
     pass
 

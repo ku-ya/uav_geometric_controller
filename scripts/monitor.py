@@ -97,7 +97,7 @@ class ErrorView(HasTraits):
     M = np.zeros((200,3))
     time = deque([0]*200, 200)
     start_stop_motor = Button()
-    rqt_reconfig = Button()
+    rqt_reconfig = Button(desc='starts ROS rqt_reconfig')
     # TODO: add ssh script exe on uav
     # linux terminal ssh and run script
     controller = Button()
@@ -148,7 +148,9 @@ class ErrorView(HasTraits):
             resizable = True,
         )
 
-    def _N_changed(self):
+    # Eqample of decorator
+    @on_trait_change('N')
+    def sample_number_changed(self):
         """
         Set number of data sample to plot
         """

@@ -53,7 +53,7 @@ class CmdThread(Thread):
         while not self.wants_abort:
             self.cmd.header.frame_id = '/Jetson/uav'
             pub.publish(self.cmd)
-            sleep(0.1)
+            sleep(0.01)
             pass
 
 
@@ -128,9 +128,7 @@ class ErrorView(HasTraits):
     ex0 = Float(0)
     ex1 = Float(0)
     ex2 = Float(0)
-    xd0 = Float(0)
-    xd1 = Float(0)
-    xd2 = Float(0)
+    xd = Array(shape=(3,))
 
     viewer = Instance(Viewer, ())
     N = Int(200)
@@ -177,9 +175,7 @@ class ErrorView(HasTraits):
             Item('host_IP_set'),
             Item('mission', label='mission', show_label=False),
             Item('mission_exe', label='Run mission', show_label=False),
-            Item('xd0',label='des x'),
-            Item('xd1',label='des y'),
-            Item('xd2',label='des z'),
+            Item('xd',label='desired position'),
         ),
         Group(
             HGroup(
@@ -252,6 +248,10 @@ class ErrorView(HasTraits):
                 height = z_min+v_up*t_cur
                 cmd.xc = [x_v[0],x_v[1],height if height < z_hover else z_hover]
                 cmd.xc_dot = [0,0,v_up]
+                if z_hover == height:
+                    continue
+                self.xd = cmd.xc
+                print(cmd.xc)
                 # cmd_tf_pub(cmd.xc)
                 # pub.publish(cmd)
             print('Take off complete')
@@ -272,16 +272,25 @@ class ErrorView(HasTraits):
                 cmd.xc_dot = [(np.sin(theta)-1.)/2.0, 1./2.0*np.sin(theta),0]
                 if x_v[2] < z_min:
                     rospy.set_param('/Jetson/uav/Motor', False)
+                print(cmd.xc)
             cmd.xc =[1,0,0]
             cmd.xc =[0,0,z_hover]
             cmd.xc_dot =[0,0,0]
+            print(cmd.xc)
             self.mission = 'halt'
 
-    def _cmd_thread_changed(self):
-        self.xd0 = self.cmd_thread.cmd.xc[0]
-        self.xd1 = self.cmd_thread.cmd.xc[1]
-        self.xd2 = self.cmd_thread.cmd.xc[2]
+        elif self.mission == 'halt':
+            # TODO
+            if x_v[2] < z_min:
+                rospy.set_param('/Jetson/uav/Motor', False)
+            cmd.xc =[1,0,0]
+            cmd.xc =[0,0,z_hover]
+            cmd.xc_dot =[0,0,0]
+            self.xd = cmd.xc
+            self.mission = 'halt'
 
+    def _xd_changed(self):
+        print('Desired position')
 
     def _start_stop_motor_fired(self):
         """
@@ -290,11 +299,11 @@ class ErrorView(HasTraits):
         cmd = trajectory()
         cmd.b1 = [1,0,0]
         cmd.header.frame_id = '/Jetson/uav'
-        # self.motor_set(True,True)
+        self.motor_set(True,True)
         pub.publish(cmd)
         if self.cmd_thread and self.cmd_thread.isAlive():
             self.cmd_thread.wants_abort = True
-            # self.motor_set(False,False)
+            self.motor_set(False,False)
         else:
             self.cmd_thread = CmdThread(args='ls')
             self.cmd_thread.wants_abort = False
@@ -337,9 +346,9 @@ class ErrorView(HasTraits):
         self.viewer.M_data_y = list(self.M[:,1])
         self.viewer.M_data_z = list(self.M[:,2])
 
-        self.ex0 = self.ex.x
-        self.ex1 = self.ex.y
-        self.ex2 = self.ex.z
+        # self.ex0 = self.ex.x
+        # self.ex1 = self.ex.y
+        # self.ex2 = self.ex.z
         return
 
 
@@ -381,7 +390,7 @@ class main(HasTraits):
             np.array([data.eR.x, data.eR.y, data.eR.z])))
         self.error_window.M = np.vstack((self.error_window.M[1:,:],
             np.array([data.moment.x, data.moment.y, data.moment.z])))
-        self.error_window.ex = data.ex
+        self.error_window.ex0, self.error_window.ex1, self.error_window.ex2  = [data.eX.x, data.eX.y, data.eX.z]
         pass
 
 
@@ -390,4 +399,5 @@ if __name__ == '__main__':
     view = main()
     rospy.Subscriber("Jetson/uav_states", states, view.ros_callback)
     view.configure_traits()
+    view.error_window.cmd_thread.wants_abort = True
     print('Completed')

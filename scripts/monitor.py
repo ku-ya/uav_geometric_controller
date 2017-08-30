@@ -43,6 +43,7 @@ class DaqThread(Thread):
 class CmdThread(Thread):
     wants_abort = False
     cmd = trajectory()
+    cmd.b1  = [1,0,0]
 
     def __init__(self,args):
         Thread.__init__(self)
@@ -231,12 +232,16 @@ class ErrorView(HasTraits):
         x_v = [0,0,0]
         z_hover = 1.5
         cmd = self.cmd_thread.cmd
+        cmd.xc_2dot = [0,0,0]
+        cmd.b1 = [1,0,0]
+
+
 
         if self.mission == 'take off':
-            # self.motor_set(True,True)
             print('Motor warmup for 2 seconds')
+            self.motor_set(True,True)
             rospy.sleep(2)
-            # motor_set(True,False)
+            self.motor_set(True,False)
             print('Taking off at {} sec'.format(time.time()-t_init))
             t_init = time.time()
             t_cur= 0
@@ -296,16 +301,12 @@ class ErrorView(HasTraits):
         """
         TODO
         """
-        cmd = trajectory()
-        cmd.b1 = [1,0,0]
-        cmd.header.frame_id = '/Jetson/uav'
         self.motor_set(True,True)
-        pub.publish(cmd)
         if self.cmd_thread and self.cmd_thread.isAlive():
             self.cmd_thread.wants_abort = True
             self.motor_set(False,False)
         else:
-            self.cmd_thread = CmdThread(args='ls')
+            self.cmd_thread = CmdThread(args='')
             self.cmd_thread.wants_abort = False
             self.cmd_thread.start()
         pass
@@ -390,7 +391,7 @@ class main(HasTraits):
             np.array([data.eR.x, data.eR.y, data.eR.z])))
         self.error_window.M = np.vstack((self.error_window.M[1:,:],
             np.array([data.moment.x, data.moment.y, data.moment.z])))
-        self.error_window.ex0, self.error_window.ex1, self.error_window.ex2  = [data.eX.x, data.eX.y, data.eX.z]
+        self.error_window.ex0, self.error_window.ex1, self.error_window.ex2  = [data.ex.x, data.ex.y, data.ex.z]
         pass
 
 

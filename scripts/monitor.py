@@ -54,7 +54,7 @@ class CmdThread(Thread):
         while not self.wants_abort:
             self.cmd.header.frame_id = '/Jetson/uav'
             pub.publish(self.cmd)
-            sleep(0.01)
+            sleep(0.1)
             pass
 
 
@@ -255,7 +255,7 @@ class ErrorView(HasTraits):
         cmd.xc = self.xd
         cmd.b1 = [1,0,0]
         print('Desired position, x: ' + cmd.xc[0]+' y: '+cmd.xc[1]+' z: '+ cmd.xc[2])
-        pub.publish(cmd)
+        # pub.publish(cmd)
 
     def _mission_exe_fired(self):
         print('Mission starting: ' + self.mission)
@@ -300,7 +300,7 @@ class ErrorView(HasTraits):
         elif self.mission == 'spin':
             # TODO
             t_cur = 0
-            t_total = 15
+            t_total = 30
             while t_cur <= t_total:
                 t_cur = time.time() - t_init
                 time.sleep(dt)
@@ -308,7 +308,7 @@ class ErrorView(HasTraits):
                 theta = 2*np.pi/t_total*t_cur
                 cmd.b1 = [np.cos(theta),np.sin(theta),0]
                 cmd.xc = [(np.cos(theta)-1.)/2.0, 1./2.0*np.sin(theta),z_hover]
-                cmd.xc_dot = [(np.sin(theta)-1.)/2.0, 1./2.0*np.sin(theta),0]
+                cmd.xc_dot = [np.sin(theta)/2.0, 1./2.0*np.sin(theta),0]
                 # if x_v[2] < z_min:
                     # rospy.set_param('/Jetson/uav/Motor', False)
                 print(cmd.xc)

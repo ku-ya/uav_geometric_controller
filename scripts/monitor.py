@@ -124,6 +124,8 @@ class Viewer(HasTraits):
 
 class ErrorView(HasTraits):
     name = Str('Jetson')
+    mapping_name = Str('uav_demo ...')
+    exploration_name = Str('uav_demo ...')
     host_IP = Str('161.253.73.237')
     host_IP_set = Button()
     error_val = Enum('eW', 'eR', 'M')
@@ -145,6 +147,7 @@ class ErrorView(HasTraits):
     controller = Button()
     mapping = Button()
     exploration = Button()
+    rviz = Button()
     openGL = Button()
     mean = Float(0.0)
     stddev = Float(1.0)
@@ -157,6 +160,7 @@ class ErrorView(HasTraits):
 
     capture_thread = Instance(DaqThread)
     rqt_thread = Instance(DaqThread)
+    mapping_thread = Instance(DaqThread)
     cmd_thread = Instance(CmdThread)
 
     _generator = Trait(np.random.normal, Callable)
@@ -166,9 +170,8 @@ class ErrorView(HasTraits):
             Item('start_stop_motor', label='start stop motor', show_label=False),
             Item('rqt_reconfig', label='Gain tuning', show_label=False),
             Item('controller', label='Controller', show_label=False),
-            Item('mapping', label='Mapping', show_label=False),
             Item('openGL', label='Visualization', show_label=False),
-            Item('exploration', label='Exploration', show_label=False),
+            Item('rviz', label='Rviz', show_label=False),
             label='Run',
             ),
             Item('ex0',label='error x',width=100),
@@ -176,10 +179,20 @@ class ErrorView(HasTraits):
             Item('ex2',label='error z',width=100),
             Item('host_IP',label='Basestation IP',width=100),
             Item('host_IP_set'),
-            Item('mission', label='mission', show_label=False),
-            Item('mission_exe', label='Run mission', show_label=False),
+            HGroup(
+                Item('mission', label='Mission', show_label=True),
+                Item('mission_exe', label='Run mission', show_label=False),
+            ),
             Item('xd',label='desired position'),
             Item('reset'),
+            HGroup(
+                Item('mapping_name', label='Mapping command', show_label=True),
+                Item('mapping', label='Mapping', show_label=False),
+            ),
+            HGroup(
+                Item('exploration_name', label='Exploration command', show_label=True),
+                Item('exploration', label='Exploration', show_label=False),
+            ),
             label='Execution',
         ),
         Group(
@@ -234,7 +247,6 @@ class ErrorView(HasTraits):
         self.xd = cmd.xc
         cmd.b1 = [1,0,0]
         pub.publish(cmd)
-
 
     def _xd_changed(self):
         cmd = trajectory()
@@ -368,6 +380,20 @@ class ErrorView(HasTraits):
                 )
             self.rqt_thread.wants_abort = False
             self.rqt_thread.start()
+        pass
+
+    def _mapping_fired(self):
+        """
+        Runs ros mapping
+        """
+        if self.mapping_thread and self.mapping_thread.isAlive():
+            self.mapping_thread.wants_abort = True
+        else:
+            self.mapping_thread = DaqThread(
+                args=self.mapping_name
+                )
+            self.mapping_thread.wants_abort = False
+            self.mapping_thread.start()
         pass
 
     def timer_tick(self, *args):

@@ -151,7 +151,7 @@ class ErrorView(HasTraits):
     max_num_points = Int(100)
     num_ticks = Int(0)
 
-    mission = Enum('halt', 'take off', 'land', 'spin', 'home')
+    mission = Enum('take off', 'land', 'spin', 'home', 'halt')
     mission_exe = Button()
     reset = Button()
 
@@ -180,6 +180,7 @@ class ErrorView(HasTraits):
             Item('mission_exe', label='Run mission', show_label=False),
             Item('xd',label='desired position'),
             Item('reset'),
+            label='Execution',
         ),
         Group(
             HGroup(
@@ -224,13 +225,25 @@ class ErrorView(HasTraits):
 
     def _error_val_changed(self):
         logging.debug('errer val changed to ' + self.error_val)
+
     def _reset_fired(self):
         cmd = trajectory()
         cmd.xc_2dot = [0,0,0]
         cmd.xc_dot = [0,0,0]
+        cmd.xc = [0,0,0]
+        self.xd = cmd.xc
         cmd.b1 = [1,0,0]
         pub.publish(cmd)
 
+
+    def _xd_changed(self):
+        cmd = trajectory()
+        cmd.xc_2dot = [0,0,0]
+        cmd.xc_dot = [0,0,0]
+        cmd.xc = self.xd
+        cmd.b1 = [1,0,0]
+        print('Desired position, x: ' + cmd.xc[0]+' y: '+cmd.xc[1]+' z: '+ cmd.xc[2])
+        pub.publish(cmd)
 
     def _mission_exe_fired(self):
         print('Mission starting: ' + self.mission)
@@ -327,9 +340,6 @@ class ErrorView(HasTraits):
             cmd.xc_dot =[0,0,0]
             self.xd = cmd.xc
             self.mission = 'halt'
-
-    def _xd_changed(self):
-        print('Desired position')
 
     def _start_stop_motor_fired(self):
         """

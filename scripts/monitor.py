@@ -341,6 +341,7 @@ class ErrorView(HasTraits):
             print('landing complete')
             cmd.xc_dot = [0,0,0]
             self.motor_set(False,False)
+            self.cmd_thread.wants_abort = True
             self.mission = 'halt'
 
         elif self.mission == 'halt':

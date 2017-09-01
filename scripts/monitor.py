@@ -54,8 +54,9 @@ class CmdThread(Thread):
         while not self.wants_abort:
             self.cmd.header.frame_id = '/Jetson/uav'
             pub.publish(self.cmd)
-            sleep(0.1)
+            sleep(0.01)
             pass
+        print('Process: cmd pub killed')
 
 
 
@@ -149,6 +150,7 @@ class ErrorView(HasTraits):
     exploration = Button()
     rviz = Button()
     openGL = Button()
+    abort = Button()
     mean = Float(0.0)
     stddev = Float(1.0)
     max_num_points = Int(100)
@@ -193,6 +195,7 @@ class ErrorView(HasTraits):
                 Item('exploration_name', label='Exploration command', show_label=True),
                 Item('exploration', label='Exploration', show_label=False),
             ),
+            Item('abort', label='Stop motor', show_label=False),
             label='Execution',
         ),
         Group(
@@ -221,6 +224,9 @@ class ErrorView(HasTraits):
     def motor_set(self, motor, warmup):
         rospy.set_param('/'+self.name+'/uav/Motor', motor)
         rospy.set_param('/'+self.name+'/uav/MotorWarmup', warmup)
+
+    def _abort_fired(self):
+        self.motor_set(False, False)
 
     def _host_IP_set_fired(self):
         print('export ROS_IP=' + self.host_IP)
@@ -254,7 +260,7 @@ class ErrorView(HasTraits):
         cmd.xc_dot = [0,0,0]
         cmd.xc = self.xd
         cmd.b1 = [1,0,0]
-        print('Desired position, x: ' + cmd.xc[0]+' y: '+cmd.xc[1]+' z: '+ cmd.xc[2])
+        # print('Desired position, x: ' + cmd.xc[0]+' y: '+cmd.xc[1]+' z: '+ cmd.xc[2])
         # pub.publish(cmd)
 
     def _mission_exe_fired(self):
@@ -286,11 +292,10 @@ class ErrorView(HasTraits):
                 cmd.header.stamp = rospy.get_rostime()
                 height = z_min+v_up*t_cur
                 cmd.xc = [x_v[0],x_v[1],height if height < z_hover else z_hover]
-                cmd.xc_dot = [0,0,v_up]
+                cmd.xc_dot = [0,0,0]
                 if z_hover == height:
                     continue
                 self.xd = cmd.xc
-                print(cmd.xc)
                 # cmd_tf_pub(cmd.xc)
                 # pub.publish(cmd)
             print('Take off complete')
@@ -308,10 +313,10 @@ class ErrorView(HasTraits):
                 theta = 2*np.pi/t_total*t_cur
                 cmd.b1 = [np.cos(theta),np.sin(theta),0]
                 cmd.xc = [(np.cos(theta)-1.)/2.0, 1./2.0*np.sin(theta),z_hover]
-                cmd.xc_dot = [np.sin(theta)/2.0, 1./2.0*np.sin(theta),0]
+                cmd.xc_dot = [dt*np.sin(theta)/2.0, dt*1./2.0*np.sin(theta),0]
                 # if x_v[2] < z_min:
                     # rospy.set_param('/Jetson/uav/Motor', False)
-                print(cmd.xc)
+                # print(cmd.xc)
             cmd.xc =[1,0,0]
             cmd.xc =[0,0,z_hover]
             cmd.xc_dot =[0,0,0]
@@ -323,7 +328,7 @@ class ErrorView(HasTraits):
             # rospy.sleep(2)
             t_init = time.time()
             t_cur= 0
-            t_total = 6
+            t_total = 5
             cmd.b1 = [1,0,0]
             while t_cur <= t_total and self.mission == 'land':
                 t_cur = time.time() - t_init
@@ -331,18 +336,19 @@ class ErrorView(HasTraits):
                 cmd.header.stamp = rospy.get_rostime()
                 height = z_hover - (v_up*t_cur)
                 cmd.xc = [x_v[0],x_v[1],height if height > z_min else z_min]
-                # cmd.xc_dot = [0,0,-v_up]
+                cmd.xc_dot = [0,0,0]
                 if z_min == height:
                     continue
                 self.xd = cmd.xc
-                print(cmd.xc)
+                # print(cmd.xc)
                 # cmd_tf_pub(cmd.xc)
                 # pub.publish(cmd)
             print('landing complete')
             cmd.xc_dot = [0,0,0]
             self.motor_set(False,False)
+            self.mission = 'take off'
+            time.sleep(0.2)
             self.cmd_thread.wants_abort = True
-            self.mission = 'halt'
 
         elif self.mission == 'halt':
             # TODO
@@ -360,8 +366,8 @@ class ErrorView(HasTraits):
         """
         self.motor_set(True,True)
         if self.cmd_thread and self.cmd_thread.isAlive():
-            self.cmd_thread.wants_abort = True
             self.motor_set(False,False)
+            self.cmd_thread.wants_abort = True
         else:
             self.cmd_thread = CmdThread(args='')
             self.motor_set(True, True)

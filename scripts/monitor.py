@@ -18,7 +18,7 @@ import time
 import rospy
 from uav_geometric_controller.msg import states, trajectory
 
-pub = rospy.Publisher('Jetson/xc', trajectory, queue_size= 10)
+pub = rospy.Publisher('Jetson/xc', trajectory, queue_size= 1)
 
 logging.basicConfig(level=logging.DEBUG,
         format='[%(levelname)s] (%(threadName)-10s) %(message)s',

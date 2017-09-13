@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import numpy as np
-from traits.api import *
+from traits.api import Array, Instance, Int, HasTraits, Str, Button, Enum
+from traits.api import Trait, Callable, on_trait_change, Float
 from traitsui.api import *
 from chaco.chaco_plot_editor import ChacoPlotItem
 from chaco.api import Plot, ArrayPlotData
@@ -18,6 +19,7 @@ import time
 import rospy
 from uav_geometric_controller.msg import states, trajectory
 
+# publisher for the desired trajectory
 pub = rospy.Publisher('Jetson/xc', trajectory, queue_size= 1)
 
 logging.basicConfig(level=logging.DEBUG,
@@ -44,7 +46,10 @@ class CmdThread(Thread):
     wants_abort = False
     cmd = trajectory()
     cmd.b1  = [1,0,0]
+    cmd.xc = [0,0,0]
     mission = 'halt'
+    t_init = time.time()
+    t_cur = 0
 
     def __init__(self,args):
         Thread.__init__(self)
@@ -57,108 +62,90 @@ class CmdThread(Thread):
     def run(self):
         print(self.args)
         self.cmd.header.frame_id = '/Jetson/uav'
+
+        dt = 0.01
+        z_min = 0.2
+        v_up = 0.3
+        t_total = 5
+        x_v = [0,0,0]
+        z_hover = 1.5
+        cmd = self.cmd
+        cmd.xc_2dot = [0,0,0]
+        cmd.b1 = [1,0,0]
+        self.motor_set(True,False)
+
         while not self.wants_abort:
             print('Mission starting: ' + self.mission)
-            t_init = time.time()
-            dt = 0.01
-            z_min = 0.2
-            v_up = 0.3
-            t_total = 5
-            x_v = [0,0,0]
-            z_hover = 1.5
-            cmd = self.cmd
-            cmd.xc_2dot = [0,0,0]
-            cmd.b1 = [1,0,0]
+            self.t_cur = time.time() - self.t_init
 
-            self.motor_set(True,False)
+            print('time cur {}'.format(self.t_cur))
 
             if self.mission == 'take off':
-                # print('Motor warmup for 2 seconds')
-                # self.motor_set(True,True)
-                # rospy.sleep(2)
-                print('Taking off at {} sec'.format(time.time()-t_init))
-                t_init = time.time()
-                t_cur= 0
                 cmd.b1 = [1,0,0]
-                while t_cur <= t_total and self.mission == 'take off':
-                    t_cur = time.time() - t_init
+                if self.t_cur <= t_total and self.mission == 'take off':
                     time.sleep(dt)
                     cmd.header.stamp = rospy.get_rostime()
-                    height = z_min+v_up*t_cur
+                    height = z_min+v_up*self.t_cur
                     cmd.xc = [x_v[0],x_v[1],height if height < z_hover else z_hover]
                     cmd.xc_dot = [0,0,v_up*dt]
                     if z_hover == height:
                         continue
                     self.xd = cmd.xc
-                    # cmd_tf_pub(cmd.xc)
-                    # pub.publish(cmd)
-                    pub.publish(self.cmd)
-                print('Take off complete')
-                cmd.xc_dot = [0,0,0]
-                self.mission = 'halt'
+                else:
+                    self.mission = 'halt'
+                # print('Take off complete')
 
             elif self.mission == 'spin':
                 # TODO
-                t_cur = 0
                 t_total = 30
-                while t_cur <= t_total:
-                    t_cur = time.time() - t_init
+                if self.t_cur <= t_total:
                     time.sleep(dt)
                     cmd.header.stamp = rospy.get_rostime()
-                    theta = 2*np.pi/t_total*t_cur
+                    theta = 2*np.pi/t_total*self.t_cur
                     cmd.b1 = [np.cos(theta),np.sin(theta),0]
                     cmd.xc = [(np.cos(theta)-1.)/2.0, 1./2.0*np.sin(theta),z_hover]
                     cmd.xc_dot = [dt*np.sin(theta)/2.0, dt*1./2.0*np.sin(theta),0]
                     # if x_v[2] < z_min:
                         # rospy.set_param('/Jetson/uav/Motor', False)
                     # print(cmd.xc)
-                    pub.publish(self.cmd)
-                cmd.xc =[1,0,0]
-                cmd.xc =[0,0,z_hover]
-                cmd.xc_dot =[0,0,0]
-                print(cmd.xc)
-                self.mission = 'halt'
+                else:
+                    self.mission = 'halt'
+                # cmd.xc =[1,0,0]
+                # cmd.xc =[0,0,z_hover]
+                # cmd.xc_dot =[0,0,0]
             elif self.mission == 'land':
-                # print('Motor warmup for 2 seconds')
-                # self.motor_set(True,True)
-                # rospy.sleep(2)
-                t_init = time.time()
-                t_cur= 0
                 t_total = 5
                 cmd.b1 = [1,0,0]
-                while t_cur <= t_total and self.mission == 'land':
-                    t_cur = time.time() - t_init
+                if self.t_cur <= t_total and self.mission == 'land':
                     time.sleep(dt)
                     cmd.header.stamp = rospy.get_rostime()
-                    height = z_hover - (v_up*t_cur)
+                    height = z_hover - (v_up*self.t_cur)
                     cmd.xc = [x_v[0],x_v[1],height if height > z_min else z_min]
                     cmd.xc_dot = [0,0,0]
                     if z_min == height:
                         continue
                     self.xd = cmd.xc
-                    pub.publish(self.cmd)
+                else:
+                    self.wants_abort = True
                     # print(cmd.xc)
                     # cmd_tf_pub(cmd.xc)
                     # pub.publish(cmd)
-                print('landing complete')
-                cmd.xc_dot = [0,0,0]
-                self.motor_set(False,False)
-                self.mission = 'take off'
-                time.sleep(0.2)
-                self.cmd_thread.wants_abort = True
 
             elif self.mission == 'halt':
                 # TODO
                 # if x_v[2] < z_min:
                     # rospy.set_param('/Jetson/uav/Motor', False)
+                cmd.b1 =[1,0,0]
                 cmd.xc =[1,0,0]
                 cmd.xc =[0,0,z_hover]
                 cmd.xc_dot =[0,0,0]
                 self.xd = cmd.xc
                 self.mission = 'halt'
+                self.t_cur= 0
+                self.t_init = time.time()
             pub.publish(self.cmd)
-            sleep(0.01)
             pass
+        self.motor_set(False,False)
         print('Process: cmd pub killed')
 
 
@@ -368,6 +355,8 @@ class ErrorView(HasTraits):
 
     def _mission_exe_fired(self):
         print('Mission fired: ' + self.mission)
+        self.cmd_thread.t_init = time.time()
+        self.cmd_thread.t_cur = 0
         self.cmd_thread.mission = self.mission
 
     def _start_stop_motor_fired(self):

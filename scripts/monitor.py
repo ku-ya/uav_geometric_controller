@@ -44,15 +44,118 @@ class CmdThread(Thread):
     wants_abort = False
     cmd = trajectory()
     cmd.b1  = [1,0,0]
+    mission = 'halt'
 
     def __init__(self,args):
         Thread.__init__(self)
         self.args = args
 
+    def motor_set(self, motor, warmup):
+        rospy.set_param('/'+self.name+'/uav/Motor', motor)
+        rospy.set_param('/'+self.name+'/uav/MotorWarmup', warmup)
+
     def run(self):
         print(self.args)
+        self.cmd.header.frame_id = '/Jetson/uav'
         while not self.wants_abort:
-            self.cmd.header.frame_id = '/Jetson/uav'
+            print('Mission starting: ' + self.mission)
+            t_init = time.time()
+            dt = 0.01
+            z_min = 0.2
+            v_up = 0.3
+            t_total = 5
+            x_v = [0,0,0]
+            z_hover = 1.5
+            cmd = self.cmd
+            cmd.xc_2dot = [0,0,0]
+            cmd.b1 = [1,0,0]
+
+            self.motor_set(True,False)
+
+            if self.mission == 'take off':
+                # print('Motor warmup for 2 seconds')
+                # self.motor_set(True,True)
+                # rospy.sleep(2)
+                print('Taking off at {} sec'.format(time.time()-t_init))
+                t_init = time.time()
+                t_cur= 0
+                cmd.b1 = [1,0,0]
+                while t_cur <= t_total and self.mission == 'take off':
+                    t_cur = time.time() - t_init
+                    time.sleep(dt)
+                    cmd.header.stamp = rospy.get_rostime()
+                    height = z_min+v_up*t_cur
+                    cmd.xc = [x_v[0],x_v[1],height if height < z_hover else z_hover]
+                    cmd.xc_dot = [0,0,v_up*dt]
+                    if z_hover == height:
+                        continue
+                    self.xd = cmd.xc
+                    # cmd_tf_pub(cmd.xc)
+                    # pub.publish(cmd)
+                    pub.publish(self.cmd)
+                print('Take off complete')
+                cmd.xc_dot = [0,0,0]
+                self.mission = 'halt'
+
+            elif self.mission == 'spin':
+                # TODO
+                t_cur = 0
+                t_total = 30
+                while t_cur <= t_total:
+                    t_cur = time.time() - t_init
+                    time.sleep(dt)
+                    cmd.header.stamp = rospy.get_rostime()
+                    theta = 2*np.pi/t_total*t_cur
+                    cmd.b1 = [np.cos(theta),np.sin(theta),0]
+                    cmd.xc = [(np.cos(theta)-1.)/2.0, 1./2.0*np.sin(theta),z_hover]
+                    cmd.xc_dot = [dt*np.sin(theta)/2.0, dt*1./2.0*np.sin(theta),0]
+                    # if x_v[2] < z_min:
+                        # rospy.set_param('/Jetson/uav/Motor', False)
+                    # print(cmd.xc)
+                    pub.publish(self.cmd)
+                cmd.xc =[1,0,0]
+                cmd.xc =[0,0,z_hover]
+                cmd.xc_dot =[0,0,0]
+                print(cmd.xc)
+                self.mission = 'halt'
+            elif self.mission == 'land':
+                # print('Motor warmup for 2 seconds')
+                # self.motor_set(True,True)
+                # rospy.sleep(2)
+                t_init = time.time()
+                t_cur= 0
+                t_total = 5
+                cmd.b1 = [1,0,0]
+                while t_cur <= t_total and self.mission == 'land':
+                    t_cur = time.time() - t_init
+                    time.sleep(dt)
+                    cmd.header.stamp = rospy.get_rostime()
+                    height = z_hover - (v_up*t_cur)
+                    cmd.xc = [x_v[0],x_v[1],height if height > z_min else z_min]
+                    cmd.xc_dot = [0,0,0]
+                    if z_min == height:
+                        continue
+                    self.xd = cmd.xc
+                    pub.publish(self.cmd)
+                    # print(cmd.xc)
+                    # cmd_tf_pub(cmd.xc)
+                    # pub.publish(cmd)
+                print('landing complete')
+                cmd.xc_dot = [0,0,0]
+                self.motor_set(False,False)
+                self.mission = 'take off'
+                time.sleep(0.2)
+                self.cmd_thread.wants_abort = True
+
+            elif self.mission == 'halt':
+                # TODO
+                # if x_v[2] < z_min:
+                    # rospy.set_param('/Jetson/uav/Motor', False)
+                cmd.xc =[1,0,0]
+                cmd.xc =[0,0,z_hover]
+                cmd.xc_dot =[0,0,0]
+                self.xd = cmd.xc
+                self.mission = 'halt'
             pub.publish(self.cmd)
             sleep(0.01)
             pass
@@ -98,8 +201,8 @@ class Viewer(HasTraits):
         self.plot_eW = self.plot_default(self.index, self.eW_data_x, self.eW_data_y, self.eW_data_z)
         self.plot_eW.title = 'eW'
         spec_range = list(self.plot_eW.plots.values())[0][0].value_mapper.range
-        spec_range.low = -0.5
-        spec_range.high = 0.5
+        spec_range.low = -1
+        spec_range.high = 1
 
     def _eR_data_x_changed(self):
         self.plot_eR = self.plot_default(self.index, self.eR_data_x, self.eR_data_y, self.eR_data_z)
@@ -264,101 +367,8 @@ class ErrorView(HasTraits):
         # pub.publish(cmd)
 
     def _mission_exe_fired(self):
-        print('Mission starting: ' + self.mission)
-        t_init = time.time()
-        dt = 0.01
-        z_min = 0.2
-        v_up = 0.3
-        t_total = 5
-        x_v = [0,0,0]
-        z_hover = 1.5
-        cmd = self.cmd_thread.cmd
-        cmd.xc_2dot = [0,0,0]
-        cmd.b1 = [1,0,0]
-
-        self.motor_set(True,False)
-
-        if self.mission == 'take off':
-            # print('Motor warmup for 2 seconds')
-            # self.motor_set(True,True)
-            # rospy.sleep(2)
-            print('Taking off at {} sec'.format(time.time()-t_init))
-            t_init = time.time()
-            t_cur= 0
-            cmd.b1 = [1,0,0]
-            while t_cur <= t_total and self.mission == 'take off':
-                t_cur = time.time() - t_init
-                time.sleep(dt)
-                cmd.header.stamp = rospy.get_rostime()
-                height = z_min+v_up*t_cur
-                cmd.xc = [x_v[0],x_v[1],height if height < z_hover else z_hover]
-                cmd.xc_dot = [0,0,0]
-                if z_hover == height:
-                    continue
-                self.xd = cmd.xc
-                # cmd_tf_pub(cmd.xc)
-                # pub.publish(cmd)
-            print('Take off complete')
-            cmd.xc_dot = [0,0,0]
-            self.mission = 'halt'
-
-        elif self.mission == 'spin':
-            # TODO
-            t_cur = 0
-            t_total = 30
-            while t_cur <= t_total:
-                t_cur = time.time() - t_init
-                time.sleep(dt)
-                cmd.header.stamp = rospy.get_rostime()
-                theta = 2*np.pi/t_total*t_cur
-                cmd.b1 = [np.cos(theta),np.sin(theta),0]
-                cmd.xc = [(np.cos(theta)-1.)/2.0, 1./2.0*np.sin(theta),z_hover]
-                cmd.xc_dot = [dt*np.sin(theta)/2.0, dt*1./2.0*np.sin(theta),0]
-                # if x_v[2] < z_min:
-                    # rospy.set_param('/Jetson/uav/Motor', False)
-                # print(cmd.xc)
-            cmd.xc =[1,0,0]
-            cmd.xc =[0,0,z_hover]
-            cmd.xc_dot =[0,0,0]
-            print(cmd.xc)
-            self.mission = 'halt'
-        elif self.mission == 'land':
-            # print('Motor warmup for 2 seconds')
-            # self.motor_set(True,True)
-            # rospy.sleep(2)
-            t_init = time.time()
-            t_cur= 0
-            t_total = 5
-            cmd.b1 = [1,0,0]
-            while t_cur <= t_total and self.mission == 'land':
-                t_cur = time.time() - t_init
-                time.sleep(dt)
-                cmd.header.stamp = rospy.get_rostime()
-                height = z_hover - (v_up*t_cur)
-                cmd.xc = [x_v[0],x_v[1],height if height > z_min else z_min]
-                cmd.xc_dot = [0,0,0]
-                if z_min == height:
-                    continue
-                self.xd = cmd.xc
-                # print(cmd.xc)
-                # cmd_tf_pub(cmd.xc)
-                # pub.publish(cmd)
-            print('landing complete')
-            cmd.xc_dot = [0,0,0]
-            self.motor_set(False,False)
-            self.mission = 'take off'
-            time.sleep(0.2)
-            self.cmd_thread.wants_abort = True
-
-        elif self.mission == 'halt':
-            # TODO
-            # if x_v[2] < z_min:
-                # rospy.set_param('/Jetson/uav/Motor', False)
-            cmd.xc =[1,0,0]
-            cmd.xc =[0,0,z_hover]
-            cmd.xc_dot =[0,0,0]
-            self.xd = cmd.xc
-            self.mission = 'halt'
+        print('Mission fired: ' + self.mission)
+        self.cmd_thread.mission = self.mission
 
     def _start_stop_motor_fired(self):
         """
@@ -435,6 +445,8 @@ class main(HasTraits):
     """
     main window and viewer handler
     """
+    rospy.init_node('error_plot', anonymous=False)
+
     error_window = Instance(ErrorView)
     viewer = Instance(Viewer, ())
     error_window.viewer = viewer
@@ -472,11 +484,10 @@ class main(HasTraits):
         self.error_window.ex0, self.error_window.ex1, self.error_window.ex2  = [data.ex.x, data.ex.y, data.ex.z]
         pass
 
+    rospy.Subscriber("Jetson/uav_states", states, ros_callback)
 
 if __name__ == '__main__':
-    rospy.init_node('error_plot', anonymous=True)
     view = main()
-    rospy.Subscriber("Jetson/uav_states", states, view.ros_callback)
     view.configure_traits()
     view.error_window.motor_set(False,False)
     view.error_window.cmd_thread.wants_abort = True

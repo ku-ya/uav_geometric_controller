@@ -77,6 +77,7 @@ class CmdThread(Thread):
         while not self.wants_abort:
             print('Mission starting: ' + self.mission)
             self.t_cur = time.time() - self.t_init
+            cmd.header.stamp = rospy.get_rostime()
 
             print('time cur {}'.format(self.t_cur))
 
@@ -84,7 +85,6 @@ class CmdThread(Thread):
                 cmd.b1 = [1,0,0]
                 if self.t_cur <= t_total and self.mission == 'take off':
                     time.sleep(dt)
-                    cmd.header.stamp = rospy.get_rostime()
                     height = z_min+v_up*self.t_cur
                     cmd.xc = [x_v[0],x_v[1],height if height < z_hover else z_hover]
                     cmd.xc_dot = [0,0,v_up*dt]
@@ -99,8 +99,6 @@ class CmdThread(Thread):
                 # TODO
                 t_total = 30
                 if self.t_cur <= t_total:
-                    time.sleep(dt)
-                    cmd.header.stamp = rospy.get_rostime()
                     theta = 2*np.pi/t_total*self.t_cur
                     cmd.b1 = [np.cos(theta),np.sin(theta),0]
                     cmd.xc = [(np.cos(theta)-1.)/2.0, 1./2.0*np.sin(theta),z_hover]
@@ -117,10 +115,9 @@ class CmdThread(Thread):
                 t_total = 5
                 cmd.b1 = [1,0,0]
                 if self.t_cur <= t_total and self.mission == 'land':
-                    time.sleep(dt)
-                    cmd.header.stamp = rospy.get_rostime()
                     height = z_hover - (v_up*self.t_cur)
-                    cmd.xc = [x_v[0],x_v[1],height if height > z_min else z_min]
+                    cmd.xc[2] = height if height > z_min else z_min
+                    # cmd.xc = [x_v[0],x_v[1],height if height > z_min else z_min]
                     cmd.xc_dot = [0,0,0]
                     if z_min == height:
                         continue
@@ -144,6 +141,7 @@ class CmdThread(Thread):
                 self.t_cur= 0
                 self.t_init = time.time()
             pub.publish(self.cmd)
+            time.sleep(dt)
             pass
         self.motor_set(False,False)
         print('Process: cmd pub killed')
@@ -224,6 +222,7 @@ class ErrorView(HasTraits):
     ex1 = Float(0)
     ex2 = Float(0)
     xd = Array(shape=(3,))
+    x_v = Array(shape=(3,))
 
     viewer = Instance(Viewer, ())
     N = Int(200)
@@ -355,8 +354,8 @@ class ErrorView(HasTraits):
 
     def _mission_exe_fired(self):
         print('Mission fired: ' + self.mission)
-        self.cmd_thread.t_init = time.time()
         self.cmd_thread.t_cur = 0
+        self.cmd_thread.t_init = time.time()
         self.cmd_thread.mission = self.mission
 
     def _start_stop_motor_fired(self):
@@ -471,6 +470,7 @@ class main(HasTraits):
         self.error_window.M = np.vstack((self.error_window.M[1:,:],
             np.array([data.moment.x, data.moment.y, data.moment.z])))
         self.error_window.ex0, self.error_window.ex1, self.error_window.ex2  = [data.ex.x, data.ex.y, data.ex.z]
+        self.error_window.x_v = [data.x_v.x, data.x_v.y, data.x_v.z]
         pass
 
     rospy.Subscriber("Jetson/uav_states", states, ros_callback)

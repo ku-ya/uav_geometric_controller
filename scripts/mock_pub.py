@@ -3,12 +3,15 @@ from uav_geometric_controller.msg import trajectory, states
 import numpy as np
 
 def talker():
-    pub = rospy.Publisher('uav_state', states, queue_size=10)
+    pub = rospy.Publisher('Jetson/uav_states', states, queue_size=10)
     rospy.init_node('talker', anonymous=True)
     rate = rospy.Rate(100) # 10hz
     data = states()
     time = 0.01
     while not rospy.is_shutdown():
+        data.x_v.x = np.sin(10*time)
+        data.x_v.y = np.sin(15*time)
+        data.x_v.z = np.sin(20*time)
         data.eW.x = np.sin(10*time)
         data.eW.y = np.sin(15*time)
         data.eW.z = np.sin(20*time)

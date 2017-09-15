@@ -66,6 +66,7 @@ class CmdThread(Thread):
 
     def run(self):
         print(self.args)
+        print('Process: cmd thread started')
         self.cmd.header.frame_id = '/Jetson/uav'
 
         dt = 0.1
@@ -75,20 +76,23 @@ class CmdThread(Thread):
         x_v = [0,0,0]
         z_hover = 1.5
         cmd = self.cmd
+        cmd.xc = [0,0,0]
+        cmd.xc_dot = [0,0,0]
         cmd.xc_2dot = [0,0,0]
         cmd.b1 = [1,0,0]
         self.motor_set(True,False)
-	motor_flag = False
+        motor_flag = False
+        pub.publish(self.cmd)
 
         while not self.wants_abort:
             #print('Mission: ' + self.mission, end='')
             self.t_cur = time.time() - self.t_init
             cmd.header.stamp = rospy.get_rostime()
 
-            #print(', time: {:2.4f} sec'.format(self.t_cur))
+            print(', time: {:2.4f} sec'.format(self.t_cur))
 
             if self.mission == 'take off':
-		motor_flag = True
+                motor_flag = True
                 cmd.b1 = [1,0,0]
                 if self.t_cur <= t_total and self.mission == 'take off':
                     height = z_min+v_up*self.t_cur
@@ -129,7 +133,7 @@ class CmdThread(Thread):
                         continue
                     self.xd = cmd.xc
                 else:
-		    self.motor_set(False,False)
+                    self.motor_set(False,False)
                     self.wants_abort = True
                     # print(cmd.xc)
                     # cmd_tf_pub(cmd.xc)
@@ -140,18 +144,20 @@ class CmdThread(Thread):
                 # if x_v[2] < z_min:
                     # rospy.set_param('/Jetson/uav/Motor', False)
                 cmd.b1 =[1,0,0]
-                cmd.xc =[1,0,0]
                 cmd.xc =[0,0,z_hover]
-		if not motor_flag:
-		    cmd.xc =[0,0,0]	
                 cmd.xc_dot =[0,0,0]
-                self.xd = cmd.xc
-                self.mission = 'halt'
                 self.t_cur= 0
                 self.t_init = time.time()
+
+    		if not motor_flag:
+    		    cmd.xc =[0,0,0]
+                cmd.xc_dot =[0,0,0]
+
+            self.xd = cmd.xc
             pub.publish(self.cmd)
             time.sleep(dt)
             pass
+
         self.motor_set(False,False)
         print('Process: cmd thread killed')
 
@@ -419,8 +425,7 @@ class ErrorView(HasTraits):
         pass
 
     def timer_tick(self, *args):
-        """
-        Callback function
+        """Callback function
         """
         error_data = eval('self.' + self.error_val)
         self.time = np.linspace(0, 0.01*len(error_data), len(error_data))
@@ -444,8 +449,7 @@ class ErrorView(HasTraits):
 
 
 class main(HasTraits):
-    """
-    main window and viewer handler
+    """Main window and viewer handler
     """
 
     error_window = Instance(ErrorView)
@@ -457,6 +461,8 @@ class main(HasTraits):
                 resizable=True)
 
     def __init__(self):
+        """initialization of node
+        """
         rospy.init_node('error_plot', anonymous=True)
         self.sub = rospy.Subscriber("Jetson/uav_states", states, self.ros_callback)
 

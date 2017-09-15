@@ -34,7 +34,7 @@ class exp_to_traj(object):
 
     def callback_accel(self, msg):
         pos = msg.accel.linear
-        self.cmd.xc_2dot = [pos.x, pos.x, pos.x]
+        self.cmd.xc_2dot = [pos.x, pos.y, pos.z]
         pass
 
     def publish(self):

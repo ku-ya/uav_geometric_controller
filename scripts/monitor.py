@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function, division
 import numpy as np
 from traits.api import Array, Instance, Int, HasTraits, Str, Button, Enum
 from traits.api import Trait, Callable, on_trait_change, Float
@@ -15,7 +16,6 @@ import pdb
 import os
 import time
 
-
 import rospy
 from uav_geometric_controller.msg import states, trajectory
 
@@ -26,7 +26,9 @@ logging.basicConfig(level=logging.DEBUG,
         format='[%(levelname)s] (%(threadName)-10s) %(message)s',
     )
 
-class DaqThread(Thread):
+class Run_thread(Thread):
+    """Use this to run as terminal command
+    """
     wants_abort = False
     def __init__(self,args):
         Thread.__init__(self)
@@ -43,6 +45,8 @@ class DaqThread(Thread):
             pass
 
 class CmdThread(Thread):
+    """Trajectory command thread
+    """
     wants_abort = False
     cmd = trajectory()
     cmd.b1  = [1,0,0]
@@ -75,11 +79,11 @@ class CmdThread(Thread):
         self.motor_set(True,False)
 
         while not self.wants_abort:
-            print('Mission starting: ' + self.mission)
+            print('Mission: ' + self.mission, end='')
             self.t_cur = time.time() - self.t_init
             cmd.header.stamp = rospy.get_rostime()
 
-            print('time cur {}'.format(self.t_cur))
+            print(', time: {:2.4f} sec'.format(self.t_cur))
 
             if self.mission == 'take off':
                 cmd.b1 = [1,0,0]
@@ -144,8 +148,7 @@ class CmdThread(Thread):
             time.sleep(dt)
             pass
         self.motor_set(False,False)
-        print('Process: cmd pub killed')
-
+        print('Process: cmd thread killed')
 
 
 class Viewer(HasTraits):
@@ -247,11 +250,12 @@ class ErrorView(HasTraits):
 
     mission = Enum('take off', 'land', 'spin', 'home', 'halt')
     mission_exe = Button()
+    landing_exe = Button()
     reset = Button()
 
-    capture_thread = Instance(DaqThread)
-    rqt_thread = Instance(DaqThread)
-    mapping_thread = Instance(DaqThread)
+    capture_thread = Instance(Run_thread)
+    rqt_thread = Instance(Run_thread)
+    mapping_thread = Instance(Run_thread)
     cmd_thread = Instance(CmdThread)
 
     _generator = Trait(np.random.normal, Callable)
@@ -273,6 +277,7 @@ class ErrorView(HasTraits):
             HGroup(
                 Item('mission', label='Mission', show_label=True),
                 Item('mission_exe', label='Run mission', show_label=False),
+                Item('landing_exe', label='Land', show_label=False),
             ),
             Item('xd',label='desired position'),
             Item('reset'),
@@ -358,6 +363,13 @@ class ErrorView(HasTraits):
         self.cmd_thread.t_init = time.time()
         self.cmd_thread.mission = self.mission
 
+    def _landing_exe_fired(self):
+        self.mission = 'land'
+        print('Mission: ' + self.mission)
+        self.cmd_thread.t_cur = 0
+        self.cmd_thread.t_init = time.time()
+        self.cmd_thread.mission = self.mission
+
     def _start_stop_motor_fired(self):
         """
         TODO
@@ -380,7 +392,7 @@ class ErrorView(HasTraits):
         if self.rqt_thread and self.rqt_thread.isAlive():
             self.rqt_thread.wants_abort = True
         else:
-            self.rqt_thread = DaqThread(
+            self.rqt_thread = Run_thread(
                 args='rosrun rqt_reconfigure rqt_reconfigure'
                 )
             self.rqt_thread.wants_abort = False
@@ -394,7 +406,7 @@ class ErrorView(HasTraits):
         if self.mapping_thread and self.mapping_thread.isAlive():
             self.mapping_thread.wants_abort = True
         else:
-            self.mapping_thread = DaqThread(
+            self.mapping_thread = Run_thread(
                 args=self.mapping_name
                 )
             self.mapping_thread.wants_abort = False
@@ -423,9 +435,6 @@ class ErrorView(HasTraits):
         self.viewer.M_data_y = list(self.M[:,1])
         self.viewer.M_data_z = list(self.M[:,2])
 
-        # self.ex0 = self.ex.x
-        # self.ex1 = self.ex.y
-        # self.ex2 = self.ex.z
         return
 
 
@@ -433,7 +442,6 @@ class main(HasTraits):
     """
     main window and viewer handler
     """
-    rospy.init_node('error_plot', anonymous=False)
 
     error_window = Instance(ErrorView)
     viewer = Instance(Viewer, ())
@@ -442,6 +450,10 @@ class main(HasTraits):
     view = View(Item('error_window', style='custom', show_label=False),
                 # Item('viewer', style='custom', show_label=False),
                 resizable=True)
+
+    def __init__(self):
+        rospy.init_node('error_plot', anonymous=True)
+        self.sub = rospy.Subscriber("Jetson/uav_states", states, self.ros_callback)
 
     def edit_traits(self, *args, **kws):
         # Start up the timer! We should do this only when the main actually
@@ -473,7 +485,6 @@ class main(HasTraits):
         self.error_window.x_v = [data.x_v.x, data.x_v.y, data.x_v.z]
         pass
 
-    rospy.Subscriber("Jetson/uav_states", states, ros_callback)
 
 if __name__ == '__main__':
     view = main()

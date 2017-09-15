@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import rospy
 from uav_geometric_controller.msg import trajectory, states
 import numpy as np

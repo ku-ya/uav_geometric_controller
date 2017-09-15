@@ -22,14 +22,14 @@ class exp_to_traj(object):
 
     def callback_pose(self, msg):
         pos = msg.pose.position
-        self.cmd.xc = [pos.x, pos.x, pos.x]
+        self.cmd.xc = [pos.x, pos.y, pos.z]
         # TODO: add b1
         euler_from_quaternion(msg.pose.orientation)
         pass
 
     def callback_twist(self, msg):
         pos = msg.twist.linear
-        self.cmd.xc_dot = [pos.x, pos.x, pos.x]
+        self.cmd.xc_dot = [pos.x, pos.y, pos.z]
         pass
 
     def callback_accel(self, msg):

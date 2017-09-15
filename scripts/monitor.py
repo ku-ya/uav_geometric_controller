@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function, division
+#from __future__ import print_function, division
 import numpy as np
 from traits.api import Array, Instance, Int, HasTraits, Str, Button, Enum
 from traits.api import Trait, Callable, on_trait_change, Float
@@ -54,6 +54,7 @@ class CmdThread(Thread):
     mission = 'halt'
     t_init = time.time()
     t_cur = 0
+    name = 'Jetson'
 
     def __init__(self,args):
         Thread.__init__(self)
@@ -67,7 +68,7 @@ class CmdThread(Thread):
         print(self.args)
         self.cmd.header.frame_id = '/Jetson/uav'
 
-        dt = 0.01
+        dt = 0.1
         z_min = 0.2
         v_up = 0.3
         t_total = 5
@@ -77,18 +78,19 @@ class CmdThread(Thread):
         cmd.xc_2dot = [0,0,0]
         cmd.b1 = [1,0,0]
         self.motor_set(True,False)
+	motor_flag = False
 
         while not self.wants_abort:
-            print('Mission: ' + self.mission, end='')
+            #print('Mission: ' + self.mission, end='')
             self.t_cur = time.time() - self.t_init
             cmd.header.stamp = rospy.get_rostime()
 
-            print(', time: {:2.4f} sec'.format(self.t_cur))
+            #print(', time: {:2.4f} sec'.format(self.t_cur))
 
             if self.mission == 'take off':
+		motor_flag = True
                 cmd.b1 = [1,0,0]
                 if self.t_cur <= t_total and self.mission == 'take off':
-                    time.sleep(dt)
                     height = z_min+v_up*self.t_cur
                     cmd.xc = [x_v[0],x_v[1],height if height < z_hover else z_hover]
                     cmd.xc_dot = [0,0,v_up*dt]
@@ -127,6 +129,7 @@ class CmdThread(Thread):
                         continue
                     self.xd = cmd.xc
                 else:
+		    self.motor_set(False,False)
                     self.wants_abort = True
                     # print(cmd.xc)
                     # cmd_tf_pub(cmd.xc)
@@ -139,6 +142,8 @@ class CmdThread(Thread):
                 cmd.b1 =[1,0,0]
                 cmd.xc =[1,0,0]
                 cmd.xc =[0,0,z_hover]
+		if not motor_flag:
+		    cmd.xc =[0,0,0]	
                 cmd.xc_dot =[0,0,0]
                 self.xd = cmd.xc
                 self.mission = 'halt'

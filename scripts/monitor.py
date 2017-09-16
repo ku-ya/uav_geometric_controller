@@ -2,7 +2,7 @@
 #from __future__ import print_function, division
 import numpy as np
 from traits.api import Array, Instance, Int, HasTraits, Str, Button, Enum
-from traits.api import Trait, Callable, on_trait_change, Float
+from traits.api import Trait, Callable, on_trait_change, Float, Bool
 from traitsui.api import *
 from chaco.chaco_plot_editor import ChacoPlotItem
 from chaco.api import Plot, ArrayPlotData
@@ -264,6 +264,8 @@ class ErrorView(HasTraits):
     landing_exe = Button()
     reset = Button()
 
+    motor_bool = Bool
+
     capture_thread = Instance(Run_thread)
     rqt_thread = Instance(Run_thread)
     mapping_thread = Instance(Run_thread)
@@ -301,6 +303,7 @@ class ErrorView(HasTraits):
                 Item('exploration', label='Exploration', show_label=False),
             ),
             Item('abort', label='Stop motor', show_label=False),
+            Item('motor_bool', label='Motor', show_label=True),
             label='Execution',
         ),
         Group(
@@ -329,9 +332,12 @@ class ErrorView(HasTraits):
     def motor_set(self, motor, warmup):
         rospy.set_param('/'+self.name+'/uav/Motor', motor)
         rospy.set_param('/'+self.name+'/uav/MotorWarmup', warmup)
+        if (not motor) and (not warmup):
+            self.motor_bool = False
 
     def _abort_fired(self):
         self.motor_set(False, False)
+        self.motor_bool = False
 
     def _host_IP_set_fired(self):
         print('export ROS_IP=' + self.host_IP)
@@ -392,6 +398,7 @@ class ErrorView(HasTraits):
         else:
             self.cmd_thread = CmdThread(args='')
             self.motor_set(True, True)
+            self.motor_bool = True
             self.cmd_thread.wants_abort = False
             self.cmd_thread.start()
         pass

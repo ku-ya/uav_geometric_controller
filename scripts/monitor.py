@@ -44,7 +44,7 @@ class Run_thread(Thread):
             sleep(0.1)
             pass
 
-class CmdThread(Thread):
+class CmdThread(Thread, HasTraits):
     """Trajectory command thread
     """
     wants_abort = False
@@ -55,6 +55,7 @@ class CmdThread(Thread):
     t_init = time.time()
     t_cur = 0
     name = 'Jetson'
+    x_v = Array(shape=(3,))
 
     def __init__(self,args):
         Thread.__init__(self)
@@ -73,7 +74,6 @@ class CmdThread(Thread):
         z_min = 0.2
         v_up = 0.3
         t_total = 5
-        x_v = [0,0,0]
         z_hover = 1.5
         cmd = self.cmd
         cmd.xc = [0,0,0]
@@ -96,7 +96,7 @@ class CmdThread(Thread):
                 cmd.b1 = [1,0,0]
                 if self.t_cur <= t_total and self.mission == 'take off':
                     height = z_min+v_up*self.t_cur
-                    cmd.xc = [x_v[0],x_v[1],height if height < z_hover else z_hover]
+                    cmd.xc = [self.x_v[0],self.x_v[1],height if height < z_hover else z_hover]
                     cmd.xc_dot = [0,0,v_up*dt]
                     if z_hover == height:
                         continue
@@ -144,13 +144,13 @@ class CmdThread(Thread):
                 # if x_v[2] < z_min:
                     # rospy.set_param('/Jetson/uav/Motor', False)
                 cmd.b1 =[1,0,0]
-                cmd.xc =[0,0,z_hover]
+                cmd.xc[2] = z_hover
                 cmd.xc_dot =[0,0,0]
                 self.t_cur= 0
                 self.t_init = time.time()
 
     		if not motor_flag:
-    		    cmd.xc =[0,0,0]
+    		    cmd.xc =self.x_v
                 cmd.xc_dot =[0,0,0]
 
             self.xd = cmd.xc
@@ -292,8 +292,11 @@ class ErrorView(HasTraits):
                 Item('mission_exe', label='Run mission', show_label=False),
                 Item('landing_exe', label='Land', show_label=False),
             ),
+            HGroup(
             Item('xd',label='desired position'),
+            Item('x_v',label='vicon position'),
             Item('reset'),
+            ),
             HGroup(
                 Item('mapping_name', label='Mapping command', show_label=True),
                 Item('mapping', label='Mapping', show_label=False),
@@ -401,6 +404,13 @@ class ErrorView(HasTraits):
             self.motor_bool = True
             self.cmd_thread.wants_abort = False
             self.cmd_thread.start()
+        pass
+
+    def _x_v_changed(self):
+        if self.cmd_thread and self.cmd_thread.isAlive():
+            self.cmd_thread.x_v = self.x_v
+        else:
+            pass
         pass
 
     def _rqt_reconfig_fired(self):

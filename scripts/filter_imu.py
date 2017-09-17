@@ -7,6 +7,11 @@ import rospy
 import tf
 import time
 from sensor_msgs.msg import Imu
+import pprint
+import sys
+
+np.set_printoptions(precision=3, linewidth=100)
+
 
 def hat(w):
     return np.matrix([[0, -w[2], w[1]],[w[2], 0, -w[0]],[-w[1], w[0], 0]])
@@ -17,7 +22,43 @@ class IMU_estimator(object):
         self.dq = np.array([0.01,0.01,0.01,0.01])
         self.dt = 1./70
         # theta x y z
-        self.state = np.array([0.0,0.0,0.0])
+        n_state = 12
+        n_sens = 3
+
+        self.x = np.matrix(np.zeros(shape=(n_state, 1)))
+        self.P = np.matrix(np.identity(n_state)*10)
+        self.F = np.matrix(np.identity(n_state))
+
+        self.F[0, 3] = self.dt
+        self.F[1, 4] = self.dt
+        self.F[2, 5] = self.dt
+        self.F[6, -3] = self.dt
+        self.F[7, -2] = self.dt
+        self.F[8, -1] = self.dt
+
+        self.H = np.matrix(np.zeros(shape=(n_sens, n_state)))
+        self.H[-3, -3] = 1
+        self.H[-2, -2] = 1
+        self.H[-1, -1] = 1
+        R_std = 0.1
+        self.R = np.matrix(np.identity(n_sens)*R_std**2)
+
+        self.I = np.matrix(np.identity(n_state))
+
+
+    def kf_predict(self):
+        self.x = self.F*self.x
+        self.P = self.F * self.P * self.F.getT()
+        print self.P
+
+
+    def kf_correct(self, Z):
+        w = Z - self.H * self.x
+        S = self.H * self.P * self.H.getT() + self.R
+        K = self.P * self.H.getT() * S.getI()
+        self.x = self.x + K * w
+        self.P = (self.I - K * self.H) * self.P
+
     def predict(self, w):
         # quat = self.quat + self.dt * w
         wx = w[1]
@@ -158,7 +199,7 @@ if __name__ == '__main__':
     ser = serial.Serial(port=port, baudrate=baudrate, timeout=1)
 
     calib_array = []
-    for i in range(200):
+    for i in range(2):
         line = ser.readline()
         words = line.strip().split(',')
         data = np.array(words).astype(np.float)
@@ -169,6 +210,8 @@ if __name__ == '__main__':
     print bias
     print "Calibraiton complete"
     imu_gyro_prev = np.zeros(3)
+
+    Z = np.matrix(np.zeros(shape=(3, 1)))
 
     while not rospy.is_shutdown():
         start = time.time()
@@ -188,6 +231,11 @@ if __name__ == '__main__':
         imuMsg.angular_velocity.y = imu_gyro[0]
         imuMsg.angular_velocity.z = -imu_gyro[2]
 
+        Z[-3] = imu_gyro[1]
+        Z[-2] = imu_gyro[0]
+        Z[-1] = -imu_gyro[2]
+
+
         accel_factor = 1
         imuMsg.linear_acceleration.x = -imu_acc[2] * accel_factor
         imuMsg.linear_acceleration.y =  -imu_acc[0]* accel_factor
@@ -204,6 +252,13 @@ if __name__ == '__main__':
         # esti.predict(np.array([0.,0.,0.]))
         # print imu_raw[:3] / norm(imu_raw[:3])
         esti.correct(imu_acc / norm(imu_acc))
+
+        esti.kf_correct(Z)
+        esti.kf_predict()
+
+        print "<"
+        print imu_gyro
+        print esti.x[-6:].getT()
 
 
         q0 = data[-8]
@@ -223,9 +278,10 @@ if __name__ == '__main__':
 
         quat = np.array(esti.quat)
         quat = np.array([quat[1], quat[2],quat[3],quat[0]])
+        quat = tf.transformations.quaternion_from_euler(esti.x[6], esti.x[7], esti.x[8])
         br.sendTransform((0, 0, 0),
                     quat ,
-                    #  tf.transformations.quaternion_from_euler(roll, pitch, yaw),
+                    #  tf.transformations.quaternion_from_euler(esti.x[6], esti.x[7], esti.x[8]),
                      rospy.Time.now(),
                      "imu",
                      "world")

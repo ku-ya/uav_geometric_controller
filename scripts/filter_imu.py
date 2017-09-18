@@ -42,15 +42,11 @@ class IMU_estimator(object):
         self.H[-1, -1] = 1
         R_std = 0.1
         self.R = np.matrix(np.identity(n_sens)*R_std**2)
-
         self.I = np.matrix(np.identity(n_state))
-
 
     def kf_predict(self):
         self.x = self.F*self.x
         self.P = self.F * self.P * self.F.getT()
-        print self.P
-
 
     def kf_correct(self, Z):
         w = Z - self.H * self.x
@@ -199,6 +195,10 @@ if __name__ == '__main__':
     ser = serial.Serial(port=port, baudrate=baudrate, timeout=1)
 
     calib_array = []
+    rospy.sleep(0.5)
+    # for i in range(50):
+    #     line = ser.readline()
+
     for i in range(2):
         line = ser.readline()
         words = line.strip().split(',')
@@ -256,9 +256,9 @@ if __name__ == '__main__':
         esti.kf_correct(Z)
         esti.kf_predict()
 
-        print "<"
-        print imu_gyro
-        print esti.x[-6:].getT()
+        # print "<"
+        # print imu_gyro
+        # print esti.x[-6:].getT()
 
 
         q0 = data[-8]
@@ -274,11 +274,11 @@ if __name__ == '__main__':
         qw = quat[-1]
         pw = rot[-1]
         xyz = pw * qv + qw * pv + np.cross(pv, qv)
-        quat = np.array([xyz[0],xyz[1],xyz[2], pw*qw - np.inner(pv, qv)])
+        # quat = np.array([xyz[0],xyz[1],xyz[2], pw*qw - np.inner(pv, qv)])
 
-        quat = np.array(esti.quat)
+        # quat = np.array(esti.quat)
+        # quat = tf.transformations.quaternion_from_euler(esti.x[6], esti.x[7], esti.x[8])
         quat = np.array([quat[1], quat[2],quat[3],quat[0]])
-        quat = tf.transformations.quaternion_from_euler(esti.x[6], esti.x[7], esti.x[8])
         br.sendTransform((0, 0, 0),
                     quat ,
                     #  tf.transformations.quaternion_from_euler(esti.x[6], esti.x[7], esti.x[8]),

@@ -224,10 +224,10 @@ if __name__ == '__main__':
 
         deg2rad = np.pi/180.
 
-        imu_raw = data[1:10]
+        imu_raw = data[1:11]
         imu_acc = imu_raw[:3]
         imu_gyro = (imu_raw[3:6] - bias[3:6]) * deg2rad
-        imu_mag = imu_raw[6:]
+        # imu_mag = imu_raw[6:]
         # print imu_gyro
         imuMsg.angular_velocity.x = imu_gyro[1]
         imuMsg.angular_velocity.y = imu_gyro[0]
@@ -263,10 +263,10 @@ if __name__ == '__main__':
         # print esti.x[-6:].getT()
 
 
-        q0 = data[-8]
-        q1 = data[-7]
-        q2 = data[-6]
-        q3 = data[-5]
+        q0, q1, q2, q3 = data[-4:]
+        # q1 = data[-7]
+        # q2 = data[-6]
+        # q3 = data[-5]
 
         quat = np.array([q0, q1, q2, q3])
         quat = np.array(esti.quat)
@@ -280,7 +280,7 @@ if __name__ == '__main__':
 
         # quat = np.array(esti.quat)
         # quat = tf.transformations.quaternion_from_euler(esti.x[6], esti.x[7], esti.x[8])
-        quat = np.array([quat[1], quat[2],quat[3],quat[0]])
+        quat = np.array([quat[1], quat[2], quat[3], quat[0]])
         br.sendTransform((0, 0, 0),
                     quat ,
                     #  tf.transformations.quaternion_from_euler(esti.x[6], esti.x[7], esti.x[8]),

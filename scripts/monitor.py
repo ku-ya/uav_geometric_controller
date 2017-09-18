@@ -15,9 +15,9 @@ from collections import deque
 import pdb
 import os
 import time
-import  tf
 
 import rospy
+import tf
 from uav_geometric_controller.msg import states, trajectory
 
 # rosparam name for xd switching
@@ -31,7 +31,8 @@ logging.basicConfig(level=logging.DEBUG,
     )
 
 class Run_thread(Thread):
-    """Use this to run as terminal command on a separate thread
+    """
+    Use this to run as terminal command on a separate thread
     """
     wants_abort = False
     def __init__(self,args):
@@ -39,8 +40,8 @@ class Run_thread(Thread):
         self.args = args
 
     def run(self):
-
         print(self.args)
+
         while not self.wants_abort:
             print('Starting... ' + self.args)
             os.system(self.args)
@@ -50,7 +51,9 @@ class Run_thread(Thread):
             pass
 
 class CmdThread(Thread, HasTraits):
-    """Trajectory command thread
+    """
+    Trajectory command thread
+
     Parameters
     ----------
 
@@ -249,7 +252,8 @@ class Viewer(HasTraits):
         return plot
 
 class ErrorView(HasTraits):
-    """Main GI window management
+    """
+    Main GI window management
     """
     name = Str(uav_name)
     mapping_name = Str('uav_demo ...')
@@ -479,7 +483,8 @@ class ErrorView(HasTraits):
         pass
 
     def timer_tick(self, *args):
-        """Callback function
+        """
+        Callback function
         """
         error_data = eval('self.' + self.error_val)
         self.time = np.linspace(0, 0.01*len(error_data), len(error_data))
@@ -503,7 +508,8 @@ class ErrorView(HasTraits):
 
 
 class main(HasTraits):
-    """Main window and viewer handler
+    """
+    Main window and viewer handler
     """
 
     error_window = Instance(ErrorView)
@@ -515,7 +521,8 @@ class main(HasTraits):
                 resizable=True)
 
     def __init__(self):
-        """initialization of node
+        """
+        Initialization of node
         """
         rospy.init_node('error_plot', anonymous=True)
         self.sub = rospy.Subscriber(uav_name + "/uav_states", states, self.ros_callback)
@@ -553,7 +560,12 @@ class main(HasTraits):
 
 if __name__ == '__main__':
     view = main()
-    view.configure_traits()
-    view.error_window.motor_set(False,False)
-    view.error_window.cmd_thread.wants_abort = True
-    print('Completed')
+    try:
+        view.configure_traits()
+    except KeyboardInterrupt:
+        print "Exiting..."
+    finally:
+        view.error_window.motor_set(False,False)
+        if view.error_window.cmd_thread and view.error_window.cmd_thread.isAlive():
+            view.error_window.cmd_thread.wants_abort = True
+        print('Completed')

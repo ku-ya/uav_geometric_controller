@@ -20,16 +20,18 @@ import  tf
 import rospy
 from uav_geometric_controller.msg import states, trajectory
 
-# publisher for the desired trajectory
+# rosparam name for xd switching
 explore_flag = 'run_autonomous_exploration'
-pub = rospy.Publisher('Jetson/xc', trajectory, queue_size= 1)
+uav_name = 'Jetson'
+# publisher for the desired trajectory
+pub = rospy.Publisher(uav_name + '/xc', trajectory, queue_size= 1)
 
 logging.basicConfig(level=logging.DEBUG,
         format='[%(levelname)s] (%(threadName)-10s) %(message)s',
     )
 
 class Run_thread(Thread):
-    """Use this to run as terminal command
+    """Use this to run as terminal command on a separate thread
     """
     wants_abort = False
     def __init__(self,args):
@@ -37,6 +39,7 @@ class Run_thread(Thread):
         self.args = args
 
     def run(self):
+
         print(self.args)
         while not self.wants_abort:
             print('Starting... ' + self.args)
@@ -48,6 +51,14 @@ class Run_thread(Thread):
 
 class CmdThread(Thread, HasTraits):
     """Trajectory command thread
+    Parameters
+    ----------
+
+    Missions:
+        take off: landing at current (x, y) position
+        land: landing at current (x, y) position
+        spin: spin starting at (0, 0)
+        halt: positins hold at last Xd
     """
     wants_abort = False
     cmd = trajectory()
@@ -56,7 +67,7 @@ class CmdThread(Thread, HasTraits):
     mission = 'halt'
     t_init = time.time()
     t_cur = 0
-    name = 'Jetson'
+    name = uav_name
     x_v = Array(shape=(3,))
 
     br = tf.TransformBroadcaster()
@@ -79,7 +90,7 @@ class CmdThread(Thread, HasTraits):
     def run(self):
         print(self.args)
         print('Process: cmd thread started')
-        self.cmd.header.frame_id = '/Jetson/uav'
+        self.cmd.header.frame_id = uav_name + '/uav'
 
         dt = 0.1
         z_min = 0.2
@@ -238,7 +249,9 @@ class Viewer(HasTraits):
         return plot
 
 class ErrorView(HasTraits):
-    name = Str('Jetson')
+    """Main GI window management
+    """
+    name = Str(uav_name)
     mapping_name = Str('uav_demo ...')
     exploration_name = Str('uav_demo ...')
     host_IP = Str('161.253.73.237')
@@ -273,6 +286,7 @@ class ErrorView(HasTraits):
 
     mission = Enum('take off', 'land', 'spin', 'home', 'halt')
     mission_exe = Button()
+    takeoff_exe = Button()
     landing_exe = Button()
     reset = Button()
 
@@ -300,10 +314,13 @@ class ErrorView(HasTraits):
             Item('host_IP',label='Basestation IP',width=100),
             Item('host_IP_set'),
             HGroup(
-                Item('mission', label='Mission', show_label=True),
-                Item('mission_exe', label='Run mission', show_label=False),
+                Item('takeoff_exe', label='Take off', show_label=False),
                 Item('landing_exe', label='Land', show_label=False),
             ),
+            HGroup(
+                Item('mission', label='Mission', show_label=True),
+                Item('mission_exe', label='Run mission', show_label=False),
+                ),
             HGroup(
             Item('xd',label='desired position'),
             Item('x_v',label='vicon position'),
@@ -402,6 +419,13 @@ class ErrorView(HasTraits):
         self.cmd_thread.t_init = time.time()
         self.cmd_thread.mission = self.mission
 
+    def _takeoff_exe_fired(self):
+        self.mission = 'take off'
+        print('Mission: ' + self.mission)
+        self.cmd_thread.t_cur = 0
+        self.cmd_thread.t_init = time.time()
+        self.cmd_thread.mission = self.mission
+
     def _start_stop_motor_fired(self):
         """
         TODO
@@ -494,7 +518,7 @@ class main(HasTraits):
         """initialization of node
         """
         rospy.init_node('error_plot', anonymous=True)
-        self.sub = rospy.Subscriber("Jetson/uav_states", states, self.ros_callback)
+        self.sub = rospy.Subscriber(uav_name + "/uav_states", states, self.ros_callback)
 
     def edit_traits(self, *args, **kws):
         # Start up the timer! We should do this only when the main actually

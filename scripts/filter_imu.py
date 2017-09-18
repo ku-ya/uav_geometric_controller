@@ -193,6 +193,8 @@ if __name__ == '__main__':
     port='/dev/ttyACM0'
     baudrate = 115200
     ser = serial.Serial(port=port, baudrate=baudrate, timeout=1)
+    ser.flushInput()
+    ser.flushOutput()
 
     calib_array = []
     rospy.sleep(0.5)

@@ -149,7 +149,6 @@ include_directories(
 add_library(controller  src/controller.cpp)
 # add_library(visualize  src/visualize.cpp)
 add_library(hw_interface  src/hw_interface.cpp)
-add_library(uav src/uav.cpp)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -217,7 +216,7 @@ target_link_libraries(controller ${catkin_LIBRARIES})
 #############
 
 ## Add gtest based cpp test target and link libraries
-catkin_add_gtest(test_controller test/test_controller.cpp src/controller_sep.cpp)
+catkin_add_gtest(test_controller test/test_controller.cpp)
 target_link_libraries(test_controller ${catkin_LIBRARIES})
 #catkin_add_gtest(${PROJECT_NAME}-test test/test_odroid.cpp)
 # if(TARGET ${PROJECT_NAME}-test)

@@ -1,7 +1,0 @@
-<launch>
-  
-<include file="$(find openni2_launch)/launch/openni2.launch"/>
-<node pkg="perception" name="frame_rate_drop" type="camera_filter.py" />
-<include file="$(find perception)/launch/voxelgrid.launch" />
-
-</launch>

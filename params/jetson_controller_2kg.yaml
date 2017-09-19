@@ -1,0 +1,45 @@
+!!python/object/new:dynamic_reconfigure.encoding.Config
+dictitems:
+  IMU_as_attitude: false
+  Motor: false
+  MotorWarmup: true
+  groups: !!python/object/new:dynamic_reconfigure.encoding.Config
+    dictitems:
+      IMU_as_attitude: false
+      Motor: false
+      MotorWarmup: true
+      groups: !!python/object/new:dynamic_reconfigure.encoding.Config
+        state: []
+      id: 0
+      kR: 0.67
+      kRr: 1.0
+      kW: 0.3
+      kiR: 0.0
+      kiX: 5.0
+      kv: 5.0
+      kx: 16.0
+      m: 2.6
+      mode: 1
+      name: Default
+      parameters: !!python/object/new:dynamic_reconfigure.encoding.Config
+        state: []
+      parent: 0
+      state: true
+      type: ''
+      x: 0.0
+      y: 0.0
+      z: 1.7
+    state: []
+  kR: 0.67
+  kRr: 1.0
+  kW: 0.3
+  kiR: 0.0
+  kiX: 5.0
+  kv: 5.0
+  kx: 16.0
+  m: 2.6
+  mode: 1
+  x: 0.0
+  y: 0.0
+  z: 1.7
+state: []

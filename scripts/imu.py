@@ -3,6 +3,7 @@
 import rospy
 from std_msgs.msg import String
 from sensor_msgs.msg import Imu
+from geometry_msgs.msg import PoseStamped
 import tf
 import csv
 import numpy as np
@@ -43,8 +44,10 @@ def readfile(line):
     # W = [data{48}, data{49}, data{50}];
 
 def talker():
-    pub = rospy.Publisher('imu/imu', Imu, queue_size=10)
+    pub = rospy.Publisher('Jetson/imu', Imu, queue_size=1)
+    pub_vicon = rospy.Publisher('/vicon/Jetson/pose', PoseStamped, queue_size=1)
     imuMsg = Imu()
+    viconMsg = PoseStamped()
     # imuRawMsg = RazorImu()
     imuMsg.orientation_covariance = [999999 , 0 , 0,
     0, 9999999, 0,
@@ -75,11 +78,12 @@ def talker():
 
 
     rospy.init_node('fake_imu', anonymous=True)
-    rate = rospy.Rate(5) # 10hz
+    rate = rospy.Rate(100) # 10hz
     while not rospy.is_shutdown():
         imuMsg.header.stamp= rospy.Time.now()
         # rospy.loginfo(hello_str)
         pub.publish(imuMsg)
+        pub_vicon.publish(viconMsg)
         rate.sleep()
 
 if __name__ == '__main__':

@@ -1,5 +1,7 @@
 name:
-    vicon: 'Jetson'
+    vicon: 'pose_est'
+    imu: 'imu_est'
+    xc: 'xc'
 port:
     i2c: [41,42,43,44]
 node:

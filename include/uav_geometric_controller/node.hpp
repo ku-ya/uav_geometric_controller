@@ -84,7 +84,7 @@ public:
   Vector3d rpy, x, v, W;
   Matrix2d e; //inertial frame,
   // Measured Values in Vicon inettial frame
-  std::string vicon_name;
+  std::string vicon_name, imu_name, xc_name;
   Vector3d x_v, v_v, prev_x_v,prev_v_v, x_v_ned, v_v_ned;
   Vector3d xd_ned, xd_dot_ned, xd_2dot_ned, xd_3dot_ned, xd_4dot_ned;
   Matrix3d R_v_ned;

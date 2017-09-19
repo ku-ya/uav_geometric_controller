@@ -1,14 +1,14 @@
 name:
     vicon: 'Jetson'
 port:
-    i2c: [43,44,41,42]
+    i2c: [41,42,43,44]
 node:
   Motor: 0
   MotorWarmup: 0
 controller:
   mode: 1
   g: 9.81
-  m: 2.035 # 1.245 Jetson, 1.374 base odroid #1.7 with sensors
+  m: 1.2 # 1.245 Jetson, 1.374 base odroid #1.7 with sensors
   J: [9.773E-3, 0.0, 0.0,
     0.0, 9.773E-3, 0.0,
     0.0,  0.0,  1.749E-2]

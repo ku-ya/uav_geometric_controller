@@ -251,6 +251,7 @@ void node::vicon_callback(
   x_v_ned = R_conv*x_v;
   v_v_ned = R_conv*v_v;
   R_v_ned = R_conv*R_b*R_conv;
+  R = R_v_ned;
 
 }
 

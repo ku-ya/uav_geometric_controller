@@ -12,7 +12,6 @@ import sys
 
 np.set_printoptions(precision=3, linewidth=100)
 
-
 def hat(w):
     return np.matrix([[0, -w[2], w[1]],[w[2], 0, -w[0]],[-w[1], w[0], 0]])
 

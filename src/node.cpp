@@ -173,13 +173,27 @@ node::node(){
   ros::param::get("controller/saturation/R",eiR_sat);
   ros::param::param<std::vector<int>>("port/i2c",mtr_addr,mtr_addr);
   ros::param::get("name/vicon",vicon_name);
-  vicon_name = "/vicon/"+vicon_name+"/pose";
+  ros::param::get("name/imu",imu_name);
+  ros::param::get("name/xc",xc_name);
   pub_ = n_.advertise<uav_geometric_controller::states>("uav_states",1);
   pub_imu_ = n_.advertise<sensor_msgs::Imu>("imu/data_raw", 1);
   ROS_INFO("UAV node initialized");
 }
 
 // callback for IMU sensor det
+void node::get_sensor(){
+    // Subscriber for all the topics
+    ros::NodeHandle nh_sens;
+    // IMU and keyboard input callback
+    ros::Subscriber imu_sub =
+    nh_sens.subscribe(imu_name,10, &node::imu_callback, this);
+    ros::Subscriber vicon_sub =
+    nh_sens.subscribe(vicon_name,10, &node::vicon_callback, this);
+    ros::Subscriber cmd_sub =
+    nh_sens.subscribe(xc_name,10, &node::cmd_callback, this);
+    ros::spin();
+}
+
 bool node::getIMU(){return IMU_flag;}
 bool node::getWarmup(){return MotorWarmup;}
 
@@ -274,18 +288,6 @@ void node::cmd_callback(const uav_geometric_controller::trajectory::ConstPtr& ms
   xc_ned_2dot = R_conv*xd_ddot;
 }
 
-void node::get_sensor(){
-    // Subscriber for all the topics
-  ros::NodeHandle nh_sens;
-    // IMU and keyboard input callback
-  ros::Subscriber imu_sub =
-    nh_sens.subscribe("imu/imu",100, &node::imu_callback, this);
-  ros::Subscriber vicon_sub =
-    nh_sens.subscribe(vicon_name,100, &node::vicon_callback, this);
-  ros::Subscriber cmd_sub =
-    nh_sens.subscribe("xc",100, &node::cmd_callback, this);
-  ros::spin();
-}
 
 void node::control(){
     // Controller 100Hz command sent to motor speed controller

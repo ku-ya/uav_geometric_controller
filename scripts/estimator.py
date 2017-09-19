@@ -27,8 +27,8 @@ class Estimator(object):
         self.nh = rospy.init_node('Estimator', anonymous=False)
         self.x = np.matrix(np.zeros(shape=(num_state, 1)))
 
-        self.pose_pub = rospy.Publisher('pose_est', PoseStamped, queue_size=1)
-        self.imu_pub = rospy.Publisher('imu_est', Imu, queue_size=1)
+        self.pose_pub = rospy.Publisher(uav_name+'/pose_est', PoseStamped, queue_size=1)
+        self.imu_pub = rospy.Publisher(uav_name+'/imu_est', Imu, queue_size=1)
         self.imu_msg = Imu()
         self.pose_msg = PoseStamped()
 

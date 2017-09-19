@@ -179,7 +179,8 @@ class CmdThread(Thread, HasTraits):
                 cmd.xc_dot =[0,0,0]
 
             self.xd = cmd.xc
-            pub.publish(self.cmd)
+            if self.mission != 'halt':
+                pub.publish(self.cmd)
             self.cmd_tf_pub()
             time.sleep(dt)
             pass

@@ -2,6 +2,7 @@
 // User header files
 #include <uav_geometric_controller/controller.hpp>
 #include <uav_geometric_controller/states.h>
+#include <unistd.h>
 using namespace std;
 using namespace Eigen;
 using namespace message_filters;
@@ -130,7 +131,7 @@ node::node(){
   IMU_flag = false; // IMU sensor reading check
   Vicon_flag = false; // IMU sensor reading check
 
-  R_b = R_imu =  R = Matrix3d::Zero();
+  R_b = R_imu =  R = Matrix3d::Identity();
 
   prev_x_v= prev_v_v = eiX =  eiX_last = eiR_last = Vector3d::Zero();
   eV = eX = x_e = v_e = eiR = eiX = eR =  Vector3d::Zero();

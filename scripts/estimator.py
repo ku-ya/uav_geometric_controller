@@ -55,7 +55,7 @@ class Estimator(object):
         self.imu_msg.linear_acceleration = data.linear_acceleration
         # self.state_update()
         self.state_predict()
-        self.imu_pub.publish(self.imu_msg)
+        self.imu_pub.publish(data)
         self.pose_pub.publish(self.pose_msg)
 
     def state_predict(self):

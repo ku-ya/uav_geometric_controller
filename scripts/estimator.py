@@ -24,7 +24,7 @@ class Estimator(object):
         self.pose_pub = rospy.Publisher('pose_est', PoseStamped, queue_size=1)
         self.imu_pub = rospy.Publisher('imu_est', Imu, queue_size=1)
         self.vicon_sub = rospy.Subscriber('/vicon/' + uav_name + "/pose", PoseStamped, self.vicon_callback)
-        self.imu_sub = rospy.Subscriber("imu", Imu, self.imu_callback)
+        self.imu_sub = rospy.Subscriber("imu/imu", Imu, self.imu_callback)
         self.imu_msg = Imu()
         self.pose_msg = PoseStamped()
 
@@ -55,7 +55,7 @@ class Estimator(object):
         self.imu_msg.linear_acceleration = data.linear_acceleration
         # self.state_update()
         self.state_predict()
-        self.imu_pub.publish(self.imu_msg)
+        self.imu_pub.publish(data)
         self.pose_pub.publish(self.pose_msg)
 
     def state_predict(self):

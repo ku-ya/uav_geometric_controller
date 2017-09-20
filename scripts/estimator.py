@@ -53,8 +53,14 @@ class Estimator(object):
     def imu_callback(self, data):
         self.imu_msg.angular_velocity = data.angular_velocity
         self.imu_msg.linear_acceleration = data.linear_acceleration
+        # TODO lock
+
+    def thread_for_pub():
         # self.state_update()
-        self.state_predict()
+        #self.state_predict()
+
+        # publish all the data
+        # TODO update the 1 to 1 to filter
         self.imu_pub.publish(data)
         self.pose_pub.publish(self.pose_msg)
 

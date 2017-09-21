@@ -505,7 +505,7 @@ class ErrorView(HasTraits):
         self.viewer.M_data_x = list(self.M[:,0])
         self.viewer.M_data_y = list(self.M[:,1])
         self.viewer.M_data_z = list(self.M[:,2])
-
+        self.motor_bool = rospy.get_param('/'+self.name+'/uav/Motor')
         return
 
 
@@ -513,7 +513,6 @@ class main(HasTraits):
     """
     Main window and viewer handler
     """
-
     error_window = Instance(ErrorView)
     viewer = Instance(Viewer, ())
     error_window.viewer = viewer

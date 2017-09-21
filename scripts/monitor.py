@@ -3,11 +3,11 @@
 import numpy as np
 from traits.api import Array, Instance, Int, HasTraits, Str, Button, Enum
 from traits.api import Trait, Callable, on_trait_change, Float, Bool
-from traitsui.api import *
+from traitsui.api import View, VGroup, HGroup, Item, Group
 from chaco.chaco_plot_editor import ChacoPlotItem
 from chaco.api import Plot, ArrayPlotData
 from enable.api import ComponentEditor
-from threading import Thread
+from threading import Thread, Event
 from time import sleep
 from pyface.timer.api import Timer
 import logging
@@ -438,6 +438,7 @@ class ErrorView(HasTraits):
         self.motor_set(True,True)
         if self.cmd_thread and self.cmd_thread.isAlive():
             self.motor_set(False,False)
+            self._abort_fired()
             self.cmd_thread.wants_abort = True
         else:
             self.cmd_thread = CmdThread(args='')

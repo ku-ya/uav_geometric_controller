@@ -27,6 +27,7 @@ class Estimator(object):
         self.imu_pub = rospy.Publisher('imu_est', Imu, queue_size=1)
         self.vicon_sub = rospy.Subscriber('/vicon/' + uav_name + "/pose", PoseStamped, self.vicon_callback)
         self.imu_sub = rospy.Subscriber("imu", Imu, self.imu_callback)
+        # self.state_sub = rospy.Subscriber("imu", , self.imu_callback)
         self.imu_msg = Imu()
         self.pose_msg = PoseStamped()
 
@@ -34,31 +35,28 @@ class Estimator(object):
         self.x = np.matrix(np.zeros(shape=(num_state, 1)))
         self.P = np.matrix(np.identity(num_state)*10)
         self.F = np.matrix(np.identity(num_state))
-        self.H = np.matrix(np.identity(num_sens))
+        self.H = np.matrix(np.zeros(shape=(num_sens, num_state)))
         R_std = 0.1
         self.R = np.matrix(np.identity(num_sens)*R_std**2)
         self.I = np.matrix(np.identity(num_state))
 
         self.timer = None
-        self.dt = 0.5
+        self.dt = 0.01
         self.next_predict = time.time()
-
         self.start()
-        time.sleep(3)
-        self.cancel()
 
         try:
-            # rospy.spin()
+            rospy.spin()
             pass
         except KeyboardInterrupt:
-            print "Exiting..."
+            print("Exiting...")
         finally:
-            print "\nKilling estimator node"
+            self.cancel()
+            print("\nKilling estimator node")
         pass
 
-
     def start(self):
-        print "Prediction thread started..."
+        print("Prediction thread started...")
         self.timer_stop = Event()
         self.timer = Thread(target=self.thread_for_pub)
         self.timer.daemon = True
@@ -81,12 +79,12 @@ class Estimator(object):
         # TODO lock
 
     def thread_for_pub(self):
-        # publish all the data
-        # TODO update the 1 to 1 to filter
+        # predict and publish all the data
+        # TODO include actual estimator
         self.next_predict = time.time()
         while not self.timer_stop.is_set():
             print self.next_predict
-            self.next_predict = self.next_predict+ self.dt;
+            self.next_predict = self.next_predict+ self.dt
             time.sleep(self.next_predict - time.time())
             self.state_predict()
             self.imu_pub.publish(self.imu_msg)
@@ -108,4 +106,4 @@ class Estimator(object):
 
 
 if __name__ == '__main__':
-    estimator = Estimator(uav_name = 'Jetson',num_state = 3, num_sens=3)
+    estimator = Estimator(uav_name = 'Jetson',num_state = 9, num_sens=3)

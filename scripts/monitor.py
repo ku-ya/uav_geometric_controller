@@ -13,12 +13,14 @@ from pyface.timer.api import Timer
 import logging
 from collections import deque
 import pdb
-import os
+import os, sys
 import time
-
+from pyface.image_resource import ImageResource
+# import coloredlogs
 import rospy
 import tf
 from uav_geometric_controller.msg import states, trajectory
+from geometry_msgs.msg import PoseStamped
 
 # rosparam name for xd switching
 explore_flag = 'run_autonomous_exploration'
@@ -29,6 +31,8 @@ pub = rospy.Publisher(uav_name + '/xc', trajectory, queue_size= 1)
 logging.basicConfig(level=logging.DEBUG,
         format='[%(levelname)s] (%(threadName)-10s) %(message)s',
     )
+# coloredlogs.install(level='DEBUG')
+# coloredlogs.install(level='DEBUG', logger=logger)
 
 class Run_thread(Thread):
     """
@@ -137,14 +141,12 @@ class CmdThread(Thread, HasTraits):
                     cmd.b1 = [np.cos(theta),np.sin(theta),0]
                     cmd.xc = [(np.cos(theta)-1.)/2.0, 1./2.0*np.sin(theta),z_hover]
                     cmd.xc_dot = [dt*np.sin(theta)/2.0, dt*1./2.0*np.sin(theta),0]
-                    # if x_v[2] < z_min:
-                        # rospy.set_param('/Jetson/uav/Motor', False)
-                    # print(cmd.xc)
+                    if x_v[2] < z_min:
+                        rospy.set_param('/Jetson/uav/Motor', False)
+                    print(cmd.xc)
                 else:
                     self.mission = 'halt'
-                # cmd.xc =[1,0,0]
-                # cmd.xc =[0,0,z_hover]
-                # cmd.xc_dot =[0,0,0]
+
             elif self.mission == 'land':
                 rospy.set_param(explore_flag, False)
                 t_total = 5
@@ -302,6 +304,10 @@ class ErrorView(HasTraits):
     mapping_thread = Instance(Run_thread)
     cmd_thread = Instance(CmdThread)
 
+    pathname = os.path.dirname(sys.argv[0])
+    pathname = os.path.abspath(pathname)
+    print pathname
+
     _generator = Trait(np.random.normal, Callable)
     traits_view = View(
         Group(
@@ -339,7 +345,7 @@ class ErrorView(HasTraits):
                 Item('exploration_name', label='Exploration command', show_label=True),
                 Item('exploration', label='Exploration', show_label=False),
             ),
-            Item('abort', label='Stop motor', show_label=False),
+            Item('abort', label='Stop motor', show_label=False, image=ImageResource(pathname+'/red.png')),
             Item('motor_bool', label='Motor', show_label=True),
             label='Execution',
         ),
@@ -513,6 +519,7 @@ class main(HasTraits):
     """
     Main window and viewer handler
     """
+    logging.info("Main starting...")
     error_window = Instance(ErrorView)
     viewer = Instance(Viewer, ())
     error_window.viewer = viewer
@@ -527,6 +534,12 @@ class main(HasTraits):
         """
         rospy.init_node('error_plot', anonymous=True)
         self.sub = rospy.Subscriber(uav_name + "/uav_states", states, self.ros_callback)
+        self.vicon_sub = rospy.Subscriber("vicon/" + uav_name + "/pose", PoseStamped, self.vicon_callback)
+
+        self.time_vicon_last = time.time()
+        self.watch = Thread(target=self.msg_watchdog)
+        self.watch.daemon = True
+        self.watch.start()
 
     def edit_traits(self, *args, **kws):
         # Start up the timer! We should do this only when the main actually
@@ -540,6 +553,19 @@ class main(HasTraits):
 
     def _error_window_default(self):
         return ErrorView(viewer=self.viewer)
+
+    def msg_watchdog(self):
+        # check for vicon msg timing
+        while True:
+            if time.time() - self.time_vicon_last > 0.02:
+                print('Lost vicon msg for: {:2.2f} sec'.format(time.time() - self.time_vicon_last))
+
+            time.sleep(0.2)
+
+    def vicon_callback(self, data):
+        # TODO update attitude
+        self.time_vicon_last = time.time()
+
 
     def ros_callback(self, data):
         """
@@ -569,4 +595,4 @@ if __name__ == '__main__':
         view.error_window.motor_set(False,False)
         if view.error_window.cmd_thread and view.error_window.cmd_thread.isAlive():
             view.error_window.cmd_thread.wants_abort = True
-        print('Completed')
+        print("Completed")

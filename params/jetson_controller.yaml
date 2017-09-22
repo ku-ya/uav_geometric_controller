@@ -1,6 +1,6 @@
 name:
-    vicon: 'pose_est'
-    imu: 'imu_est'
+    vicon: '/vicon/Jetson/pose'
+    imu: 'imu/imu'
     xc: 'xc'
 port:
     i2c: "/dev/i2c-0"

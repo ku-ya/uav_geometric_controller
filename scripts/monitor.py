@@ -136,7 +136,7 @@ class CmdThread(Thread, HasTraits):
                         continue
                     self.xd = cmd.xc
                 else:
-                    self.mission = 'halt'
+                    self.mission = 'spin'
                     cmd.xc_dot = [0,0,0]
                     pub.publish(self.cmd)
                 # print('Take off complete')
@@ -146,8 +146,9 @@ class CmdThread(Thread, HasTraits):
                 if self.t_cur <= t_total:
                     theta = 2*np.pi/t_total*self.t_cur
                     cmd.b1 = [np.cos(theta),np.sin(theta),0]
-                    cmd.xc = [(np.cos(theta)-1.)/2.0, 1./2.0*np.sin(theta),z_hover]
-                    cmd.xc_dot = [dt*np.sin(theta)/2.0, dt*1./2.0*np.sin(theta),0]
+                    cmd.xc = [x_v[0],x_v[1],z_hover]
+                    # cmd.xc = [(np.cos(theta)-1.)/2.0, 1./2.0*np.sin(theta),z_hover]
+                    # cmd.xc_dot = [dt*np.sin(theta)/2.0, dt*1./2.0*np.sin(theta),0]
                     if x_v[2] < z_min:
                         rospy.set_param('/Jetson/uav/Motor', False)
                     print(cmd.xc)

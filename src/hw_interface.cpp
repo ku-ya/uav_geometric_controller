@@ -1,6 +1,7 @@
 #include <uav_geometric_controller/hw_interface.hpp>
 using namespace std;
-hw_interface::hw_interface(std::vector<int> address){
+hw_interface::hw_interface(const char * port, std::vector<int> address){
+    this->port = port;
     for(int i = 0; i < 4; i++){
         mtr_addr[i] = address[i];
         cout<<mtr_addr[i]<<endl;
@@ -46,8 +47,9 @@ uint8_t* hw_interface::motor_command(int thr[4], bool MotorWarmup, bool MOTOR_ON
 
 void hw_interface::open_I2C(){
   // Open i2c:
-  fhi2c = open("/dev/i2c-1", O_RDWR);// Chris
-  printf("Opening i2c port...\n");
+  fhi2c = open(port, O_RDWR);// Chris
+  printf("Opening i2c port: ");
+  cout<<port<<endl;
   if(fhi2c!=3)
   printf("ERROR opening i2c port.\n");
   else

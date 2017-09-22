@@ -135,6 +135,7 @@ public:
   // Output of Control_Nonlinear() and Command Execution
   int thr[4] = {0,0,0,0};// i2c motor commands
   std::vector<int>  mtr_addr;
+  std::string i2c_port;
   uint8_t* motor_power;
   //! Constructor.
   node();

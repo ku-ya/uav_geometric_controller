@@ -173,6 +173,7 @@ node::node(){
   ros::param::get("controller/saturation/x",eiX_sat);
   ros::param::get("controller/saturation/R",eiR_sat);
   ros::param::param<std::vector<int>>("port/i2c",mtr_addr,mtr_addr);
+  ros::param::get("port/name",i2c_port);
   ros::param::get("name/vicon",vicon_name);
   ros::param::get("name/imu",imu_name);
   ros::param::get("name/xc",xc_name);
@@ -292,7 +293,7 @@ void node::cmd_callback(const uav_geometric_controller::trajectory::ConstPtr& ms
 
 void node::control(){
     // Controller 100Hz command sent to motor speed controller
-  hw_interface hw_intf(mtr_addr);  // open communication through I2C
+  hw_interface hw_intf(i2c_port.c_str(), mtr_addr);  // open communication through I2C
   if(getEnv() == 1) hw_intf.open_I2C();
   ros::Rate loop_rate(100); // rate for the node loop
   ROS_INFO("Controller thread loop stapting");

@@ -537,6 +537,7 @@ class main(HasTraits):
         self.vicon_sub = rospy.Subscriber("vicon/" + uav_name + "/pose", PoseStamped, self.vicon_callback)
 
         self.time_vicon_last = time.time()
+        self.time_state_last = time.time()
         self.watch = Thread(target=self.msg_watchdog)
         self.watch.daemon = True
         self.watch.start()
@@ -560,6 +561,8 @@ class main(HasTraits):
             if time.time() - self.time_vicon_last > 0.02:
                 print('Lost vicon msg for: {:2.2f} sec'.format(time.time() - self.time_vicon_last))
 
+            if time.time() - self.time_state_last > 0.02:
+                print('Lost uav state msg for: {:2.2f} sec'.format(time.time() - self.time_state_last))
             time.sleep(0.2)
 
     def vicon_callback(self, data):
@@ -574,6 +577,7 @@ class main(HasTraits):
         eW
         M
         """
+        self.time_state_last = time.time()
         self.error_window.eW = np.vstack((self.error_window.eW[1:,:],
             np.array([data.eW.x, data.eW.y, data.eW.z])))
         self.error_window.eR = np.vstack((self.error_window.eR[1:,:],

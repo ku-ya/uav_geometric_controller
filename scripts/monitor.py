@@ -94,7 +94,7 @@ class CmdThread(Thread, HasTraits):
         self.br.sendTransform(self.cmd.xc,
                      tf.transformations.quaternion_from_euler(0, 0, 0),
                      rospy.Time.now(),
-                     self.name,
+                     self.name + '_xc',
                      "world")
 
     def run(self):
@@ -116,6 +116,7 @@ class CmdThread(Thread, HasTraits):
         self.motor_set(True,False)
         motor_flag = False
         pub.publish(self.cmd)
+        self.cmd_tf_pub()
 
         while not self.wants_abort:
             print('Mission: {}, time: {:2.4f} sec'.format(self.mission, self.t_cur))

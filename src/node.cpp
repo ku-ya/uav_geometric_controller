@@ -172,8 +172,8 @@ node::node(){
   ros::param::get("controller/gain/pos/c",cX);
   ros::param::get("controller/saturation/x",eiX_sat);
   ros::param::get("controller/saturation/R",eiR_sat);
-  ros::param::param<std::vector<int>>("port/i2c",mtr_addr,mtr_addr);
-  ros::param::get("port/name",i2c_port);
+  ros::param::param<std::vector<int>>("port/address",mtr_addr,mtr_addr);
+  ros::param::get("port/i2c",i2c_port);
   ros::param::get("name/vicon",vicon_name);
   ros::param::get("name/imu",imu_name);
   ros::param::get("name/xc",xc_name);

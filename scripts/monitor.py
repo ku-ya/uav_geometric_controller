@@ -34,6 +34,9 @@ logging.basicConfig(level=logging.DEBUG,
 # coloredlogs.install(level='DEBUG')
 # coloredlogs.install(level='DEBUG', logger=logger)
 
+# allowed signal loss time, prints warning
+dt_signal_loss = 0.02
+
 class Run_thread(Thread):
     """
     Use this to run as terminal command on a separate thread
@@ -132,6 +135,8 @@ class CmdThread(Thread, HasTraits):
                     self.xd = cmd.xc
                 else:
                     self.mission = 'halt'
+                    cmd.xc_dot = [0,0,0]
+                    pub.publish(self.cmd)
                 # print('Take off complete')
             elif self.mission == 'spin':
                 # TODO
@@ -146,6 +151,7 @@ class CmdThread(Thread, HasTraits):
                     print(cmd.xc)
                 else:
                     self.mission = 'halt'
+                    pub.publish(self.cmd)
 
             elif self.mission == 'land':
                 rospy.set_param(explore_flag, False)
@@ -162,6 +168,7 @@ class CmdThread(Thread, HasTraits):
                 else:
                     self.motor_set(False,False)
                     self.wants_abort = True
+                    pub.publish(self.cmd)
                     # print(cmd.xc)
                     # pub.publish(cmd)
 
@@ -558,17 +565,18 @@ class main(HasTraits):
     def msg_watchdog(self):
         # check for vicon msg timing
         while True:
-            if time.time() - self.time_vicon_last > 0.02:
-                print('Lost vicon msg for: {:2.2f} sec'.format(time.time() - self.time_vicon_last))
+            if time.time() - self.time_vicon_last > dt_signal_loss:
+                print('Lost vicon msg for: {:2.2f} sec'.format(time.time()
+                        - self.time_vicon_last))
 
-            if time.time() - self.time_state_last > 0.02:
-                print('Lost uav state msg for: {:2.2f} sec'.format(time.time() - self.time_state_last))
+            if time.time() - self.time_state_last > dt_signal_loss:
+                print('Lost uav state msg for: {:2.2f} sec'.format(time.time()
+                        - self.time_state_last))
             time.sleep(0.2)
 
     def vicon_callback(self, data):
         # TODO update attitude
         self.time_vicon_last = time.time()
-
 
     def ros_callback(self, data):
         """

@@ -107,6 +107,7 @@ class CmdThread(Thread, HasTraits):
         v_up = 0.3
         t_total = 5
         z_hover = 1.5
+        z_land = self.x_v[2]
         cmd = self.cmd
         cmd.xc = [0,0,0]
         cmd.xc_dot = [0,0,0]
@@ -159,7 +160,7 @@ class CmdThread(Thread, HasTraits):
                 t_total = 5
                 cmd.b1 = [1,0,0]
                 if self.t_cur <= t_total and self.mission == 'land':
-                    height = z_hover - (v_up*self.t_cur)
+                    height = z_land - (v_up*self.t_cur)
                     cmd.xc[0], cmd.xc[1] = x_v[0],x_v[1]
                     cmd.xc[2] = height if height > z_min else z_min
                     # cmd.xc = [x_v[0],x_v[1],height if height > z_min else z_min]

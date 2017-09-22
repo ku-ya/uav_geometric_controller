@@ -136,7 +136,7 @@ class CmdThread(Thread, HasTraits):
                         continue
                     self.xd = cmd.xc
                 else:
-                    self.mission = 'halt'
+                    self.mission = 'spin'
                     cmd.xc_dot = [0,0,0]
                     pub.publish(self.cmd)
                 # print('Take off complete')

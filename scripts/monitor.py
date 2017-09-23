@@ -79,12 +79,17 @@ class CmdThread(Thread, HasTraits):
     t_cur = 0
     name = uav_name
     x_v = Array(shape=(3,))
+    x_euler = Array(shape=(3,))
 
     br = tf.TransformBroadcaster()
+    yaw = 0
 
     def __init__(self,args):
         Thread.__init__(self)
         self.args = args
+        self.theta = 0
+        self.motor_set(True, True)
+
 
     def motor_set(self, motor, warmup):
         rospy.set_param('/'+self.name+'/uav/Motor', motor)
@@ -92,7 +97,7 @@ class CmdThread(Thread, HasTraits):
 
     def cmd_tf_pub(self):
         self.br.sendTransform(self.cmd.xc,
-                     tf.transformations.quaternion_from_euler(0, 0, 0),
+                     tf.transformations.quaternion_from_euler(0,0,self.x_euler[2]),
                      rospy.Time.now(),
                      self.name + '_xc',
                      "world")
@@ -106,7 +111,7 @@ class CmdThread(Thread, HasTraits):
         z_min = 0.2
         v_up = 0.3
         t_total = 5
-        z_hover = 1.5
+        z_hover = 1.0
         z_land = self.x_v[2]
         cmd = self.cmd
         cmd.xc = [0,0,0]
@@ -114,7 +119,8 @@ class CmdThread(Thread, HasTraits):
         cmd.xc_2dot = [0,0,0]
         cmd.b1 = [1,0,0]
         x_v = self.x_v
-        self.motor_set(True,False)
+        x_euler = self.x_euler
+        self.motor_set(True,True)
         motor_flag = False
         pub.publish(self.cmd)
         self.cmd_tf_pub()
@@ -126,8 +132,9 @@ class CmdThread(Thread, HasTraits):
 
 
             if self.mission == 'take off':
+                self.motor_set(True,False)
                 motor_flag = True
-                cmd.b1 = [1,0,0]
+                cmd.b1 = [np.cos(x_euler[2]),np.sin(x_euler[2]),0]
                 if self.t_cur <= t_total and self.mission == 'take off':
                     height = z_min+v_up*self.t_cur
                     cmd.xc = [x_v[0],x_v[1],height if height < z_hover else z_hover]
@@ -136,7 +143,7 @@ class CmdThread(Thread, HasTraits):
                         continue
                     self.xd = cmd.xc
                 else:
-                    self.mission = 'spin'
+                    self.mission = 'halt'
                     cmd.xc_dot = [0,0,0]
                     pub.publish(self.cmd)
                 # print('Take off complete')
@@ -144,8 +151,8 @@ class CmdThread(Thread, HasTraits):
                 # TODO
                 t_total = 30
                 if self.t_cur <= t_total:
-                    theta = 2*np.pi/t_total*self.t_cur
-                    cmd.b1 = [np.cos(theta),np.sin(theta),0]
+                    self.theta = 2*np.pi/t_total*self.t_cur
+                    cmd.b1 = [np.cos(x_euler[2]+self.theta),np.sin(x_euler[2]+self.theta),0]
                     cmd.xc = [x_v[0],x_v[1],z_hover]
                     # cmd.xc = [(np.cos(theta)-1.)/2.0, 1./2.0*np.sin(theta),z_hover]
                     # cmd.xc_dot = [dt*np.sin(theta)/2.0, dt*1./2.0*np.sin(theta),0]
@@ -155,11 +162,12 @@ class CmdThread(Thread, HasTraits):
                 else:
                     self.mission = 'halt'
                     pub.publish(self.cmd)
+                    self.theta = 0
 
             elif self.mission == 'land':
                 rospy.set_param(explore_flag, False)
-                t_total = 5
-                cmd.b1 = [1,0,0]
+                t_total = z_land/v_up
+                cmd.b1 = [np.cos(x_euler[2]),np.sin(x_euler[2]),0]
                 if self.t_cur <= t_total and self.mission == 'land':
                     height = z_land - (v_up*self.t_cur)
                     cmd.xc[0], cmd.xc[1] = x_v[0],x_v[1]
@@ -181,11 +189,12 @@ class CmdThread(Thread, HasTraits):
                 # if x_v[2] < z_min:
                     # rospy.set_param('/Jetson/uav/Motor', False)
                 x_v =  self.x_v
-                cmd.b1 =[1,0,0]
+                x_euler =  self.x_euler
                 cmd.xc[2] = z_hover
                 cmd.xc_dot =[0,0,0]
                 self.t_cur= 0
                 self.t_init = time.time()
+                z_land = self.x_v[2]
 
     		if not motor_flag:
     		    cmd.xc =self.x_v
@@ -199,6 +208,7 @@ class CmdThread(Thread, HasTraits):
             pass
 
         self.motor_set(False,False)
+        pub.publish(self.cmd)
         print('Process: cmd thread killed')
 
 
@@ -280,6 +290,7 @@ class ErrorView(HasTraits):
     ex2 = Float(0)
     xd = Array(shape=(3,))
     x_v = Array(shape=(3,))
+    x_euler = Array(shape=(3,))
 
     viewer = Instance(Viewer, ())
     N = Int(200)
@@ -452,7 +463,7 @@ class ErrorView(HasTraits):
         """
         TODO
         """
-        self.motor_set(True,True)
+        # self.motor_set(True,True)
         if self.cmd_thread and self.cmd_thread.isAlive():
             self.motor_set(False,False)
             self._abort_fired()
@@ -468,6 +479,7 @@ class ErrorView(HasTraits):
     def _x_v_changed(self):
         if self.cmd_thread and self.cmd_thread.isAlive():
             self.cmd_thread.x_v = self.x_v
+            self.cmd_thread.x_euler = self.x_euler
             self.xd = self.cmd_thread.cmd.xc
         else:
             pass
@@ -581,6 +593,12 @@ class main(HasTraits):
     def vicon_callback(self, data):
         # TODO update attitude
         self.time_vicon_last = time.time()
+        quaternion = (data.pose.orientation.x,
+                        data.pose.orientation.y,
+                        data.pose.orientation.z,
+                        data.pose.orientation.w)
+        euler = tf.transformations.euler_from_quaternion(quaternion)
+        self.error_window.x_euler = euler
 
     def ros_callback(self, data):
         """

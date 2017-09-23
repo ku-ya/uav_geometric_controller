@@ -3,7 +3,7 @@
     <group ns="Jetson">
       <arg name="MOCA" value="true"/>
       <rosparam>
-          environment: 0
+          environment: 1
       </rosparam>
 
       <include file="$(find uav_geometric_controller)/launch/imu_jetson.launch"/>
@@ -14,8 +14,6 @@
       <arg name="debug" default="false"/>
       <arg name="verbose" default="true"/>
       <!-- start estimator node-->
-      <node name="estimator" type="estimator.py" pkg="uav_geometric_controller" respawn="false" output="screen">
-      </node>
       <!-- start controller node-->
       <node name="uav" type="node" pkg="uav_geometric_controller" respawn="false" output="screen">
       </node>

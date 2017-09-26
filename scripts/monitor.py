@@ -314,9 +314,10 @@ class ErrorView(HasTraits):
     num_ticks = Int(0)
 
     mission = Enum('spin','halt')
-    mission_exe = Button()
+    mission_exe = Button(color='red')
     takeoff_exe = Button()
     landing_exe = Button()
+    kill_uav = Button()
     reset = Button()
 
     motor_bool = Bool

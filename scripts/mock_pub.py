@@ -6,7 +6,7 @@ import numpy as np
 
 def talker():
     pub = rospy.Publisher('Jetson/uav_states', states, queue_size=10)
-    rospy.init_node('talker', anonymous=True)
+    rospy.init_node('talker', anonymous=False)
     rate = rospy.Rate(100) # 10hz
     data = states()
     time = 0.01

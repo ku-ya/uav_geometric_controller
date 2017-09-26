@@ -320,6 +320,7 @@ class ErrorView(HasTraits):
     reset = Button()
 
     motor_bool = Bool
+    explore_bool = Bool(False)
 
     capture_thread = Instance(Run_thread)
     rqt_thread = Instance(Run_thread)
@@ -364,10 +365,11 @@ class ErrorView(HasTraits):
                 Item('mapping', label='Mapping', show_label=False),
             ),
             HGroup(
-                Item('exploration_name', label='Exploration command', show_label=True),
+                # Item('exploration_name', label='Exploration command', show_label=True),
                 Item('exploration', label='Exploration', show_label=False),
+                Item('explore_bool', label='Exploration', show_label=False),
             ),
-            Item('abort', label='Stop motor', show_label=False, image=ImageResource(pathname+'/red.png')),
+            # Item('abort', label='Stop motor', show_label=False, image=ImageResource(pathname+'/red.png')),
             Item('motor_bool', label='Motor', show_label=True),
             label='Execution',
         ),
@@ -403,6 +405,11 @@ class ErrorView(HasTraits):
     def _abort_fired(self):
         self.motor_set(False, False)
         self.motor_bool = False
+
+    def _exploration_fired(self):
+        self.explore_bool = not self.explore_bool
+        rospy.set_param(explore_flag, self.explore_bool)
+        pass
 
     def _host_IP_set_fired(self):
         print('export ROS_IP=' + self.host_IP)
@@ -535,6 +542,7 @@ class ErrorView(HasTraits):
         self.viewer.M_data_y = list(self.M[:,1])
         self.viewer.M_data_z = list(self.M[:,2])
         self.motor_bool = rospy.get_param('/'+self.name+'/uav/Motor')
+        self.explore_bool = rospy.get_param(explore_flag)
         return
 
 

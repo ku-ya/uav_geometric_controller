@@ -313,7 +313,7 @@ class ErrorView(HasTraits):
     max_num_points = Int(100)
     num_ticks = Int(0)
 
-    mission = Enum('take off', 'land', 'spin', 'home', 'halt')
+    mission = Enum('spin','halt')
     mission_exe = Button()
     takeoff_exe = Button()
     landing_exe = Button()

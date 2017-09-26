@@ -356,9 +356,9 @@ class ErrorView(HasTraits):
                 Item('mission_exe', label='Run mission', show_label=False),
                 ),
             HGroup(
-            Item('xd',label='desired position'),
-            Item('x_v',label='vicon position'),
-            Item('reset'),
+                Item('xd',label='desired position'),
+                Item('x_v',label='vicon position'),
+                Item('reset'),
             ),
             HGroup(
                 Item('mapping_name', label='Mapping command', show_label=True),
@@ -635,6 +635,8 @@ if __name__ == '__main__':
         print "Exiting..."
     finally:
         view.error_window.motor_set(False,False)
+        # Stop exploration
+        rospy.set_param(explore_flag, False)
         if view.error_window.cmd_thread and view.error_window.cmd_thread.isAlive():
             view.error_window.cmd_thread.wants_abort = True
         print("Completed")

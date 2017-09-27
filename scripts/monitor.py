@@ -371,6 +371,7 @@ class ErrorView(HasTraits):
                 Item('explore_bool', label='Exploration', show_label=False),
             ),
             # Item('abort', label='Stop motor', show_label=False, image=ImageResource(pathname+'/red.png')),
+            Item('kill_uav', label='Kill controller', show_label=True),
             Item('motor_bool', label='Motor', show_label=True),
             label='Execution',
         ),
@@ -406,6 +407,10 @@ class ErrorView(HasTraits):
     def _abort_fired(self):
         self.motor_set(False, False)
         self.motor_bool = False
+
+    def _kill_uav_fired(self):
+        print 'rosnode kill /' + uav_name + '/uav'
+        os.system('rosnode kill /' + uav_name + '/uav')
 
     def _exploration_fired(self):
         self.explore_bool = not self.explore_bool
